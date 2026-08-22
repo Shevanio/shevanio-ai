@@ -62,6 +62,11 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          syft-version: v1.51.0
+
       - name: Mark release distribution snapshot start
         run: |
           set -euo pipefail
@@ -130,6 +135,11 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: go.mod
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          syft-version: v1.51.0
 
       - name: Recheck immutable release provenance
         env:
