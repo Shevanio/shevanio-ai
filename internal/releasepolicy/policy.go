@@ -841,4 +841,5 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       release_channel: rc
+    secrets: inherit
 `
