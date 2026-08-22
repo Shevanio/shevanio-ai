@@ -15,10 +15,10 @@ import (
 	"time"
 )
 
-const CompactStateSchema = "gentle-ai.review-state/v2"
-const CompactReceiptSchema = "gentle-ai.review-receipt/v2"
-const NativeLowRiskVerificationDomain = "gentle-ai.native-low-risk-verification/v1"
-const CompactRecoveredEvidenceSchema = "gentle-ai.review-recovered-evidence/v1"
+const CompactStateSchema = "shevanio-ai.review-state/v2"
+const CompactReceiptSchema = "shevanio-ai.review-receipt/v2"
+const NativeLowRiskVerificationDomain = "shevanio-ai.native-low-risk-verification/v1"
+const CompactRecoveredEvidenceSchema = "shevanio-ai.review-recovered-evidence/v1"
 
 const (
 	StateCorrectionRequired             State = "correction_required"
@@ -622,7 +622,7 @@ func validateCompactVerificationEvidence(state CompactState) error {
 // ledger artifact: the frozen findings themselves are the ledger, validated by
 // Validate as the exact concatenation of the completed lens results. When at
 // least one finding was frozen, the binding is the SHA-256 of the canonical
-// gentle-ai.review-ledger/v1 bytes for exactly those findings, so auditors can
+// shevanio-ai.review-ledger/v1 bytes for exactly those findings, so auditors can
 // reconstruct and verify it from the persisted state. A pristine lineage — one
 // whose completed review froze no findings at all — has no ledger content to
 // bind and keeps the honest empty-input hash (SHA-256 of zero bytes); it never
@@ -1163,7 +1163,7 @@ func findingLocationInGenesis(location string, genesisPaths []string) bool {
 
 // ErrInvalidFindingLocation identifies reviewer locations that cannot be used
 // as repository line evidence.
-var ErrInvalidFindingLocation = errors.New("invalid reviewer finding location; correct it to repository/path:<positive-line> or repository/path:<positive-start>-<positive-end> before running gentle-ai review capture-result again")
+var ErrInvalidFindingLocation = errors.New("invalid reviewer finding location; correct it to repository/path:<positive-line> or repository/path:<positive-start>-<positive-end> before running shevanio-ai review capture-result again")
 
 // FindingLocationErrorReason is a stable machine-readable validation reason.
 type FindingLocationErrorReason string

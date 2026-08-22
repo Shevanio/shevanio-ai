@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // piRefuterReview builds a reviewing authority whose one captured lens carries

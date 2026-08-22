@@ -1,5 +1,5 @@
 {
-  "schema": "gentle-ai.review-capture-result-dry-run/v1",
+  "schema": "shevanio-ai.review-capture-result-dry-run/v1",
   "operation": "review/capture-result",
   "validation": "accepted",
   "lineage_id": "review-example",

@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/opencodedefault"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 func TestInjectRoutingInstallsGuidanceForEverySupportedAgent(t *testing.T) {
@@ -53,10 +53,10 @@ func TestInjectRoutingInstallsGuidanceForEverySupportedAgent(t *testing.T) {
 			if !strings.Contains(written, rendered) {
 				t.Fatalf("InjectRouting(%q) did not write the rendered guidance:\n%s", agent.ID, written)
 			}
-			if !strings.Contains(written, "<!-- gentle-ai:"+RoutingSectionID+" -->") {
+			if !strings.Contains(written, "<!-- shevanio-ai:"+RoutingSectionID+" -->") {
 				t.Fatalf("InjectRouting(%q) did not open the managed section:\n%s", agent.ID, written)
 			}
-			if !strings.Contains(written, "<!-- /gentle-ai:"+RoutingSectionID+" -->") {
+			if !strings.Contains(written, "<!-- /shevanio-ai:"+RoutingSectionID+" -->") {
 				t.Fatalf("InjectRouting(%q) did not close the managed section:\n%s", agent.ID, written)
 			}
 		})
@@ -318,8 +318,8 @@ func TestInjectRoutingUsesAlwaysLoadedOrchestratorScope(t *testing.T) {
 			if !strings.Contains(prompt, rendered) {
 				t.Fatalf("orchestrator prompt for %q carries no routing guidance:\n%s", agent, prompt)
 			}
-			if !strings.Contains(prompt, "<!-- gentle-ai:"+RoutingSectionID+" -->") ||
-				!strings.Contains(prompt, "<!-- /gentle-ai:"+RoutingSectionID+" -->") {
+			if !strings.Contains(prompt, "<!-- shevanio-ai:"+RoutingSectionID+" -->") ||
+				!strings.Contains(prompt, "<!-- /shevanio-ai:"+RoutingSectionID+" -->") {
 				t.Fatalf("orchestrator prompt for %q carries no managed section:\n%s", agent, prompt)
 			}
 
@@ -597,11 +597,11 @@ func orchestratorPrompt(t *testing.T, path string) string {
 	return settings.Agent[opencodedefault.ManagedAgent].Prompt
 }
 
-// managedRoutingBlock returns only the content Gentle AI owns, so assertions
+// managedRoutingBlock returns only the content Shevanio AI owns, so assertions
 // about the block never accidentally inspect surrounding user content.
 func managedRoutingBlock(content string) string {
-	open := "<!-- gentle-ai:" + RoutingSectionID + " -->"
-	closing := "<!-- /gentle-ai:" + RoutingSectionID + " -->"
+	open := "<!-- shevanio-ai:" + RoutingSectionID + " -->"
+	closing := "<!-- /shevanio-ai:" + RoutingSectionID + " -->"
 
 	start := strings.Index(content, open)
 	end := strings.Index(content, closing)

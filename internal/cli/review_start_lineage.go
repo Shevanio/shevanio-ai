@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 const (

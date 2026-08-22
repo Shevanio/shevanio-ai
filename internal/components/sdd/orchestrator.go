@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 const (
 	openCodeBackgroundPolicyAsset  = "opencode/background-subagents.md"
-	openCodeBackgroundPolicyMarker = "<!-- gentle-ai:opencode-background-subagents -->"
-	openCodeBackgroundPolicyEnd    = "<!-- /gentle-ai:opencode-background-subagents -->"
+	openCodeBackgroundPolicyMarker = "<!-- shevanio-ai:opencode-background-subagents -->"
+	openCodeBackgroundPolicyEnd    = "<!-- /shevanio-ai:opencode-background-subagents -->"
 )
 
 // OrchestratorRenderOptions carries already-resolved prompt policy selections.

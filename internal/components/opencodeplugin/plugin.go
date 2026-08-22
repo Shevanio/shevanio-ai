@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 type Definition struct {
@@ -79,7 +79,7 @@ const roseArt = [
   "               ⠐⠈",
 ]
 
-const compactArt = ["✦ Gentle AI ✦"]
+const compactArt = ["✦ Shevanio AI ✦"]
 
 const Logo = () => {
   const dim = useTerminalDimensions()

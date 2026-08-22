@@ -26,7 +26,7 @@ import (
 // no process restart is needed to toggle it between runs. It is a distinct
 // switch from the user-owned RDD kill switch (delivery-gate scope); neither
 // substitutes for the other. (The read-only shadow observer's own
-// independent switch, GENTLE_AI_RDD_SHADOW, retired in Wave 7 S2a.)
+// independent switch, SHEVANIO_AI_RDD_SHADOW, retired in Wave 7 S2a.)
 //
 // Wave 7 S7 (WU18) attempted removal and reverted it (design decision,
 // coordinator amendment): v3's negotiated START never gained
@@ -41,7 +41,7 @@ import (
 // testing. WU18a (S7a) kept the genuinely additive work this attempt
 // produced -- the v1/v2 legacy-collision start guards and v3's new frozen-
 // candidate-context negotiated support -- both live and switch-independent.
-const newLineageActivationEnvVar = "GENTLE_AI_RDD_NEW_LINEAGE"
+const newLineageActivationEnvVar = "SHEVANIO_AI_RDD_NEW_LINEAGE"
 
 // NewLineageActivationEnabled reports the start-only activation switch. It
 // gates only where a NEW lineage is created (review_facade.go's start

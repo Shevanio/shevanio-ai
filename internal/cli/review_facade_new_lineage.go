@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // ReviewFacadeStartNewLineageResult is the v3 activation branch's own START

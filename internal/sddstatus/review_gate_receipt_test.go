@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // review_gate_receipt_test.go is Wave 4 S5c' (design.md's decision-1
@@ -449,7 +449,7 @@ func TestLegacyPostReviewVerifyReportWithArbitraryWorkUnitRequiresCurrentAttesta
 		Outcome: AttemptPassed, ChangedLines: 0, EvidenceRevision: shaID("b"), Diagnosis: "legacy final verification passed",
 		HarnessDisposition: HarnessReused, CleanupEvidence: "no cleanup required", ProcessEvidence: "focused verification passed",
 	}}
-	legacy.RequestDigest = runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
+	legacy.RequestDigest = runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
 		ExpectedRevision: legacy.PreviousRevision, RequestID: legacy.RequestID, Outcome: legacy.Finish.Outcome,
 		EvidenceRevision: legacy.Finish.EvidenceRevision, Diagnosis: legacy.Finish.Diagnosis,
 		HarnessDisposition: legacy.Finish.HarnessDisposition, CleanupEvidence: legacy.Finish.CleanupEvidence,

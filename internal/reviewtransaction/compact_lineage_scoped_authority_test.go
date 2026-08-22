@@ -213,7 +213,7 @@ func TestUnreadableCompactRecordStillRefusesItselfAndNamesAnExit(t *testing.T) {
 
 func anyProblemNamesAnExit(problems []string) bool {
 	for _, problem := range problems {
-		if strings.Contains(problem, "gentle-ai review ") {
+		if strings.Contains(problem, "shevanio-ai review ") {
 			return true
 		}
 	}

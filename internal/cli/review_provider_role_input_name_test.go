@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestProviderRoleCollectInputNamesObeyPublishedPattern pins every provider

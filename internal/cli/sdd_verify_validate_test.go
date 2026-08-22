@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 func TestRunSDDVerifyValidate(t *testing.T) {
-	report := "```yaml\nschema: gentle-ai.verify-result/v1\nevidence_revision: sha256:" + strings.Repeat("a", 64) + "\nverdict: fail\nblockers: 1\ncritical_findings: 0\nrequirements: 1/1\nscenarios: 1/1\ntest_command: go test ./...\ntest_exit_code: 0\ntest_output_hash: sha256:" + strings.Repeat("b", 64) + "\nbuild_command: go vet ./...\nbuild_exit_code: 0\nbuild_output_hash: sha256:" + strings.Repeat("c", 64) + "\n```"
+	report := "```yaml\nschema: shevanio-ai.verify-result/v1\nevidence_revision: sha256:" + strings.Repeat("a", 64) + "\nverdict: fail\nblockers: 1\ncritical_findings: 0\nrequirements: 1/1\nscenarios: 1/1\ntest_command: go test ./...\ntest_exit_code: 0\ntest_output_hash: sha256:" + strings.Repeat("b", 64) + "\nbuild_command: go vet ./...\nbuild_exit_code: 0\nbuild_output_hash: sha256:" + strings.Repeat("c", 64) + "\n```"
 	var output bytes.Buffer
 	if err := runSDDVerifyValidate([]string{"--input", "-", "--requirements", "1", "--scenarios", "1"}, strings.NewReader(report), &output); err != nil {
 		t.Fatalf("valid failure: %v", err)
@@ -61,7 +61,7 @@ func TestRunSDDVerifyValidateHelpIsSuccessfulAndInputFree(t *testing.T) {
 	if stdin.reads != 0 {
 		t.Fatalf("help read stdin %d times", stdin.reads)
 	}
-	for _, want := range []string{"Usage: gentle-ai sdd-verify-validate", "--input <path|->", "--requirements <n>", "--scenarios <n>"} {
+	for _, want := range []string{"Usage: shevanio-ai sdd-verify-validate", "--input <path|->", "--requirements <n>", "--scenarios <n>"} {
 		if !strings.Contains(output.String(), want) {
 			t.Fatalf("help missing %q:\n%s", want, output.String())
 		}
@@ -106,7 +106,7 @@ func TestRunSDDVerifyValidateHelpRespectsFlagValueArity(t *testing.T) {
 			var output bytes.Buffer
 			err := runSDDVerifyValidate(tt.args, &sddVerifyValidateReadSpy{}, &output)
 			if tt.wantHelp {
-				if err != nil || !strings.Contains(output.String(), "Usage: gentle-ai sdd-verify-validate") {
+				if err != nil || !strings.Contains(output.String(), "Usage: shevanio-ai sdd-verify-validate") {
 					t.Fatalf("runSDDVerifyValidate(%v) = output %q, err %v", tt.args, output.String(), err)
 				}
 				return

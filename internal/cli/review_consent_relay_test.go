@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // runConsentRelayStart drives one negotiated START through the real router
@@ -41,7 +41,7 @@ func decodeConsentQuestion(t *testing.T, payload []byte) ReviewIntegrationConsen
 	return result
 }
 
-// invocationArgs turns a runnable `gentle-ai review start ...` invocation from
+// invocationArgs turns a runnable `shevanio-ai review start ...` invocation from
 // the consent envelope into router arguments, proving the invocation is
 // literally runnable rather than merely descriptive.
 func invocationArgs(t *testing.T, invocation string) []string {
@@ -50,8 +50,8 @@ func invocationArgs(t *testing.T, invocation string) []string {
 	if err != nil {
 		t.Fatalf("parse consent invocation: %v", err)
 	}
-	if len(words) < 3 || words[0] != "gentle-ai" || words[1] != "review" || words[2] != "start" {
-		t.Fatalf("consent invocation is not a runnable gentle-ai review start command: %q", invocation)
+	if len(words) < 3 || words[0] != "shevanio-ai" || words[1] != "review" || words[2] != "start" {
+		t.Fatalf("consent invocation is not a runnable shevanio-ai review start command: %q", invocation)
 	}
 	return words[2:]
 }
@@ -85,7 +85,7 @@ func normalizeConsentFixtureCWD(t *testing.T, payload []byte, root string) []byt
 		}
 		args[cwd+1] = "/repo"
 
-		words := append([]string{"gentle-ai", "review"}, args...)
+		words := append([]string{"shevanio-ai", "review"}, args...)
 		for index, word := range words {
 			words[index] = reviewTransitionShellWord(word)
 		}
@@ -109,7 +109,7 @@ func normalizeConsentFixtureCWD(t *testing.T, payload []byte, root string) []byt
 
 func TestInvocationArgsParsesQuotedWindowsConsentFollowUp(t *testing.T) {
 	root := `C:\Users\Jane Doe\repo`
-	invocation := "gentle-ai review start --cwd '" + root + "' --contract " + ReviewIntegrationContractV1
+	invocation := "shevanio-ai review start --cwd '" + root + "' --contract " + ReviewIntegrationContractV1
 
 	want := []string{"start", "--cwd", root, "--contract", ReviewIntegrationContractV1}
 	if got := invocationArgs(t, invocation); strings.Join(got, "\n") != strings.Join(want, "\n") {
@@ -120,7 +120,7 @@ func TestInvocationArgsParsesQuotedWindowsConsentFollowUp(t *testing.T) {
 func TestConsentFixtureNormalizationStripsRenderedWindowsCWDQuoting(t *testing.T) {
 	root := `C:\Users\Jane Doe\repo`
 	payload, err := json.Marshal(ReviewIntegrationConsentResult{Choices: []ReviewIntegrationConsentChoice{{
-		Invocation: "gentle-ai review start --cwd '" + root + "' --contract " + ReviewIntegrationContractV1,
+		Invocation: "shevanio-ai review start --cwd '" + root + "' --contract " + ReviewIntegrationContractV1,
 	}}})
 	if err != nil {
 		t.Fatal(err)
@@ -426,7 +426,7 @@ func TestConsentDeclineOnLowRiskCandidateIsRefused(t *testing.T) {
 		"--lineage", "review-consent-low-decline", "--consent", "declined",
 	}), &output)
 	if err == nil || !strings.Contains(output.String(), "nothing to decline") ||
-		!strings.Contains(output.String(), "rerun gentle-ai review start without --consent") {
+		!strings.Contains(output.String(), "rerun shevanio-ai review start without --consent") {
 		t.Fatalf("low-risk decline must be refused with the reason and rerun: %v\n%s", err, output.String())
 	}
 }
@@ -472,7 +472,7 @@ func TestHeadlessSkipNoticeFollowsAnExplicitOptIn(t *testing.T) {
 	if err == nil {
 		t.Fatalf("an unconfigured clone started a review nobody asked for:\n%s", output.String())
 	}
-	if !strings.Contains(err.Error(), "gentle-ai review mode enable --scope=global") {
+	if !strings.Contains(err.Error(), "shevanio-ai review mode enable --scope=global") {
 		t.Fatalf("the opt-in refusal names no way in: %v", err)
 	}
 	if console.String() != "" {
@@ -530,7 +530,7 @@ func TestConsentQuestionMatchesVersionedFixture(t *testing.T) {
 			}
 			normalized := normalizeConsentFixtureCWD(t, output.Bytes(), root)
 			fixturePath := filepath.Join("..", "..", "contracts", "review-integration", tt.fixture)
-			if os.Getenv("GENTLE_AI_CONSENT_FIXTURE_UPDATE") == "1" {
+			if os.Getenv("SHEVANIO_AI_CONSENT_FIXTURE_UPDATE") == "1" {
 				if err := os.WriteFile(fixturePath, normalized, 0o644); err != nil {
 					t.Fatal(err)
 				}

@@ -12,11 +12,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/communitytool"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pipeline"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestInstallRuntimeStagePlanAddsCommunityToolStepsInSelectionOrder(t *testing.T) {
@@ -109,7 +109,7 @@ func TestInstallRuntimeStagePlanDeselectionCleansOwnedPiIntegration(t *testing.T
 	if runtime.state.piCodeGraph == nil || !runtime.state.piCodeGraph.Changed {
 		t.Fatalf("pipeline Pi result = %#v, want reported cleanup", runtime.state.piCodeGraph)
 	}
-	if _, err := os.Stat(filepath.Join(home, ".gentle-ai", "pi-codegraph.json")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(home, ".shevanio-ai", "pi-codegraph.json")); !os.IsNotExist(err) {
 		t.Fatalf("manifest remains after pipeline deselection: %v", err)
 	}
 }
@@ -117,7 +117,7 @@ func TestInstallRuntimeStagePlanDeselectionCleansOwnedPiIntegration(t *testing.T
 func TestBackupTargetsSnapshotPiManifestOverlayDuringDeselection(t *testing.T) {
 	home := t.TempDir()
 	overlay := filepath.Join(home, ".pi", "agent", "subagents", "package.md")
-	manifest := filepath.Join(home, ".gentle-ai", "pi-codegraph.json")
+	manifest := filepath.Join(home, ".shevanio-ai", "pi-codegraph.json")
 	writePiInstallFixture(t, home)
 	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
 		t.Fatal(err)
@@ -357,7 +357,7 @@ func TestSuccessfulCodeGraphReconciliationStillRegistersOpenCodePlugin(t *testin
 func TestPiCodeGraphReconcileStepRollbackRemovesDynamicPackageOverlay(t *testing.T) {
 	home := t.TempDir()
 	overlay := filepath.Join(home, ".pi", "agent", "subagents", "package.md")
-	manifest := filepath.Join(home, ".gentle-ai", "pi-codegraph.json")
+	manifest := filepath.Join(home, ".shevanio-ai", "pi-codegraph.json")
 	writePiInstallFixture(t, home)
 	mustWriteFile(t, overlay, []byte("owned overlay\n"))
 	if err := os.MkdirAll(filepath.Dir(manifest), 0o700); err != nil {
@@ -443,9 +443,9 @@ func TestCodeGraphGuidanceMarkdownForSDDOnlyWhenSelected(t *testing.T) {
 			setupHome: func(t *testing.T, home string) {
 				mustWriteFile(t, filepath.Join(home, ".claude", "CLAUDE.md"), []byte(strings.Join([]string{
 					"existing Claude guidance",
-					"<!-- gentle-ai:codegraph-guidance -->",
-					"CodeGraph guidance with `gentle-ai codegraph init --cwd <project-root>`",
-					"<!-- /gentle-ai:codegraph-guidance -->",
+					"<!-- shevanio-ai:codegraph-guidance -->",
+					"CodeGraph guidance with `shevanio-ai codegraph init --cwd <project-root>`",
+					"<!-- /shevanio-ai:codegraph-guidance -->",
 				}, "\n")))
 			},
 			lookPath: func(string) (string, error) { return "/bin/codegraph", nil },
@@ -493,7 +493,7 @@ func TestCodeGraphGuidanceMarkdownForSDDOnlyWhenSelected(t *testing.T) {
 				}
 				return
 			}
-			if !strings.Contains(got, "gentle-ai codegraph init --cwd <project-root>") {
+			if !strings.Contains(got, "shevanio-ai codegraph init --cwd <project-root>") {
 				t.Fatalf("CodeGraph guidance missing search-order rule:\n%s", got)
 			}
 		})
@@ -532,9 +532,9 @@ func TestComponentApplyStepOmitsCodeGraphGuidanceWithoutSelection(t *testing.T) 
 	}, "\n")))
 	mustWriteFile(t, filepath.Join(home, ".codex", "AGENTS.md"), []byte(strings.Join([]string{
 		"existing Codex guidance",
-		"<!-- gentle-ai:codegraph-guidance -->",
-		"CodeGraph guidance with `gentle-ai codegraph init --cwd <project-root>`",
-		"<!-- /gentle-ai:codegraph-guidance -->",
+		"<!-- shevanio-ai:codegraph-guidance -->",
+		"CodeGraph guidance with `shevanio-ai codegraph init --cwd <project-root>`",
+		"<!-- /shevanio-ai:codegraph-guidance -->",
 	}, "\n")))
 
 	step := componentApplyStep{
@@ -780,7 +780,7 @@ func assertOpenCodeSharedPromptCodeGraphGuidance(t *testing.T, home string, want
 		t.Fatalf("ReadFile(%q) error = %v", promptPath, err)
 	}
 	text := string(content)
-	hasGuidance := strings.Contains(text, "<!-- gentle-ai:codegraph-guidance -->") && strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>")
+	hasGuidance := strings.Contains(text, "<!-- shevanio-ai:codegraph-guidance -->") && strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>")
 	if hasGuidance != want {
 		t.Fatalf("CodeGraph guidance present = %v, want %v in %s", hasGuidance, want, promptPath)
 	}

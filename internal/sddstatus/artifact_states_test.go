@@ -13,7 +13,7 @@ import (
 // Engram store still carries observations from previously finished changes.
 func engramWorkspaceWithArchivedChangesOnly(t *testing.T, changes ...string) string {
 	t.Helper()
-	t.Setenv("ENGRAM_PROJECT", "gentle-ai")
+	t.Setenv("ENGRAM_PROJECT", "shevanio-ai")
 	workspace := t.TempDir()
 	mkdir(t, filepath.Join(workspace, "openspec", "changes", "archive"))
 	write(t, filepath.Join(workspace, "openspec", "config.yaml"), "artifact_store: hybrid\n")
@@ -78,7 +78,7 @@ func TestEmptyWorkspaceStatusProjectsV1(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Marshal() error = %v", err)
 			}
-			if !strings.Contains(string(payload), `"schemaName":"gentle-ai.sdd-status"`) {
+			if !strings.Contains(string(payload), `"schemaName":"shevanio-ai.sdd-status"`) {
 				t.Fatalf("projected JSON lost its identity: %s", payload)
 			}
 
@@ -86,7 +86,7 @@ func TestEmptyWorkspaceStatusProjectsV1(t *testing.T) {
 			if strings.Contains(markdown, "\n{}\n") {
 				t.Fatalf("markdown fell back to the empty projection:\n%s", markdown)
 			}
-			if !strings.Contains(markdown, `"schemaName": "gentle-ai.sdd-status"`) {
+			if !strings.Contains(markdown, `"schemaName": "shevanio-ai.sdd-status"`) {
 				t.Fatalf("markdown omitted the projected status:\n%s", markdown)
 			}
 
@@ -138,7 +138,7 @@ type builtArtifactMap struct {
 // by restating the literals.
 func artifactMapsFromEveryBuilder(t *testing.T) []builtArtifactMap {
 	t.Helper()
-	t.Setenv("ENGRAM_PROJECT", "gentle-ai")
+	t.Setenv("ENGRAM_PROJECT", "shevanio-ai")
 	collected := []builtArtifactMap{}
 
 	for _, store := range []ArtifactStore{ArtifactStoreOpenSpec, ArtifactStoreEngram, ArtifactStoreNone} {

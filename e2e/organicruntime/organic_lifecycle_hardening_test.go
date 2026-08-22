@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // currentChangesTargetIdentity derives the exact frozen target identity for
@@ -40,14 +40,14 @@ func currentChangesTargetIdentity(t *testing.T, repo string) string {
 // organicLargeWorkspaceE2EEnvironment gates the deliberately heavy lifecycle
 // proof below. The fixture catches regressions from batched Git inventories
 // back to per-path subprocess loops across START, capture, and finalize.
-const organicLargeWorkspaceE2EEnvironment = "GENTLE_AI_LARGE_WORKSPACE_E2E"
+const organicLargeWorkspaceE2EEnvironment = "SHEVANIO_AI_LARGE_WORKSPACE_E2E"
 
 // TestOrganicReviewStartDeadlineHeadroom now covers the #1957 remainder of
 // #1778: later capture and finalize operations share the same bounded topology.
 func TestOrganicReviewStartDeadlineHeadroom(t *testing.T) {
 	t.Run("issue-1778", func(t *testing.T) {
 		if os.Getenv(organicLargeWorkspaceE2EEnvironment) != "1" {
-			t.Skip("set GENTLE_AI_LARGE_WORKSPACE_E2E=1 to run the large-workspace START/capture/finalize proof")
+			t.Skip("set SHEVANIO_AI_LARGE_WORKSPACE_E2E=1 to run the large-workspace START/capture/finalize proof")
 		}
 		harness := newOrganicHarness(t)
 		lineage := "organic-large-workspace-lifecycle"
@@ -69,7 +69,7 @@ func TestOrganicReviewStartDeadlineHeadroom(t *testing.T) {
 		stdout, stderr, err := harness.gentleAllowFailure(
 			"review", "start", "--cwd", harness.repo.worktree,
 			"--lineage", lineage,
-			"--contract", "gentle-ai.review-integration/v1",
+			"--contract", "shevanio-ai.review-integration/v1",
 			"--target", targetIdentity,
 			"--projection", "workspace",
 		)
@@ -353,7 +353,7 @@ func TestOrganicReviewLifecycleErrorTyping(t *testing.T) {
 		stdout, stderr, err := harness.gentleAllowFailure(
 			"review", "start", "--cwd", harness.repo.worktree,
 			"--lineage", lineage,
-			"--contract", "gentle-ai.review-integration/v1",
+			"--contract", "shevanio-ai.review-integration/v1",
 			"--target", targetIdentity,
 			"--projection", "workspace",
 			"--policy", missingPolicy,
@@ -418,7 +418,7 @@ func TestOrganicReviewLifecycleErrorTyping(t *testing.T) {
 		stdout, stderr, err := harness.gentleAllowFailure(
 			"review", "start", "--cwd", harness.repo.worktree,
 			"--lineage", lineage,
-			"--contract", "gentle-ai.review-integration/v1",
+			"--contract", "shevanio-ai.review-integration/v1",
 			"--target", targetIdentity,
 			"--projection", "workspace",
 			"--policy", directoryAsPolicy,
@@ -535,7 +535,7 @@ func harnessCaptureCleanResults(t *testing.T, harness *organicHarness, lineage, 
 
 func harnessStatus(t *testing.T, harness *organicHarness, lineage string, extra ...string) organicStatusResult {
 	t.Helper()
-	arguments := []string{"review", "status", "--cwd", harness.repo.worktree, "--lineage", lineage, "--contract", "gentle-ai.review-integration/v1"}
+	arguments := []string{"review", "status", "--cwd", harness.repo.worktree, "--lineage", lineage, "--contract", "shevanio-ai.review-integration/v1"}
 	arguments = append(arguments, extra...)
 	payload := harness.gentle(arguments...)
 	var status organicStatusResult
@@ -606,7 +606,7 @@ func TestOrganicReviewExecutableTransitionContract(t *testing.T) {
 		if err := json.Unmarshal(payload, &schema); err != nil {
 			t.Fatalf("decode verification-evidence schema: %v\n%s", err, payload)
 		}
-		if schema.ID != "https://gentle-ai.dev/schema/review/verification-evidence/v1" || schema.Type != "string" || schema.MinLength != 1 {
+		if schema.ID != "https://shevanio-ai.dev/schema/review/verification-evidence/v1" || schema.Type != "string" || schema.MinLength != 1 {
 			t.Fatalf("verification-evidence schema = %#v", schema)
 		}
 
@@ -664,7 +664,7 @@ func TestOrganicReviewExecutableTransitionContract(t *testing.T) {
 			if err == nil {
 				t.Fatalf("lineage-only finalize with no evidence anywhere silently succeeded\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
 			}
-			if !strings.Contains(stderr, "gentle-ai review capture-evidence") || !strings.Contains(stderr, "gentle-ai review finalize --lineage "+lineage+" --captured-evidence") {
+			if !strings.Contains(stderr, "shevanio-ai review capture-evidence") || !strings.Contains(stderr, "shevanio-ai review finalize --lineage "+lineage+" --captured-evidence") {
 				t.Fatalf("no-transition rejection did not name the escape verbatim: stderr=%q", stderr)
 			}
 		})
@@ -731,7 +731,7 @@ func TestOrganicReviewExecutableTransitionContract(t *testing.T) {
 		// authorization binding must include the successor lineage line —
 		// matching reviewTransitionRecoveryAuthorization's contract, not the
 		// selector-free shape.
-		authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage +
+		authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage +
 			"\npredecessor_revision=" + unauthorized.Authority.Revision + "\ntarget_identity=" + liveTarget +
 			"\nsuccessor_lineage=" + successor + "\nactor=" + actor + "\nreason=" + reason
 
@@ -810,7 +810,7 @@ func TestOrganicReviewTargetShapeRefusals(t *testing.T) {
 		harness.git("add", "--", "candidate.txt")
 
 		stdout, stderr, err := harness.gentleAllowFailure(
-			"review", "status", "--cwd", harness.repo.worktree, "--contract", "gentle-ai.review-integration/v1",
+			"review", "status", "--cwd", harness.repo.worktree, "--contract", "shevanio-ai.review-integration/v1",
 		)
 		if err != nil {
 			t.Fatalf("selector-free status on unborn HEAD failed: %v\nstdout:\n%s\nstderr:\n%s", err, stdout, stderr)
@@ -867,7 +867,7 @@ func TestOrganicReviewTargetShapeRefusals(t *testing.T) {
 		harness.git("config", "branch.main.remote", "origin")
 		harness.git("config", "branch.main.merge", "refs/heads/main")
 
-		want := "commit an authorized empty root, then run gentle-ai review start --committed-only with --base-ref set to that commit's SHA"
+		want := "commit an authorized empty root, then run shevanio-ai review start --committed-only with --base-ref set to that commit's SHA"
 		result := harness.gateAllowFailure("pre-push", "--lineage", lineage)
 		if result.Allowed || !strings.Contains(result.Reason, want) {
 			t.Fatalf("pre-push from an empty-base receipt = %#v, want typed refusal naming %q verbatim (1641)", result, want)
@@ -981,7 +981,7 @@ func TestOrganicReviewRecoveryGraph(t *testing.T) {
 		if status.TargetIdentity == "" {
 			t.Fatalf("could not compute the requested base-diff successor identity: %#v", status)
 		}
-		authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage +
+		authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage +
 			"\npredecessor_revision=" + finalized.StoreRevision + "\ntarget_identity=" + status.TargetIdentity +
 			"\nactor=maintainer\nreason=recover escalated candidate into base-diff scope"
 
@@ -1120,7 +1120,7 @@ func TestOrganicReviewStoreRobustness(t *testing.T) {
 		// on disk, exactly like a real interrupted/tampered TERMINAL authority:
 		// mark it invalidated without the invalidation provenance
 		// CompactState.Validate() requires.
-		statePath := filepath.Join(harness.commonDir(), "gentle-ai", "review-transactions", "v2", quarantined, "review-state.json")
+		statePath := filepath.Join(harness.commonDir(), "shevanio-ai", "review-transactions", "v2", quarantined, "review-state.json")
 		payload, err := os.ReadFile(statePath)
 		if err != nil {
 			t.Fatal(err)
@@ -1192,7 +1192,7 @@ func TestOrganicReviewStoreRobustness(t *testing.T) {
 		// directly by name: an explicit selector never silently reports it
 		// healthy, even though selector-free enumeration now quarantines it.
 		explicit := harness.gentle(
-			"review", "status", "--cwd", harness.repo.worktree, "--contract", "gentle-ai.review-integration/v1",
+			"review", "status", "--cwd", harness.repo.worktree, "--contract", "shevanio-ai.review-integration/v1",
 			"--lineage", quarantined,
 		)
 		var explicitResult struct {
@@ -1231,7 +1231,7 @@ func TestOrganicReviewNarrationPairedRecoverableVersusTerminal(t *testing.T) {
 
 		t.Run("recoverable", func(t *testing.T) {
 			stdout, stderr, err := harness.gentleAllowFailure(
-				"review", "status", "--cwd", harness.repo.worktree, "--contract", "gentle-ai.review-integration/v1", "--next-transition",
+				"review", "status", "--cwd", harness.repo.worktree, "--contract", "shevanio-ai.review-integration/v1", "--next-transition",
 			)
 			if err != nil {
 				t.Fatalf("ordinary next-transition on a fresh target failed: %v\nstdout:\n%s\nstderr:\n%s", err, stdout, stderr)
@@ -1250,7 +1250,7 @@ func TestOrganicReviewNarrationPairedRecoverableVersusTerminal(t *testing.T) {
 
 		t.Run("terminal", func(t *testing.T) {
 			stdout, stderr, err := harness.gentleAllowFailure(
-				"review", "status", "--cwd", harness.repo.worktree, "--contract", "gentle-ai.review-integration/v1", "--next-transition",
+				"review", "status", "--cwd", harness.repo.worktree, "--contract", "shevanio-ai.review-integration/v1", "--next-transition",
 				"--workspace-overlay", "--projection", "staged", "--base-ref", "HEAD",
 			)
 			if err != nil {
@@ -1271,12 +1271,12 @@ func TestOrganicReviewNarrationPairedRecoverableVersusTerminal(t *testing.T) {
 }
 
 // reviewDefectReportDirEntries lists the files under this repository's
-// <GitCommonDir>/gentle-ai/defect-reports/, or nil if the directory does not
+// <GitCommonDir>/shevanio-ai/defect-reports/, or nil if the directory does not
 // exist yet -- exactly the storage location organic-dx tasks.md Phase 5
 // documents (never inside the working tree, never committed).
 func reviewDefectReportDirEntries(t *testing.T, harness *organicHarness) []string {
 	t.Helper()
-	dir := filepath.Join(harness.commonDir(), "gentle-ai", "defect-reports")
+	dir := filepath.Join(harness.commonDir(), "shevanio-ai", "defect-reports")
 	entries, err := os.ReadDir(dir)
 	if os.IsNotExist(err) {
 		return nil
@@ -1342,11 +1342,11 @@ func TestOrganicReviewDefectReportToolFaultVersusUserDecision(t *testing.T) {
 		if len(entries) != 1 {
 			t.Fatalf("defect-reports directory = %v, want exactly one report", entries)
 		}
-		reportPath := filepath.Join(harness.commonDir(), "gentle-ai", "defect-reports", entries[0])
+		reportPath := filepath.Join(harness.commonDir(), "shevanio-ai", "defect-reports", entries[0])
 		if !strings.Contains(stderr, reportPath) {
 			t.Fatalf("stderr did not name the report path %q: %q", reportPath, stderr)
 		}
-		if !strings.Contains(stderr, "https://github.com/Gentleman-Programming/gentle-ai/issues/new/choose") {
+		if !strings.Contains(stderr, "https://github.com/Shevanio/shevanio-ai/issues/new/choose") {
 			t.Fatalf("stderr did not name the issues URL: %q", stderr)
 		}
 
@@ -1357,7 +1357,7 @@ func TestOrganicReviewDefectReportToolFaultVersusUserDecision(t *testing.T) {
 		report := string(reportBytes)
 		for _, header := range []string{
 			"# Bug Description", "## Steps to Reproduce", "## Expected Behavior", "## Actual Behavior",
-			"## Gentle AI Version", "## Operating System", "## AI Agent / Client", "## Affected Area", "## Logs / Error Output",
+			"## Shevanio AI Version", "## Operating System", "## AI Agent / Client", "## Affected Area", "## Logs / Error Output",
 		} {
 			if !strings.Contains(report, header) {
 				t.Fatalf("generated report missing template-shaped header %q:\n%s", header, report)
@@ -1410,7 +1410,7 @@ func TestOrganicReviewDefectReportToolFaultVersusUserDecision(t *testing.T) {
 		if err == nil {
 			t.Fatal("conflicting reviewer result capture unexpectedly succeeded")
 		}
-		for _, want := range []string{"reviewer_result_slot_occupied", "gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition", "authoritative continuation"} {
+		for _, want := range []string{"reviewer_result_slot_occupied", "shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition", "authoritative continuation"} {
 			if !strings.Contains(stderr, want) {
 				t.Fatalf("occupied-slot terminal did not name %q: %q", want, stderr)
 			}

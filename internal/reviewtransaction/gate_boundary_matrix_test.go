@@ -15,9 +15,9 @@ package reviewtransaction
 // the full 35-cell run with zero unexplained divergences is S6/S7's exit
 // bar (tasks.md 6.6, 8.7).
 //
-// The wired cells drive the REAL compiled gentle-ai binary as a subprocess
+// The wired cells drive the REAL compiled shevanio-ai binary as a subprocess
 // (not an in-process Go call, not a reimplementation) -- the same technique
-// e2e/organicruntime uses (buildOrganicBinary): `go build ./cmd/gentle-ai`
+// e2e/organicruntime uses (buildOrganicBinary): `go build ./cmd/shevanio-ai`
 // once per test run, then every wired cell execs that one binary through
 // `review start` / `review finalize` / `review validate --gate <gate>`.
 
@@ -37,7 +37,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 var gateBoundaryMatrixGates = []string{
@@ -65,13 +65,13 @@ var gateBoundaryMatrixRelations = []string{
 // doc comment, "a REAL, ALREADY-SHIPPED production code path can be
 // driven"), and building that fixture -- particularly for release, whose
 // boundary needs five additional artifact files and (for a v3 lineage)
-// GENTLE_AI_RDD_NEW_LINEAGE plus a tier that can actually reach approved
+// SHEVANIO_AI_RDD_NEW_LINEAGE plus a tier that can actually reach approved
 // (C-A) -- has not been done for every remaining cell yet. This is a
 // disclosed scope/time gap, not a missing mechanism.
 const gateBoundaryMatrixNotWiredReason = "gateVerdict, NativeGateEvaluation.Relation, EvaluateLegacyGate, and " +
 	"EvaluateNewLineageGate all exist and are wired production code as of Wave 5 fix cycle 1 (verify-report " +
 	"#10186's C-B/C-C) -- this cell's own binary-driven fixture (start/finalize/validate through the compiled " +
-	"gentle-ai binary) has not been built yet, not because the underlying mechanism is missing. This harness must " +
+	"shevanio-ai binary) has not been built yet, not because the underlying mechanism is missing. This harness must " +
 	"drive real code, not reimplement the algebra by hand, so an unbuilt fixture is an explicit SKIP, not a " +
 	"fabricated pass."
 
@@ -118,7 +118,7 @@ var (
 	gateBoundaryMatrixHome       string
 )
 
-// gateBoundaryMatrixBinary compiles the real gentle-ai binary once for the
+// gateBoundaryMatrixBinary compiles the real shevanio-ai binary once for the
 // whole test run (mirrors e2e/organicruntime's buildOrganicBinary) so every
 // wired cell drives the identical, actually-shipped CLI, never a
 // reimplementation of gate-evaluation logic.
@@ -131,7 +131,7 @@ func gateBoundaryMatrixBinary(t *testing.T) string {
 			return
 		}
 		moduleRoot := filepath.Clean(filepath.Join(filepath.Dir(source), "..", ".."))
-		name := "gentle-ai-gate-boundary-matrix"
+		name := "shevanio-ai-gate-boundary-matrix"
 		if runtime.GOOS == "windows" {
 			name += ".exe"
 		}
@@ -141,16 +141,16 @@ func gateBoundaryMatrixBinary(t *testing.T) string {
 			return
 		}
 		path := filepath.Join(dir, name)
-		cmd := exec.CommandContext(context.Background(), "go", "build", "-trimpath", "-o", path, "./cmd/gentle-ai")
+		cmd := exec.CommandContext(context.Background(), "go", "build", "-trimpath", "-o", path, "./cmd/shevanio-ai")
 		cmd.Dir = moduleRoot
 		cmd.Env = os.Environ()
 		if output, err := cmd.CombinedOutput(); err != nil {
-			gateBoundaryMatrixBinaryErr = fmt.Errorf("build gentle-ai test binary: %w\n%s", err, output)
+			gateBoundaryMatrixBinaryErr = fmt.Errorf("build shevanio-ai test binary: %w\n%s", err, output)
 			return
 		}
 		info, err := os.Stat(path)
 		if err != nil || !info.Mode().IsRegular() {
-			gateBoundaryMatrixBinaryErr = fmt.Errorf("built gentle-ai binary %q is unusable: %v", path, err)
+			gateBoundaryMatrixBinaryErr = fmt.Errorf("built shevanio-ai binary %q is unusable: %v", path, err)
 			return
 		}
 		gateBoundaryMatrixBinaryPath = path
@@ -233,7 +233,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 	binary := gateBoundaryMatrixBinary(t)
 	// Every wired cell drives a real review through the compiled binary, and
 	// receipt-driven development is opt-in, so this shared home carries the same
-	// explicit global "on" that `gentle-ai review mode enable` persists. Without
+	// explicit global "on" that `shevanio-ai review mode enable` persists. Without
 	// it every cell would be refused at start for a reason the matrix is not
 	// about. The gate algebra under test is unaffected by how the mode got set.
 	gateBoundaryMatrixHome = t.TempDir()
@@ -270,7 +270,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GatePostApply), "exact"}] = gateBoundaryMatrixRow{
 			Gate: string(GatePostApply), Relation: "exact", Verdict: string(GateAllow), Explained: false,
-			Reason: "driven via the real gentle-ai binary: review start -> finalize -> validate --gate post-apply on the identical workspace candidate",
+			Reason: "driven via the real shevanio-ai binary: review start -> finalize -> validate --gate post-apply on the identical workspace candidate",
 		}
 	}
 
@@ -297,7 +297,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GatePreCommit), "exact"}] = gateBoundaryMatrixRow{
 			Gate: string(GatePreCommit), Relation: "exact", Verdict: string(GateAllow), Explained: false,
-			Reason: "driven via the real gentle-ai binary: review start -> finalize -> git add -> validate --gate pre-commit on the identical staged candidate",
+			Reason: "driven via the real shevanio-ai binary: review start -> finalize -> git add -> validate --gate pre-commit on the identical staged candidate",
 		}
 	}
 
@@ -331,7 +331,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GatePrePush), "exact"}] = gateBoundaryMatrixRow{
 			Gate: string(GatePrePush), Relation: "exact", Verdict: string(GateAllow), Explained: false,
-			Reason: "driven via the real gentle-ai binary: review start -> finalize -> git add/commit -> validate --gate pre-push against an unchanged origin remote",
+			Reason: "driven via the real shevanio-ai binary: review start -> finalize -> git add/commit -> validate --gate pre-push against an unchanged origin remote",
 		}
 
 		prOut, err := runGateBoundaryMatrixReview(binary, repo, "validate", "--lineage", lineage,
@@ -345,7 +345,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GatePrePR), "exact"}] = gateBoundaryMatrixRow{
 			Gate: string(GatePrePR), Relation: "exact", Verdict: string(GateAllow), Explained: false,
-			Reason: "driven via the real gentle-ai binary: review start -> finalize -> git add/commit -> validate --gate pre-pr against an unchanged origin remote base",
+			Reason: "driven via the real shevanio-ai binary: review start -> finalize -> git add/commit -> validate --gate pre-pr against an unchanged origin remote base",
 		}
 	}
 
@@ -370,7 +370,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		return gateBoundaryMatrixRow{
 			Gate: gate, Relation: "changed", Verdict: result.Result, NextStep: wantNext, Explained: false,
-			Reason: "driven via the real gentle-ai binary: approved candidate drifted, then validate --gate " + gate + " denies with Relation/Next populated by gateVerdict (Slice 3)",
+			Reason: "driven via the real shevanio-ai binary: approved candidate drifted, then validate --gate " + gate + " denies with Relation/Next populated by gateVerdict (Slice 3)",
 		}
 	}
 
@@ -499,7 +499,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GatePrePR), "changed"}] = gateBoundaryMatrixRow{
 			Gate: string(GatePrePR), Relation: "changed", Verdict: result.Result, Explained: false,
-			Reason: "driven via the real gentle-ai binary: three lineages reviewing the same path in sequence, each individually approved and committed; lineage-free validate --gate pre-pr denies base-mismatch -- composition-free for the first time since Wave 5 Slice 5's deletion",
+			Reason: "driven via the real shevanio-ai binary: three lineages reviewing the same path in sequence, each individually approved and committed; lineage-free validate --gate pre-pr denies base-mismatch -- composition-free for the first time since Wave 5 Slice 5's deletion",
 		}
 	}
 
@@ -512,7 +512,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 	// through the compact/v2 path, the one lineage kind a plain binary-driven
 	// `review start` can freshly create -- confirmed empirically: a v1 legacy
 	// lineage has no CLI-reachable creation path at all, and a v3 lineage
-	// needs GENTLE_AI_RDD_NEW_LINEAGE threaded into the subprocess, both
+	// needs SHEVANIO_AI_RDD_NEW_LINEAGE threaded into the subprocess, both
 	// deferred rather than rushed into this budget).
 	releaseArtifactArgs := func(t *testing.T) []string {
 		t.Helper()
@@ -563,7 +563,7 @@ func TestGateBoundaryMatrix_35Cells(t *testing.T) {
 		}
 		wired[[2]string{string(GateRelease), "exact"}] = gateBoundaryMatrixRow{
 			Gate: string(GateRelease), Relation: "exact", Verdict: string(GateAllow), Explained: false,
-			Reason: "driven via the real gentle-ai binary: review start -> finalize -> validate --gate release with the five release-boundary artifacts on the identical, unchanged candidate",
+			Reason: "driven via the real shevanio-ai binary: review start -> finalize -> validate --gate release with the five release-boundary artifacts on the identical, unchanged candidate",
 		}
 	}
 

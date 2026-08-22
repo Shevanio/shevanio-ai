@@ -2,23 +2,23 @@
 set -euo pipefail
 
 # ============================================================================
-# Gentle-AI — Install Script
+# Shevanio AI — Install Script
 # Ecosystem, Frameworks, Workflows for AI coding agents.
 #
 # Usage:
-#   curl -sL https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh | bash
+#   curl -sL https://raw.githubusercontent.com/Shevanio/shevanio-ai/main/scripts/install.sh | bash
 #
 # Or download and run:
-#   curl -sLO https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh
+#   curl -sLO https://raw.githubusercontent.com/Shevanio/shevanio-ai/main/scripts/install.sh
 #   chmod +x install.sh
 #   ./install.sh
 # ============================================================================
 
-GITHUB_OWNER="Gentleman-Programming"
-GITHUB_REPO="gentle-ai"
-BINARY_NAME="gentle-ai"
-BREW_TAP="Gentleman-Programming/homebrew-tap"
-BREW_FORMULA_REF="gentleman-programming/tap/${BINARY_NAME}"
+GITHUB_OWNER="Shevanio"
+GITHUB_REPO="shevanio-ai"
+BINARY_NAME="shevanio-ai"
+BREW_TAP="Shevanio/homebrew-tap"
+BREW_FORMULA_REF="shevanio/tap/${BINARY_NAME}"
 
 # ============================================================================
 # Color support
@@ -50,7 +50,7 @@ error()   { echo -e "${RED}[error]${NC}   $*" >&2; }
 fatal()   { error "$@"; exit 1; }
 step()    { echo -e "\n${CYAN}${BOLD}==>${NC} ${BOLD}$*${NC}"; }
 
-homebrew_trust_gentle_ai_formula() {
+homebrew_trust_shevanio_ai_formula() {
     if brew help trust &>/dev/null; then
         info "Trusting ${BREW_FORMULA_REF} for Homebrew tap-trust enforcement"
         brew trust --formula "$BREW_FORMULA_REF" &>/dev/null || true
@@ -64,7 +64,7 @@ print_homebrew_failure_help() {
 
     if [[ "$lower" == *"untrusted tap"* || "$lower" == *"tap trust is required"* || "$lower" == *"homebrew_require_tap_trust"* ]]; then
         warn "Homebrew requires explicit trust for external taps."
-        echo "Trust only the Gentle AI formula, then retry:" >&2
+        echo "Trust only the Shevanio AI formula, then retry:" >&2
         echo "  brew trust --formula ${BREW_FORMULA_REF}" >&2
         echo "  brew upgrade ${BINARY_NAME}" >&2
     fi
@@ -88,13 +88,13 @@ print_homebrew_failure_help() {
 
 show_help() {
     cat <<EOF
-${BOLD}Gentle-AI installer${NC}
+${BOLD}Shevanio AI installer${NC}
 
 Usage: install.sh [OPTIONS]
 
 Options:
   --method METHOD   Force install method: brew, go, binary (default: auto-detect)
-  --channel CHANNEL Gentle AI channel: stable (default), beta, or nightly (env: GENTLE_AI_CHANNEL)
+  --channel CHANNEL Shevanio AI channel: stable (default), beta, or nightly (env: SHEVANIO_AI_CHANNEL)
   --dir DIR         Custom install directory for binary method
   --insecure        Skip checksum verification (not recommended)
   -h, --help        Show this help
@@ -148,8 +148,8 @@ detect_platform() {
 # GoReleaser v2 {{ .Os }} produces GOOS values (lowercase: darwin, linux)
 # GoReleaser {{ .Arch }} produces GOARCH values (amd64, arm64)
 # Examples:
-#   gentle-ai_1.0.0_darwin_arm64.tar.gz
-#   gentle-ai_1.0.0_linux_amd64.tar.gz
+#   shevanio-ai_1.0.0_darwin_arm64.tar.gz
+#   shevanio-ai_1.0.0_linux_amd64.tar.gz
 # ============================================================================
 
 get_archive_name() {
@@ -188,7 +188,7 @@ check_prerequisites() {
 detect_install_method() {
     if [ "${CHANNEL}" = "beta" ]; then
         if [ -n "${FORCE_METHOD:-}" ] && [ "${FORCE_METHOD}" != "go" ]; then
-            fatal "--channel beta installs Gentle AI from main and only supports --method go"
+            fatal "--channel beta installs Shevanio AI from main and only supports --method go"
         fi
         INSTALL_METHOD="go"
         info "Using beta channel — will install ${BINARY_NAME} from main via go install"
@@ -235,7 +235,7 @@ install_brew() {
         fatal "Failed to tap $BREW_TAP"
     fi
 
-    homebrew_trust_gentle_ai_formula
+    homebrew_trust_shevanio_ai_formula
 
     if brew list "$BINARY_NAME" &>/dev/null; then
         info "Already installed, upgrading ${BINARY_NAME}..."
@@ -284,9 +284,9 @@ install_go() {
 
     info "Running: go install ${go_package}"
     if [ "${CHANNEL}" = "beta" ]; then
-        prepend_go_env_pattern GONOSUMDB github.com/gentleman-programming/gentle-ai/v2
-        prepend_go_env_pattern GOPRIVATE github.com/gentleman-programming/gentle-ai/v2
-        prepend_go_env_pattern GONOPROXY github.com/gentleman-programming/gentle-ai/v2
+        prepend_go_env_pattern GONOSUMDB github.com/shevanio/shevanio-ai/v2
+        prepend_go_env_pattern GOPRIVATE github.com/shevanio/shevanio-ai/v2
+        prepend_go_env_pattern GONOPROXY github.com/shevanio/shevanio-ai/v2
         export GONOSUMDB GOPRIVATE GONOPROXY
 
         if ! go install "$go_package"; then
@@ -531,7 +531,7 @@ print_banner() {
     echo " | |_| |  __/ | | | |_| |  __/_____/ ___ \ | | "
     echo "  \____|\___|_| |_|\__|_|\___|    /_/   \_\___|"
     echo -e "${NC}"
-    echo -e "  ${DIM}Gentle-AI — Ecosystem, Frameworks, Workflows${NC}"
+    echo -e "  ${DIM}Shevanio AI — Ecosystem, Frameworks, Workflows${NC}"
     echo ""
 }
 
@@ -541,7 +541,7 @@ print_next_steps() {
     echo ""
     echo -e "${BOLD}Next steps:${NC}"
     if [ "${CHANNEL}" = "beta" ]; then
-        echo -e "  ${CYAN}1.${NC} Run ${BOLD}GENTLE_AI_CHANNEL=beta ${BINARY_NAME} install${NC} to keep using the beta channel"
+        echo -e "  ${CYAN}1.${NC} Run ${BOLD}SHEVANIO_AI_CHANNEL=beta ${BINARY_NAME} install${NC} to keep using the beta channel"
     else
         echo -e "  ${CYAN}1.${NC} Run ${BOLD}${BINARY_NAME}${NC} to start the TUI installer"
     fi
@@ -564,7 +564,7 @@ main() {
     FORCE_METHOD=""
     INSTALL_DIR=""
     INSECURE="false"
-    CHANNEL="${GENTLE_AI_CHANNEL:-stable}"
+    CHANNEL="${SHEVANIO_AI_CHANNEL:-stable}"
 
     while [ $# -gt 0 ]; do
         case "$1" in

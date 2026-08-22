@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func intendedUntrackedStatus(t *testing.T, repo string, args ...string) ReviewTargetStatusResult {
@@ -62,7 +62,7 @@ func intendedUntrackedSelectArgs(digest string, paths ...string) []string {
 func executePrintedReview(t *testing.T, repo, command string) []byte {
 	t.Helper()
 	words, err := SplitPrintedCommandWords(command)
-	if err != nil || len(words) < 3 || words[0] != "gentle-ai" || words[1] != "review" || words[2] != "start" {
+	if err != nil || len(words) < 3 || words[0] != "shevanio-ai" || words[1] != "review" || words[2] != "start" {
 		t.Fatalf("printed START = %q: %v", command, err)
 	}
 	t.Chdir(repo)
@@ -258,7 +258,7 @@ func TestConsentFollowUpPrintedPathFlagsRoundTripWindowsNativePaths(t *testing.T
 				t.Fatalf("split printed consent follow-up: %v", err)
 			}
 			want := []string{
-				"gentle-ai", "review", "start",
+				"shevanio-ai", "review", "start",
 				"--contract", ReviewIntegrationContractV2,
 				"--cwd", test.cwd,
 				"--target", "sha256:target",

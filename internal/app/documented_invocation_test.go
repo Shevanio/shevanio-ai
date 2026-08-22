@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/app"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/app"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
 )
 
 // This corpus exists because of #2506: the product states runnable commands
@@ -46,7 +46,7 @@ type documentedInvocation struct {
 
 // --- extraction -----------------------------------------------------------
 
-var inlineInvocationRegexp = regexp.MustCompile("`(gentle-ai [^`\n]+)`")
+var inlineInvocationRegexp = regexp.MustCompile("`(shevanio-ai [^`\n]+)`")
 
 func extractInvocations(source, content string) []documentedInvocation {
 	var out []documentedInvocation
@@ -65,7 +65,7 @@ func extractInvocations(source, content string) []documentedInvocation {
 				index++
 				command = strings.TrimSuffix(command, "\\") + " " + strings.TrimSpace(lines[index])
 			}
-			if strings.HasPrefix(command, "gentle-ai ") {
+			if strings.HasPrefix(command, "shevanio-ai ") {
 				out = append(out, documentedInvocation{source: at, command: command})
 			}
 			continue
@@ -135,7 +135,7 @@ func collectDocumentedInvocations(t *testing.T) []documentedInvocation {
 var placeholderRegexp = regexp.MustCompile(`<[a-zA-Z][a-zA-Z0-9_ .-]*>`)
 var optionalWordRegexp = regexp.MustCompile(`^\[[a-z-]+\]$`)
 
-const documentedRuntimeAgentIDPlaceholder = "{{GENTLE_AI_RUNTIME_AGENT_ID}}"
+const documentedRuntimeAgentIDPlaceholder = "{{SHEVANIO_AI_RUNTIME_AGENT_ID}}"
 const documentedRuntimeAgentID = "opencode"
 
 func wordNeedsShell(word string) bool {
@@ -226,7 +226,7 @@ func classifyWords(words []string, safeVerbs map[string]bool, repo string) ([]st
 			// A placeholder is only substitutable where a value belongs: in a
 			// --flag word or as the value of the bare flag before it. In a
 			// verb or positional slot the command's own identity is
-			// templated ("gentle-ai review <verb>"), a reference to a family
+			// templated ("shevanio-ai review <verb>"), a reference to a family
 			// of commands rather than a runnable claim.
 			bareFlagBefore := index > 0 && strings.HasPrefix(words[index-1], "--") && !strings.Contains(words[index-1], "=")
 			if !strings.HasPrefix(word, "--") && !bareFlagBefore {

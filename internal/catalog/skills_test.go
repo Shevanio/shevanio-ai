@@ -3,8 +3,8 @@ package catalog
 import (
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/skills"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // TestMVPSkillsCoverAllPresetSkills ensures every skill that presets.go would
@@ -47,7 +47,7 @@ func TestMVPSkillsIncludeRequestedBundledSkillsWithCanonicalNames(t *testing.T) 
 		model.SkillImprover:            "skill-improver",
 		model.SkillRDDDefectWorkflow:   "rdd-defect-workflow",
 		model.SkillSystemicIssueTriage: "systemic-issue-triage",
-		model.SkillGentleAIBench:       "gentle-ai-bench",
+		model.SkillShevanioAIBench:     "shevanio-ai-bench",
 	}
 
 	found := make(map[model.SkillID]string)

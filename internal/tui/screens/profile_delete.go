@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/sdd"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 // RenderProfileDelete renders the profile delete confirmation screen.

@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/engram"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/doctor"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
+	"github.com/shevanio/shevanio-ai/v2/internal/doctor"
 )
 
 // --- checkOneTool ---
@@ -131,7 +131,7 @@ func TestCheckOneTool_OK(t *testing.T) {
 }
 
 // TestCheckOneTool_ShadowedWindowsExt reproduces the Windows bug: binaries on
-// disk carry an executable extension (e.g. gentle-ai.exe / gentle-ai.cmd), so a
+// disk carry an executable extension (e.g. shevanio-ai.exe / shevanio-ai.cmd), so a
 // bare-name scan misses them and shadowing is reported as [ok]. With PATHEXT
 // extensions the duplicate copies are detected and a warning is produced.
 func TestCheckOneTool_ShadowedWindowsExt(t *testing.T) {
@@ -148,7 +148,7 @@ func TestCheckOneTool_ShadowedWindowsExt(t *testing.T) {
 
 	dir1 := t.TempDir()
 	dir2 := t.TempDir()
-	for _, p := range []string{filepath.Join(dir1, "gentle-ai.exe"), filepath.Join(dir2, "gentle-ai.cmd")} {
+	for _, p := range []string{filepath.Join(dir1, "shevanio-ai.exe"), filepath.Join(dir2, "shevanio-ai.cmd")} {
 		f, err := os.Create(p)
 		if err != nil {
 			t.Fatal(err)
@@ -156,9 +156,9 @@ func TestCheckOneTool_ShadowedWindowsExt(t *testing.T) {
 		_ = f.Close()
 	}
 
-	lookPathFn = func(string) (string, error) { return filepath.Join(dir1, "gentle-ai.exe"), nil }
+	lookPathFn = func(string) (string, error) { return filepath.Join(dir1, "shevanio-ai.exe"), nil }
 
-	got := checkOneTool("gentle-ai", []string{dir1, dir2})
+	got := checkOneTool("shevanio-ai", []string{dir1, dir2})
 
 	if got.Status != CheckStatusWarn {
 		t.Fatalf("expected warn for extensioned shadow, got %s: %s", got.Status, got.Detail)
@@ -310,7 +310,7 @@ func TestCheckStateJSON_Missing(t *testing.T) {
 
 func TestCheckStateJSON_Malformed(t *testing.T) {
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -330,7 +330,7 @@ func TestCheckStateJSON_Malformed(t *testing.T) {
 
 func TestCheckStateJSON_AgentConfigDirMissing(t *testing.T) {
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -351,7 +351,7 @@ func TestCheckStateJSON_AgentConfigDirMissing(t *testing.T) {
 
 func TestCheckStateJSON_OK(t *testing.T) {
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func TestCheckStateJSON_OK(t *testing.T) {
 
 func TestCheckInstalledAssetVersion_MatchingPass(t *testing.T) {
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -391,7 +391,7 @@ func TestCheckInstalledAssetVersion_MatchingPass(t *testing.T) {
 
 func TestCheckInstalledAssetVersion_SkewWarning(t *testing.T) {
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -404,7 +404,7 @@ func TestCheckInstalledAssetVersion_SkewWarning(t *testing.T) {
 	if got.Status != CheckStatusWarn {
 		t.Errorf("expected warn for version skew, got %s: %s", got.Status, got.Detail)
 	}
-	if !strings.Contains(got.Detail, "v0.9.0") || !strings.Contains(got.Detail, "gentle-ai sync") {
+	if !strings.Contains(got.Detail, "v0.9.0") || !strings.Contains(got.Detail, "shevanio-ai sync") {
 		t.Errorf("unexpected detail: %s", got.Detail)
 	}
 }
@@ -561,7 +561,7 @@ func TestCheckEngramReachable_MissingRelativeWindowsExecutableWarns(t *testing.T
 }
 
 // TestCheckEngramReachable_StdioDefault_NoHTTPListener is matrix cell (a) of
-// #2078: a default install. gentle-ai only ever configures Engram as a stdio
+// #2078: a default install. shevanio-ai only ever configures Engram as a stdio
 // MCP server (engram mcp --tools=agent, written by
 // internal/components/engram/inject.go); it never configures an HTTP
 // transport. With the stdio transport healthy and no HTTP listener anywhere,
@@ -734,7 +734,7 @@ func TestRunDoctor_IntegrationAllMocked(t *testing.T) {
 	}()
 
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -759,22 +759,22 @@ func TestRunDoctor_IntegrationAllMocked(t *testing.T) {
 	pathDirsFn = func() []string { pathSnapshots++; return []string{"/usr/local/bin"} }
 	osUserHomeDirDoctor = func() (string, error) { return homeDir, nil }
 	// organic-dx Phase 3f task 3f.5 added an invoked-executable clause to the
-	// gentle-ai tool check; this integration test is about RunDoctor's overall
+	// shevanio-ai tool check; this integration test is about RunDoctor's overall
 	// rendering shape, not that feature, so it mocks the invoked executable to
 	// match the PATH-resolved copy exactly (the common case) to keep the
 	// expected output byte-identical to before that feature landed. The new
 	// feature has its own dedicated tests in doctor_invoked_binary_test.go.
-	osExecutableDoctor = func() (string, error) { return "/usr/local/bin/gentle-ai", nil }
+	osExecutableDoctor = func() (string, error) { return "/usr/local/bin/shevanio-ai", nil }
 
 	var buf bytes.Buffer
 	if err := RunDoctor(context.Background(), &buf); err != nil {
 		t.Fatalf("RunDoctor returned error: %v", err)
 	}
 
-	want := fmt.Sprintf(`gentle-ai doctor — system health check
+	want := fmt.Sprintf(`shevanio-ai doctor — system health check
 =======================================
 
-  [ok]  tool:gentle-ai                 gentle-ai found at /usr/local/bin/gentle-ai; invoked executable: /usr/local/bin/gentle-ai (version dev)
+  [ok]  tool:shevanio-ai               shevanio-ai found at /usr/local/bin/shevanio-ai; invoked executable: /usr/local/bin/shevanio-ai (version dev)
   [ok]  tool:gga                       gga found at /usr/local/bin/gga
   [ok]  tool:engram                    engram found at /usr/local/bin/engram
   [ok]  tool:claude                    claude found at /usr/local/bin/claude
@@ -785,7 +785,7 @@ func TestRunDoctor_IntegrationAllMocked(t *testing.T) {
 
 Summary: 8 passed, 0 failed, 0 warnings
 Status:  healthy
-`, configPath, filepath.Join(homeDir, ".gentle-ai"))
+`, configPath, filepath.Join(homeDir, ".shevanio-ai"))
 	if got := buf.String(); got != want {
 		t.Fatalf("RunDoctor output mismatch\ngot:\n%s\nwant:\n%s", got, want)
 	}
@@ -864,19 +864,19 @@ func TestCheckToolBinaries_AgentNotInState_NotReported(t *testing.T) {
 	}
 
 	// Core tools must still be required.
-	var sawGentleAI, sawEngram, sawPi bool
+	var sawShevanioAI, sawEngram, sawPi bool
 	for _, r := range results {
 		switch r.Name {
-		case "tool:gentle-ai":
-			sawGentleAI = true
+		case "tool:shevanio-ai":
+			sawShevanioAI = true
 		case "tool:engram":
 			sawEngram = true
 		case "tool:pi":
 			sawPi = true
 		}
 	}
-	if !sawGentleAI || !sawEngram || !sawPi {
-		t.Errorf("expected core+pi checks present; got sawGentleAI=%v sawEngram=%v sawPi=%v", sawGentleAI, sawEngram, sawPi)
+	if !sawShevanioAI || !sawEngram || !sawPi {
+		t.Errorf("expected core+pi checks present; got sawShevanioAI=%v sawEngram=%v sawPi=%v", sawShevanioAI, sawEngram, sawPi)
 	}
 }
 
@@ -896,7 +896,7 @@ func TestCheckToolBinaries_StateMissing_ChecksCoreOnly(t *testing.T) {
 	for _, r := range results {
 		required[string(r.Name)] = struct{}{}
 	}
-	for _, core := range []string{"tool:gentle-ai", "tool:gga", "tool:engram"} {
+	for _, core := range []string{"tool:shevanio-ai", "tool:gga", "tool:engram"} {
 		if _, ok := required[core]; !ok {
 			t.Errorf("expected %s in core-only output, got %+v", core, required)
 		}
@@ -910,7 +910,7 @@ func TestCheckToolBinaries_StateMissing_ChecksCoreOnly(t *testing.T) {
 
 // TestCheckOneTool_DirectoryWithToolName_NotCountedAsDuplicate verifies that
 // a directory whose name happens to match a tool (e.g. an existing
-// $HOME/gentle-ai/ on PATH) is not treated as a duplicate binary copy by
+// $HOME/shevanio-ai/ on PATH) is not treated as a duplicate binary copy by
 // the doctor (#709).
 func TestCheckOneTool_DirectoryWithToolName_NotCountedAsDuplicate(t *testing.T) {
 	orig := lookPathFn
@@ -927,18 +927,18 @@ func TestCheckOneTool_DirectoryWithToolName_NotCountedAsDuplicate(t *testing.T) 
 	dirWithFile := t.TempDir()
 	dirWithDir := t.TempDir()
 
-	if err := os.WriteFile(filepath.Join(dirWithFile, "gentle-ai"), []byte("fake"), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(dirWithFile, "shevanio-ai"), []byte("fake"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Mkdir(filepath.Join(dirWithDir, "gentle-ai"), 0o755); err != nil {
+	if err := os.Mkdir(filepath.Join(dirWithDir, "shevanio-ai"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
 	lookPathFn = func(string) (string, error) {
-		return filepath.Join(dirWithFile, "gentle-ai"), nil
+		return filepath.Join(dirWithFile, "shevanio-ai"), nil
 	}
 
-	got := checkOneTool("gentle-ai", []string{dirWithFile, dirWithDir})
+	got := checkOneTool("shevanio-ai", []string{dirWithFile, dirWithDir})
 
 	if got.Status != CheckStatusPass {
 		t.Fatalf("expected pass when only one real binary exists; got %s: %s", got.Status, got.Detail)
@@ -972,16 +972,16 @@ func TestCheckOneTool_FileWithoutExecBit_NotCountedAsDuplicate(t *testing.T) {
 	dir2 := t.TempDir()
 
 	// One executable copy, one non-executable copy.
-	if err := os.WriteFile(filepath.Join(dir1, "gentle-ai"), []byte("#!/bin/sh\nexit 0"), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(dir1, "shevanio-ai"), []byte("#!/bin/sh\nexit 0"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir2, "gentle-ai"), []byte("not executable"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir2, "shevanio-ai"), []byte("not executable"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	lookPathFn = func(string) (string, error) { return filepath.Join(dir1, "gentle-ai"), nil }
+	lookPathFn = func(string) (string, error) { return filepath.Join(dir1, "shevanio-ai"), nil }
 
-	got := checkOneTool("gentle-ai", []string{dir1, dir2})
+	got := checkOneTool("shevanio-ai", []string{dir1, dir2})
 
 	if got.Status != CheckStatusPass {
 		t.Fatalf("expected pass when second copy lacks the execute bit; got %s: %s", got.Status, got.Detail)
@@ -1016,7 +1016,7 @@ func TestRunDoctor_OnlySelectedAgentsAreRequired(t *testing.T) {
 	executableExtsFn = func() []string { return []string{""} }
 
 	homeDir := t.TempDir()
-	stateDir := filepath.Join(homeDir, ".gentle-ai")
+	stateDir := filepath.Join(homeDir, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -1074,7 +1074,7 @@ func TestRunDoctor_OnlySelectedAgentsAreRequired(t *testing.T) {
 func TestRenderDoctorReportDoesNotRenderRemedyMetadata(t *testing.T) {
 	var buf bytes.Buffer
 	renderDoctorReport(&buf, DoctorReport{Checks: []CheckResult{{Name: doctor.CheckDiskSpace, Status: CheckStatusFail, Detail: "cleanup needed", Remedy: doctor.NewRemedy(doctor.RemedyFreeDiskSpace, "Free disk space")}}})
-	want := "gentle-ai doctor — system health check\n=======================================\n\n  [xx]  disk:space                     cleanup needed\n       Remedy: Free disk space\n\nSummary: 0 passed, 1 failed, 0 warnings\nStatus:  unhealthy\n"
+	want := "shevanio-ai doctor — system health check\n=======================================\n\n  [xx]  disk:space                     cleanup needed\n       Remedy: Free disk space\n\nSummary: 0 passed, 1 failed, 0 warnings\nStatus:  unhealthy\n"
 	if got := buf.String(); got != want {
 		t.Fatalf("rendered report mismatch\ngot:\n%s\nwant:\n%s", got, want)
 	}

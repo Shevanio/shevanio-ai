@@ -213,7 +213,7 @@ func TestCancelledCompactStartDoesNotCreateLockInode(t *testing.T) {
 func TestStoreLockRecoversCrashAndCorruptOwnerRecords(t *testing.T) {
 	for _, content := range []string{
 		"not-json\n",
-		`{"schema":"gentle-ai.review-store-lock/v1","owner_id":"crashed","pid":999999,"host":"gone","acquired_at":"2000-01-01T00:00:00Z"}` + "\n",
+		`{"schema":"shevanio-ai.review-store-lock/v1","owner_id":"crashed","pid":999999,"host":"gone","acquired_at":"2000-01-01T00:00:00Z"}` + "\n",
 	} {
 		t.Run(content[:min(len(content), 8)], func(t *testing.T) {
 			store := Store{Dir: filepath.Join(canonicalTempDir(t), "review-store")}
@@ -233,8 +233,8 @@ func TestStoreLockRecoversCrashAndCorruptOwnerRecords(t *testing.T) {
 }
 
 func TestStoreLockIsReleasedWhenOwnerProcessExits(t *testing.T) {
-	if os.Getenv("GENTLE_AI_LOCK_EXIT_HELPER") == "1" {
-		lock, err := acquireStoreLock(os.Getenv("GENTLE_AI_LOCK_EXIT_PATH"))
+	if os.Getenv("SHEVANIO_AI_LOCK_EXIT_HELPER") == "1" {
+		lock, err := acquireStoreLock(os.Getenv("SHEVANIO_AI_LOCK_EXIT_PATH"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -243,7 +243,7 @@ func TestStoreLockIsReleasedWhenOwnerProcessExits(t *testing.T) {
 	}
 	path := filepath.Join(canonicalTempDir(t), "review-store", "LOCK")
 	command := exec.Command(os.Args[0], "-test.run=^TestStoreLockIsReleasedWhenOwnerProcessExits$")
-	command.Env = append(os.Environ(), "GENTLE_AI_LOCK_EXIT_HELPER=1", "GENTLE_AI_LOCK_EXIT_PATH="+path)
+	command.Env = append(os.Environ(), "SHEVANIO_AI_LOCK_EXIT_HELPER=1", "SHEVANIO_AI_LOCK_EXIT_PATH="+path)
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("lock owner helper: %v\n%s", err, output)
 	}
@@ -546,6 +546,35 @@ func TestStoreReplaysPublishedV149Ordinary4RAuthority(t *testing.T) {
 	}
 	if len(chain.Records) != 5 || chain.Records[len(chain.Records)-1].Transaction.State != StateApproved {
 		t.Fatalf("LoadChain(published v1.49.0) = %#v", chain)
+	}
+}
+
+func TestNormalizeLegacyProductIdentityRequiresLegacyRootSchema(t *testing.T) {
+	tests := []struct {
+		name       string
+		payload    string
+		want       string
+		wantLegacy bool
+	}{
+		{
+			name:       "legacy root",
+			payload:    `{"schema":"gentle-ai.review-record/v1","nested":"gentle-ai.review-transaction/v1","url":"https://gentle-ai.dev/schema"}`,
+			want:       `{"schema":"shevanio-ai.review-record/v1","nested":"shevanio-ai.review-transaction/v1","url":"https://shevanio-ai.dev/schema"}`,
+			wantLegacy: true,
+		},
+		{
+			name:    "current root with incidental legacy text",
+			payload: `{"schema":"shevanio-ai.review-record/v1","note":"gentle-ai.example"}`,
+			want:    `{"schema":"shevanio-ai.review-record/v1","note":"gentle-ai.example"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, legacy := normalizeLegacyProductIdentity([]byte(tt.payload))
+			if legacy != tt.wantLegacy || string(got) != tt.want {
+				t.Fatalf("normalizeLegacyProductIdentity() = %q, %t; want %q, %t", got, legacy, tt.want, tt.wantLegacy)
+			}
+		})
 	}
 }
 
@@ -1154,7 +1183,7 @@ func TestAuthoritativeStoreUsesRepositoryCommonDirectoryAndCanonicalLineage(t *t
 		t.Fatalf("AuthoritativeStore() error = %v", err)
 	}
 	commonDir := strings.TrimSpace(gitSnapshot(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-	want := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v1", "trusted-lineage-1")
+	want := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v1", "trusted-lineage-1")
 	if store.Dir != want {
 		t.Fatalf("authoritative store = %q, want %q", store.Dir, want)
 	}
@@ -1202,7 +1231,7 @@ func TestRepositoryIdentityIgnoresHostileGitSelectionEnvironment(t *testing.T) {
 		t.Fatalf("AuthoritativeStore() under hostile Git environment error = %v", err)
 	}
 	wantCommonDir := strings.TrimSpace(gitSnapshotWithoutLocalEnv(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-	wantStore := filepath.Join(wantCommonDir, "gentle-ai", "review-transactions", "v1", "hostile-env-lineage")
+	wantStore := filepath.Join(wantCommonDir, "shevanio-ai", "review-transactions", "v1", "hostile-env-lineage")
 	if store.Dir != wantStore {
 		t.Fatalf("authoritative store = %q, want %q", store.Dir, wantStore)
 	}
@@ -1218,7 +1247,7 @@ func TestAuthoritativeStorePreservesLinkedWorktreeCommonDirectory(t *testing.T) 
 		t.Fatalf("AuthoritativeStore(linked worktree) error = %v", err)
 	}
 	wantCommonDir := strings.TrimSpace(gitSnapshotWithoutLocalEnv(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-	want := filepath.Join(wantCommonDir, "gentle-ai", "review-transactions", "v1", "worktree-lineage")
+	want := filepath.Join(wantCommonDir, "shevanio-ai", "review-transactions", "v1", "worktree-lineage")
 	if store.Dir != want {
 		t.Fatalf("linked-worktree store = %q, want common store %q", store.Dir, want)
 	}

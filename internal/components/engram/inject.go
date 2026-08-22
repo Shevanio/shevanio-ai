@@ -9,11 +9,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/codex"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 type InjectionResult struct {
@@ -225,7 +225,7 @@ func InjectWithPromptDir(configHomeDir, promptDir string, adapter agents.Adapter
 }
 
 const antigravityEngramPluginJSON = `{
-  "name": "gentle-ai-engram",
+  "name": "shevanio-ai-engram",
   "description": "Loads Engram MCP memory tools for Antigravity sessions.",
   "version": "0.1.0"
 }
@@ -235,7 +235,7 @@ const antigravityEngramToolsMessage = "CRITICAL FIRST ACTION — Ensure these En
 
 func antigravityEngramHooksJSON() []byte {
 	cfg := map[string]any{
-		"gentle-ai-engram-tools": map[string]any{
+		"shevanio-ai-engram-tools": map[string]any{
 			"PreInvocation": []any{
 				map[string]any{
 					"type": "command",
@@ -270,7 +270,7 @@ func ensureJSONFileIfMissing(path string) (filemerge.WriteResult, error) {
 }
 
 func installAntigravityEngramPlugin(homeDir, engramCommand string) (bool, []string, error) {
-	pluginDir := filepath.Join(homeDir, ".gemini", "antigravity-cli", "plugins", "gentle-ai-engram")
+	pluginDir := filepath.Join(homeDir, ".gemini", "antigravity-cli", "plugins", "shevanio-ai-engram")
 	files := make([]string, 0, 3)
 	changed := false
 
@@ -333,10 +333,10 @@ func injectWithOptions(configHomeDir, promptDir string, adapter agents.Adapter, 
 			break
 		}
 		// Engram v1.10.3+ writes an absolute path for the command field when
-		// `engram setup <agent>` is invoked. gentle-ai's Inject() runs after
+		// `engram setup <agent>` is invoked. shevanio-ai's Inject() runs after
 		// engram setup, so we must preserve any absolute command path already
 		// present instead of silently overwriting it with the relative "engram".
-		// See: https://github.com/Gentleman-Programming/gentle-ai/issues (engram absolute path regression)
+		// See: https://github.com/Shevanio/shevanio-ai/issues (engram absolute path regression)
 		mcpPath := adapter.MCPConfigPath(configHomeDir, "engram")
 		cmd := stableEngramCommandForMergedConfig(mcpPath, adapter.Agent())
 		content := buildSeparateMCPContent(mcpPath, engramServerJSONWithCmd(cmd))
@@ -487,7 +487,7 @@ func injectWithOptions(configHomeDir, promptDir string, adapter agents.Adapter, 
 		changed = changed || tomlWrite.Changed
 		files = append(files, configPath)
 
-		// Write gentle-ai SDD model-selection profile files into ~/.codex/.
+		// Write shevanio-ai SDD model-selection profile files into ~/.codex/.
 		// These use the separate-file mechanism from Codex >= 0.134.0 and are
 		// selected at runtime via `codex --profile <name>`.
 		// codexHomeDir is the ~/.codex directory (the parent of config.toml).
@@ -833,7 +833,7 @@ func isStandardAgent(id model.AgentID) bool {
 // Code).
 //
 // Engram v1.10.3+ writes an absolute command path when `engram setup` is run.
-// gentle-ai runs Inject() after setup, so we must not overwrite that absolute
+// shevanio-ai runs Inject() after setup, so we must not overwrite that absolute
 // path with the relative "engram" string from defaultEngramServerJSON.
 //
 // Logic:
@@ -894,14 +894,14 @@ func managedLegacyClaudeEngramCommand(content []byte) (string, bool) {
 }
 
 // IsManagedLegacyClaudeConfig reports whether content has the exact legacy
-// standalone Engram server shape emitted by Gentle AI.
+// standalone Engram server shape emitted by Shevanio AI.
 func IsManagedLegacyClaudeConfig(content []byte) bool {
 	_, ok := managedLegacyClaudeEngramCommand(content)
 	return ok
 }
 
 // RemoveManagedLegacyClaudeConfig removes only the exact standalone shape
-// emitted by Gentle AI. Its parent is removed only when the same real directory
+// emitted by Shevanio AI. Its parent is removed only when the same real directory
 // remains empty after that managed file is deleted; symlinks are never unlinked.
 func RemoveManagedLegacyClaudeConfig(path string) (bool, error) {
 	info, err := os.Lstat(path)

@@ -8,7 +8,7 @@ import (
 )
 
 // fakeBinary writes an executable that answers a fixed argv with a fixed
-// message, so the capability probe can be tested without a real gentle-ai.
+// message, so the capability probe can be tested without a real shevanio-ai.
 func fakeBinary(t *testing.T, script string) *Sandbox {
 	t.Helper()
 	root := t.TempDir()
@@ -102,11 +102,11 @@ func TestReadBackBlanksGitTrace(t *testing.T) {
 
 // reviewModeStubBinary writes an executable that logs every argv it is given
 // and answers `review mode enable` with the effective mode the test wants,
-// so the review precondition can be tested without a real gentle-ai.
+// so the review precondition can be tested without a real shevanio-ai.
 func reviewModeStubBinary(t *testing.T, effective string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
-	binary := filepath.Join(dir, "gentle-ai-stub")
+	binary := filepath.Join(dir, "shevanio-ai-stub")
 	log := filepath.Join(dir, "argv.log")
 	script := "#!/bin/sh\n" +
 		"echo \"$*\" >> " + log + "\n" +
@@ -191,13 +191,13 @@ func TestUntouchedJourneyNeverTouchesTheSwitch(t *testing.T) {
 }
 
 func TestSandboxEnvIncludesBenchReceiptMutationPath(t *testing.T) {
-	sandbox, err := newSandbox("gentle-ai", t.TempDir())
+	sandbox, err := newSandbox("shevanio-ai", t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	sandbox.BenchReceiptMutationPath = filepath.Join(sandbox.Root, "receipt.json")
 	for _, entry := range sandbox.env() {
-		if entry == "GENTLE_AI_BENCH_MUTATE_RECEIPT="+sandbox.BenchReceiptMutationPath {
+		if entry == "SHEVANIO_AI_BENCH_MUTATE_RECEIPT="+sandbox.BenchReceiptMutationPath {
 			return
 		}
 	}
@@ -205,7 +205,7 @@ func TestSandboxEnvIncludesBenchReceiptMutationPath(t *testing.T) {
 }
 
 func TestSandboxEnvKeepsTempFilesInsideTheSandbox(t *testing.T) {
-	sandbox, err := newSandbox("gentle-ai", t.TempDir())
+	sandbox, err := newSandbox("shevanio-ai", t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +237,7 @@ func TestSandboxEnvKeepsTempFilesInsideTheSandbox(t *testing.T) {
 }
 
 func TestSandboxEnvKeepsWindowsHomeInsideTheSandbox(t *testing.T) {
-	sandbox, err := newSandbox("gentle-ai", t.TempDir())
+	sandbox, err := newSandbox("shevanio-ai", t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}

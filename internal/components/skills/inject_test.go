@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/vscode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/skillregistry"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/vscode"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/skillregistry"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func claudeAdapter() agents.Adapter   { return claude.NewAdapter() }
@@ -336,7 +336,7 @@ func TestInjectBundledSkillsAreRegistryDiscoverable(t *testing.T) {
 	for _, skill := range []model.SkillID{
 		model.SkillRDDDefectWorkflow,
 		model.SkillSystemicIssueTriage,
-		model.SkillGentleAIBench,
+		model.SkillShevanioAIBench,
 	} {
 		t.Run(string(skill), func(t *testing.T) {
 			home := t.TempDir()
@@ -483,6 +483,6 @@ func requiredBundledSkillIDs() []model.SkillID {
 		model.SkillImprover,
 		model.SkillRDDDefectWorkflow,
 		model.SkillSystemicIssueTriage,
-		model.SkillGentleAIBench,
+		model.SkillShevanioAIBench,
 	}
 }

@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 type InstallInput struct {
@@ -244,7 +244,7 @@ func defaultAgentsFromDetection(detection system.DetectionResult) []model.AgentI
 // by internal/app/app.go's default agent list -- so it can never drift from
 // a hand-written list (install/sync surface audit finding 3: an unknown
 // value like `cluade` previously converted silently and was later dropped
-// without any error, so `gentle-ai sync --agent cluade` reported success
+// without any error, so `shevanio-ai sync --agent cluade` reported success
 // having synced nothing).
 func asAgentIDs(values []string) ([]model.AgentID, error) {
 	supported := catalog.AllAgents()

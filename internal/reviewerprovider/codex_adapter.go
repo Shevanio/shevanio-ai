@@ -13,9 +13,9 @@ import (
 	"strings"
 )
 
-const codexReviewerLoopbackBaseURLEnvironment = "GENTLE_AI_CODEX_REVIEWER_LOOPBACK_BASE_URL"
+const codexReviewerLoopbackBaseURLEnvironment = "SHEVANIO_AI_CODEX_REVIEWER_LOOPBACK_BASE_URL"
 
-const codexReviewerLoopbackProviderID = "gentle_ai_reviewer_loopback"
+const codexReviewerLoopbackProviderID = "shevanio_ai_reviewer_loopback"
 
 // CodexAdapter invokes Codex with an opaque provider invocation and returns
 // the CLI's raw final-message bytes without interpreting them.
@@ -41,7 +41,7 @@ func (adapter *CodexAdapter) Review(ctx context.Context, invocation Invocation) 
 		return nil, fmt.Errorf("codex reviewer transport unavailable: %w", err)
 	}
 
-	scratch, err := os.MkdirTemp("", "gentle-ai-codex-reviewer-*")
+	scratch, err := os.MkdirTemp("", "shevanio-ai-codex-reviewer-*")
 	if err != nil {
 		return nil, fmt.Errorf("codex reviewer transport unavailable: create scratch directory: %w", err)
 	}
@@ -89,7 +89,7 @@ func codexReviewerArguments(scratch, outputPath string) ([]string, error) {
 
 	return append(arguments,
 		"--config", `model_provider="`+codexReviewerLoopbackProviderID+`"`,
-		"--config", fmt.Sprintf(`model_providers.%s={name="Gentle AI reviewer loopback",base_url=%q,wire_api="responses"}`, codexReviewerLoopbackProviderID, baseURL),
+		"--config", fmt.Sprintf(`model_providers.%s={name="Shevanio AI reviewer loopback",base_url=%q,wire_api="responses"}`, codexReviewerLoopbackProviderID, baseURL),
 	), nil
 }
 

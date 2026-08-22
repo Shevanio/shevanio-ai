@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
 )
 
 func TestRunUpdate_ReturnsErrorWhenChecksFail(t *testing.T) {
@@ -106,10 +106,10 @@ func TestRunUpgrade_ReturnsErrorBeforeExecutingWhenChecksFail(t *testing.T) {
 	}
 }
 
-// TestRunUpgrade_RestartsAfterGentleAIUpgrade verifies that `gentle-ai upgrade`
-// prints the restart guidance message after a successful gentle-ai upgrade.
+// TestRunUpgrade_RestartsAfterShevanioAIUpgrade verifies that `shevanio-ai upgrade`
+// prints the restart guidance message after a successful shevanio-ai upgrade.
 // After task 4.6, no re-exec occurs on any OS — the message is always printed.
-func TestRunUpgrade_RestartsAfterGentleAIUpgrade(t *testing.T) {
+func TestRunUpgrade_RestartsAfterShevanioAIUpgrade(t *testing.T) {
 	unsetEnv(t, envSelfUpdateDone)
 
 	origCheckFiltered := updateCheckFiltered
@@ -121,7 +121,7 @@ func TestRunUpgrade_RestartsAfterGentleAIUpgrade(t *testing.T) {
 
 	updateCheckFiltered = func(context.Context, string, system.PlatformProfile, []string) []update.UpdateResult {
 		return []update.UpdateResult{{
-			Tool:             update.ToolInfo{Name: "gentle-ai", InstallMethod: update.InstallBinary},
+			Tool:             update.ToolInfo{Name: "shevanio-ai", InstallMethod: update.InstallBinary},
 			InstalledVersion: "1.36.1",
 			LatestVersion:    "1.36.2",
 			Status:           update.UpdateAvailable,
@@ -129,7 +129,7 @@ func TestRunUpgrade_RestartsAfterGentleAIUpgrade(t *testing.T) {
 	}
 	upgradeExecuteWithOptions = func(context.Context, []update.UpdateResult, system.PlatformProfile, string, bool, upgrade.ExecuteOptions) upgrade.UpgradeReport {
 		return upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{{
-			ToolName:   "gentle-ai",
+			ToolName:   "shevanio-ai",
 			OldVersion: "1.36.1",
 			NewVersion: "1.36.2",
 			Status:     upgrade.UpgradeSucceeded,
@@ -142,21 +142,21 @@ func TestRunUpgrade_RestartsAfterGentleAIUpgrade(t *testing.T) {
 		t.Fatalf("runUpgrade() error = %v", err)
 	}
 	// After task 4.6: restart message printed, no re-exec.
-	if !strings.Contains(buf.String(), "restart gentle-ai") {
+	if !strings.Contains(buf.String(), "restart shevanio-ai") {
 		t.Fatalf("runUpgrade() output missing restart notice:\n%s", buf.String())
 	}
 }
 
-// TestRestartAfterGentleAIUpgrade_PrintsRestartGuidance verifies that
-// restartAfterGentleAIUpgrade (converged in task 4.6) always prints
+// TestRestartAfterShevanioAIUpgrade_PrintsRestartGuidance verifies that
+// restartAfterShevanioAIUpgrade (converged in task 4.6) always prints
 // the restart guidance message and never re-execs, on any OS.
-func TestRestartAfterGentleAIUpgrade_PrintsRestartGuidance(t *testing.T) {
+func TestRestartAfterShevanioAIUpgrade_PrintsRestartGuidance(t *testing.T) {
 	unsetEnv(t, envSelfUpdateDone)
 
 	var buf bytes.Buffer
-	err := restartAfterGentleAIUpgrade("1.36.2", &buf)
+	err := restartAfterShevanioAIUpgrade("1.36.2", &buf)
 	if err != nil {
-		t.Fatalf("restartAfterGentleAIUpgrade() error = %v", err)
+		t.Fatalf("restartAfterShevanioAIUpgrade() error = %v", err)
 	}
 	out := buf.String()
 	// Must contain version and "restart" guidance.
@@ -177,11 +177,11 @@ func envContains(values []string, needle string) bool {
 	return false
 }
 
-// TestRunUpgrade_DryRunDoesNotRestartAfterGentleAIUpgrade verifies that a dry-run
+// TestRunUpgrade_DryRunDoesNotRestartAfterShevanioAIUpgrade verifies that a dry-run
 // upgrade does not trigger the restart-guidance message (no actual upgrade occurred).
-// reExec was removed in task 4.6; restartAfterGentleAIUpgrade now prints+returns.
+// reExec was removed in task 4.6; restartAfterShevanioAIUpgrade now prints+returns.
 // Dry-run skips that path entirely, so no restart message should appear.
-func TestRunUpgrade_DryRunDoesNotRestartAfterGentleAIUpgrade(t *testing.T) {
+func TestRunUpgrade_DryRunDoesNotRestartAfterShevanioAIUpgrade(t *testing.T) {
 	origCheckFiltered := updateCheckFiltered
 	origUpgradeExecuteWithOptions := upgradeExecuteWithOptions
 	t.Cleanup(func() {
@@ -190,10 +190,10 @@ func TestRunUpgrade_DryRunDoesNotRestartAfterGentleAIUpgrade(t *testing.T) {
 	})
 
 	updateCheckFiltered = func(context.Context, string, system.PlatformProfile, []string) []update.UpdateResult {
-		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "gentle-ai"}, Status: update.UpdateAvailable}}
+		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "shevanio-ai"}, Status: update.UpdateAvailable}}
 	}
 	upgradeExecuteWithOptions = func(context.Context, []update.UpdateResult, system.PlatformProfile, string, bool, upgrade.ExecuteOptions) upgrade.UpgradeReport {
-		return upgrade.UpgradeReport{DryRun: true, Results: []upgrade.ToolUpgradeResult{{ToolName: "gentle-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
+		return upgrade.UpgradeReport{DryRun: true, Results: []upgrade.ToolUpgradeResult{{ToolName: "shevanio-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
 	}
 
 	var buf bytes.Buffer
@@ -217,11 +217,11 @@ func TestTUIUpgrade_DoesNotRestartBeforeModelCanRenderReport(t *testing.T) {
 	})
 
 	upgradeExecute = func(context.Context, []update.UpdateResult, system.PlatformProfile, string, bool, ...io.Writer) upgrade.UpgradeReport {
-		return upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{{ToolName: "gentle-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
+		return upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{{ToolName: "shevanio-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
 	}
 
 	report := tuiUpgrade(system.PlatformProfile{OS: "darwin", PackageManager: "brew"}, os.TempDir())(context.Background(), nil)
-	if len(report.Results) != 1 || report.Results[0].ToolName != "gentle-ai" {
+	if len(report.Results) != 1 || report.Results[0].ToolName != "shevanio-ai" {
 		t.Fatalf("tuiUpgrade() report = %#v", report)
 	}
 }
@@ -244,7 +244,7 @@ func TestRunUpgrade_ForwardsParsedArgsOnceWithoutReparsing(t *testing.T) {
 	updateCheckFiltered = func(_ context.Context, _ string, _ system.PlatformProfile, filters []string) []update.UpdateResult {
 		checkCalls++
 		checkFilters = filters
-		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "gentle-ai"}, Status: update.UpToDate}}
+		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "shevanio-ai"}, Status: update.UpToDate}}
 	}
 
 	var execDryRun, execSkipBackup bool
@@ -283,7 +283,7 @@ func TestRunUpgrade_ForwardsParsedArgsOnceWithoutReparsing(t *testing.T) {
 
 // TestPrintPostUpgradeDoctorAdvisory_OutputFormat verifies the advisory
 // message format: starts with a newline, has the [info] tag, and names the
-// `gentle-ai doctor` command. The exact wording is part of the public contract
+// `shevanio-ai doctor` command. The exact wording is part of the public contract
 // because the issue (#1901) specifies the literal expected output.
 func TestPrintPostUpgradeDoctorAdvisory_OutputFormat(t *testing.T) {
 	var buf bytes.Buffer
@@ -293,19 +293,19 @@ func TestPrintPostUpgradeDoctorAdvisory_OutputFormat(t *testing.T) {
 	if !strings.HasPrefix(out, "\n[info]") {
 		t.Errorf("output must start with newline + [info] tag, got %q", out)
 	}
-	if !strings.Contains(out, "gentle-ai doctor") {
-		t.Errorf("output must mention 'gentle-ai doctor', got %q", out)
+	if !strings.Contains(out, "shevanio-ai doctor") {
+		t.Errorf("output must mention 'shevanio-ai doctor', got %q", out)
 	}
 	if !strings.Contains(out, "ecosystem health") {
 		t.Errorf("output must mention ecosystem health context, got %q", out)
 	}
 }
 
-// TestRunUpgrade_PrintsDoctorAdvisoryAfterGentleAIUpgrade verifies that a
-// successful `gentle-ai upgrade` of the gentle-ai binary prints the doctor
+// TestRunUpgrade_PrintsDoctorAdvisoryAfterShevanioAIUpgrade verifies that a
+// successful `shevanio-ai upgrade` of the shevanio-ai binary prints the doctor
 // advisory (per #1901). The advisory must appear AFTER the restart message
 // and must NOT appear in dry-run mode.
-func TestRunUpgrade_PrintsDoctorAdvisoryAfterGentleAIUpgrade(t *testing.T) {
+func TestRunUpgrade_PrintsDoctorAdvisoryAfterShevanioAIUpgrade(t *testing.T) {
 	unsetEnv(t, envSelfUpdateDone)
 
 	origCheckFiltered := updateCheckFiltered
@@ -317,7 +317,7 @@ func TestRunUpgrade_PrintsDoctorAdvisoryAfterGentleAIUpgrade(t *testing.T) {
 
 	updateCheckFiltered = func(context.Context, string, system.PlatformProfile, []string) []update.UpdateResult {
 		return []update.UpdateResult{{
-			Tool:             update.ToolInfo{Name: "gentle-ai", InstallMethod: update.InstallBinary},
+			Tool:             update.ToolInfo{Name: "shevanio-ai", InstallMethod: update.InstallBinary},
 			InstalledVersion: "1.36.1",
 			LatestVersion:    "1.36.2",
 			Status:           update.UpdateAvailable,
@@ -325,7 +325,7 @@ func TestRunUpgrade_PrintsDoctorAdvisoryAfterGentleAIUpgrade(t *testing.T) {
 	}
 	upgradeExecuteWithOptions = func(context.Context, []update.UpdateResult, system.PlatformProfile, string, bool, upgrade.ExecuteOptions) upgrade.UpgradeReport {
 		return upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{{
-			ToolName:   "gentle-ai",
+			ToolName:   "shevanio-ai",
 			OldVersion: "1.36.1",
 			NewVersion: "1.36.2",
 			Status:     upgrade.UpgradeSucceeded,
@@ -339,15 +339,15 @@ func TestRunUpgrade_PrintsDoctorAdvisoryAfterGentleAIUpgrade(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !strings.Contains(out, "restart gentle-ai") {
+	if !strings.Contains(out, "restart shevanio-ai") {
 		t.Errorf("runUpgrade() output missing restart notice:\n%s", out)
 	}
-	if !strings.Contains(out, "Run 'gentle-ai doctor' to verify ecosystem health after upgrade") {
+	if !strings.Contains(out, "Run 'shevanio-ai doctor' to verify ecosystem health after upgrade") {
 		t.Errorf("runUpgrade() output missing post-upgrade doctor advisory:\n%s", out)
 	}
 	// Advisory must come AFTER the restart notice (lexicographic order in output).
-	restartIdx := strings.Index(out, "restart gentle-ai")
-	advisoryIdx := strings.Index(out, "gentle-ai doctor")
+	restartIdx := strings.Index(out, "restart shevanio-ai")
+	advisoryIdx := strings.Index(out, "shevanio-ai doctor")
 	if restartIdx < 0 || advisoryIdx < 0 || advisoryIdx <= restartIdx {
 		t.Errorf("advisory must appear AFTER restart notice (restart=%d, advisory=%d):\n%s", restartIdx, advisoryIdx, out)
 	}
@@ -364,10 +364,10 @@ func TestRunUpgrade_DryRunDoesNotPrintDoctorAdvisory(t *testing.T) {
 	})
 
 	updateCheckFiltered = func(context.Context, string, system.PlatformProfile, []string) []update.UpdateResult {
-		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "gentle-ai"}, Status: update.UpdateAvailable}}
+		return []update.UpdateResult{{Tool: update.ToolInfo{Name: "shevanio-ai"}, Status: update.UpdateAvailable}}
 	}
 	upgradeExecuteWithOptions = func(context.Context, []update.UpdateResult, system.PlatformProfile, string, bool, upgrade.ExecuteOptions) upgrade.UpgradeReport {
-		return upgrade.UpgradeReport{DryRun: true, Results: []upgrade.ToolUpgradeResult{{ToolName: "gentle-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
+		return upgrade.UpgradeReport{DryRun: true, Results: []upgrade.ToolUpgradeResult{{ToolName: "shevanio-ai", NewVersion: "1.36.2", Status: upgrade.UpgradeSucceeded}}}
 	}
 
 	var buf bytes.Buffer
@@ -375,15 +375,15 @@ func TestRunUpgrade_DryRunDoesNotPrintDoctorAdvisory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("runUpgrade() error = %v", err)
 	}
-	if strings.Contains(buf.String(), "gentle-ai doctor") {
-		t.Fatalf("dry-run output must NOT mention 'gentle-ai doctor' advisory:\n%s", buf.String())
+	if strings.Contains(buf.String(), "shevanio-ai doctor") {
+		t.Fatalf("dry-run output must NOT mention 'shevanio-ai doctor' advisory:\n%s", buf.String())
 	}
 }
 
-// TestRunUpgrade_NonGentleAIUpgradeDoesNotPrintDoctorAdvisory verifies that
-// upgrading a tool other than gentle-ai (e.g. engram, gga) does NOT trigger
-// the doctor advisory. The advisory is gated on gentle-ai specifically.
-func TestRunUpgrade_NonGentleAIUpgradeDoesNotPrintDoctorAdvisory(t *testing.T) {
+// TestRunUpgrade_NonShevanioAIUpgradeDoesNotPrintDoctorAdvisory verifies that
+// upgrading a tool other than shevanio-ai (e.g. engram, gga) does NOT trigger
+// the doctor advisory. The advisory is gated on shevanio-ai specifically.
+func TestRunUpgrade_NonShevanioAIUpgradeDoesNotPrintDoctorAdvisory(t *testing.T) {
 	origCheckFiltered := updateCheckFiltered
 	origUpgradeExecuteWithOptions := upgradeExecuteWithOptions
 	t.Cleanup(func() {
@@ -414,6 +414,6 @@ func TestRunUpgrade_NonGentleAIUpgradeDoesNotPrintDoctorAdvisory(t *testing.T) {
 		t.Fatalf("runUpgrade() error = %v", err)
 	}
 	if strings.Contains(buf.String(), "ecosystem health after upgrade") {
-		t.Fatalf("non-gentle-ai upgrade must NOT print post-upgrade doctor advisory:\n%s", buf.String())
+		t.Fatalf("non-shevanio-ai upgrade must NOT print post-upgrade doctor advisory:\n%s", buf.String())
 	}
 }

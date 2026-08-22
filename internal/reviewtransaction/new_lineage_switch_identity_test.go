@@ -7,12 +7,12 @@ import (
 
 // This file is coverage closure for spec rdd-new-lineage-activation ->
 // "Distinct Env Switch, Default Off, Legacy Path When Disabled" ->
-// "Switch identity never overloads another switch": GENTLE_AI_RDD_NEW_LINEAGE
+// "Switch identity never overloads another switch": SHEVANIO_AI_RDD_NEW_LINEAGE
 // and the user-owned RDD kill switch are independent reads
 // (NewLineageActivationEnabled, ResolveRDDMode). No production behavior
 // changes here — these are new tests only.
 //
-// The third pairing this file originally proved -- GENTLE_AI_RDD_SHADOW
+// The third pairing this file originally proved -- SHEVANIO_AI_RDD_SHADOW
 // (shadowObservationEnabled) never overloading the activation switch --
 // retired with the shadow observer itself (Wave 7 S2a): with no shadow
 // switch left to read, there is nothing left to prove non-overloaded

@@ -146,7 +146,9 @@ func TestOrdinaryBoundedLensStateRoundTripsAndLegacyJSONRemainsAdditive(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	const baselineRevision = "sha256:4ec2a97038f0ab2e833edeb158c7de2673fa6113c5479a9007fd7bcc642fee1b"
+	// This is the current runtime's ordinary_4r shape, not a persisted Gentle
+	// record; the Shevanio schema and digest domain therefore define the pin.
+	const baselineRevision = "sha256:3897f039275ff44b9c7ed4e424212722438436a4484d6806dde12be9f7c58214"
 	if legacyRevision != baselineRevision {
 		t.Fatalf("legacy ordinary_4r genesis revision = %q, want baseline %q", legacyRevision, baselineRevision)
 	}

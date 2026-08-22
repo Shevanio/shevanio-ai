@@ -41,9 +41,9 @@ func issue3043VerifyInstall(sandbox *Sandbox, observation Observation) error {
 	if strings.Contains(observation.Stdout, "OPENCODE_EXPERIMENTAL=true") {
 		return fmt.Errorf("install emitted legacy shell mutation guidance: %s", observation.Stdout)
 	}
-	launcher := filepath.Join(sandbox.Home, ".gentle-ai", "bin", "opencode")
+	launcher := filepath.Join(sandbox.Home, ".shevanio-ai", "bin", "opencode")
 	data, err := os.ReadFile(launcher)
-	if err != nil || !strings.Contains(string(data), "gentle-ai:managed-opencode-launcher/v1") {
+	if err != nil || !strings.Contains(string(data), "shevanio-ai:managed-opencode-launcher/v1") {
 		return fmt.Errorf("managed launcher missing or unowned: %q, %v", data, err)
 	}
 	cmd := exec.Command(launcher)
@@ -68,7 +68,7 @@ func issue3043Journeys() []Journey {
 		ID:     "j3043-opencode-managed-background-activation",
 		Review: reviewUntouched,
 		Title:  "OpenCode background subagents activate through a managed launcher",
-		Source: "https://github.com/Gentleman-Programming/gentle-ai/issues/3043",
+		Source: "https://github.com/Shevanio/shevanio-ai/issues/3043",
 		Steps: []Step{
 			{Name: "fixture: isolated OpenCode runtime", Fixture: issue3043OpenCodeRuntime},
 			{Name: "install reports managed activation", Args: issue3043InstallArgs, After: issue3043VerifyInstall},

@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-const VerifyResultSchema = "gentle-ai.verify-result/v1"
-const RemediationResultSchema = "gentle-ai.remediation-result/v1"
+const VerifyResultSchema = "shevanio-ai.verify-result/v1"
+const RemediationResultSchema = "shevanio-ai.remediation-result/v1"
 const MaxVerifyReportBytes = 1 << 20
 const VerifyEmptyOutputHash = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
@@ -280,7 +280,7 @@ func parseLeadingEnvelope(text string) ([]string, int, string) {
 		return nil, -1, "YAML front matter is unsupported; the first non-empty content must be a fenced yaml envelope"
 	}
 	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "```yaml" {
-		return nil, -1, "missing valid gentle-ai.verify-result/v1 envelope: the first non-empty content must be fenced yaml"
+		return nil, -1, "missing valid shevanio-ai.verify-result/v1 envelope: the first non-empty content must be fenced yaml"
 	}
 	for index := 1; index < len(lines); index++ {
 		if strings.TrimSpace(lines[index]) == "```" {
@@ -641,7 +641,7 @@ func remediationFenceContainsResult(lines []string) bool {
 		line = remediationFenceContent(line)
 		if strings.HasPrefix(line, "schema:") {
 			schema := strings.TrimSpace(strings.TrimPrefix(line, "schema:"))
-			if schema == RemediationResultSchema || schema == "gentle-ai.remediation-evidence/v1" {
+			if schema == RemediationResultSchema || schema == "shevanio-ai.remediation-evidence/v1" {
 				return true
 			}
 		}
@@ -649,7 +649,7 @@ func remediationFenceContainsResult(lines []string) bool {
 	var fields map[string]any
 	if err := json.Unmarshal([]byte(strings.Join(remediationFenceContents(lines), "\n")), &fields); err == nil {
 		schema, _ := fields["schema"].(string)
-		return schema == RemediationResultSchema || schema == "gentle-ai.remediation-evidence/v1"
+		return schema == RemediationResultSchema || schema == "shevanio-ai.remediation-evidence/v1"
 	}
 	return false
 }
@@ -763,7 +763,7 @@ func parseRemediationEvidence(lines []string) (remediationEvidence, bool) {
 	if err := decoder.Decode(&extra); err != io.EOF {
 		return remediationEvidence{}, false
 	}
-	if evidence.Schema != "gentle-ai.remediation-evidence/v1" {
+	if evidence.Schema != "shevanio-ai.remediation-evidence/v1" {
 		return remediationEvidence{}, false
 	}
 	return evidence, true

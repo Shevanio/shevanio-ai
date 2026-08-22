@@ -81,7 +81,7 @@ func (b *battery) runOpenCodeHostEchoScenario(node string) {
 		b.fail(openCodeLane, openCodeEchoStep, "materialize the first Task: "+err.Error())
 		return
 	}
-	if !issue.BeforeOK || !strings.HasPrefix(issue.ChildPrompt, "GENTLE_AI_REVIEW_PROVIDER_MATERIALIZATION ") {
+	if !issue.BeforeOK || !strings.HasPrefix(issue.ChildPrompt, "SHEVANIO_AI_REVIEW_PROVIDER_MATERIALIZATION ") {
 		b.fail(openCodeLane, openCodeEchoStep, "first Task did not receive a Go materialization: "+firstLine(issue.Error))
 		return
 	}
@@ -113,7 +113,7 @@ func (b *battery) runOpenCodeHostEchoScenario(node string) {
 		return
 	}
 	manifest := b.record("result-artifact", []byte(replay.Output))
-	if getString(manifest, "schema") != "gentle-ai.review-result-artifact/v2" || getString(manifest, "admission_decision") != "completed" {
+	if getString(manifest, "schema") != "shevanio-ai.review-result-artifact/v2" || getString(manifest, "admission_decision") != "completed" {
 		b.fail(openCodeLane, openCodeEchoStep, "host echo did not round-trip a completed result artifact")
 		return
 	}

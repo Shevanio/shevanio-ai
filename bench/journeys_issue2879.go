@@ -71,10 +71,14 @@ func issue2879Plan(r *journeyRun) error {
 	afterMalformed, malformedErr := os.ReadFile(unrelatedPath)
 	if blockedInspection.ExitCode != 0 || json.Unmarshal([]byte(blockedInspection.Stdout), &blockedReport) != nil || len(blockedReport.EntryDiagnostics) != 2 ||
 		blockedReport.EntryDiagnostics[0].LineageID != issue2879Lineage || blockedReport.EntryDiagnostics[0].Problem != "outdated_compact_state" ||
-		blockedReport.EntryDiagnostics[1].LineageID != "z-unrelated" || blockedReport.EntryDiagnostics[1].Problem != "malformed_compact_state" ||
-		blockedPreflight.ExitCode != 0 || json.Unmarshal([]byte(blockedPreflight.Stdout), &blockedResult) != nil || blockedResult.DispositionProviderInputs != nil ||
-		historicalErr != nil || malformedErr != nil || !bytes.Equal(afterHistorical, issue2879ReleasedRecord) || !bytes.Equal(afterMalformed, []byte("{\n")) {
-		return errors.New("unrelated malformed authority produced a historical disposition plan")
+		blockedReport.EntryDiagnostics[1].LineageID != "z-unrelated" || blockedReport.EntryDiagnostics[1].Problem != "malformed_compact_state" {
+		return fmt.Errorf("historical and malformed authority classification = %+v", blockedReport.EntryDiagnostics)
+	}
+	if blockedPreflight.ExitCode != 0 || json.Unmarshal([]byte(blockedPreflight.Stdout), &blockedResult) != nil || blockedResult.DispositionProviderInputs != nil {
+		return fmt.Errorf("malformed authority preflight was not fail-closed: exit=%d disposition_inputs=%+v", blockedPreflight.ExitCode, blockedResult.DispositionProviderInputs)
+	}
+	if historicalErr != nil || malformedErr != nil || !bytes.Equal(afterHistorical, issue2879ReleasedRecord) || !bytes.Equal(afterMalformed, []byte("{\n")) {
+		return errors.New("historical preflight mutated preserved authority bytes")
 	}
 	if err := os.RemoveAll(filepath.Dir(unrelatedPath)); err != nil {
 		return err

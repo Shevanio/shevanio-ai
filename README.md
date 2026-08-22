@@ -1,13 +1,13 @@
 <div align="center">
 
-<img width="3276" height="1280" alt="Gentle-AI neon rose banner" src="docs/assets/brand/gentle-ai-banner.png" />
+<img width="3276" height="1280" alt="Shevanio AI neon rose banner" src="docs/assets/brand/shevanio-ai-banner.png" />
 
-<h1>Gentle-AI</h1>
+<h1>Shevanio AI</h1>
 
-<p><strong>Gentle-AI — Ecosystem, Frameworks, Workflows for AI coding agents.</strong></p>
+<p><strong>Shevanio AI — Ecosystem, Frameworks, Workflows for AI coding agents.</strong></p>
 
 <p>
-<a href="https://github.com/Gentleman-Programming/gentle-ai/releases"><img src="https://img.shields.io/github/v/release/Gentleman-Programming/gentle-ai" alt="Release"></a>
+<a href="https://github.com/Shevanio/shevanio-ai/releases"><img src="https://img.shields.io/github/v/release/Shevanio/shevanio-ai" alt="Release"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/Go-1.25.10+-00ADD8?logo=go&logoColor=white" alt="Go 1.25.10+">
 <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform">
@@ -18,27 +18,15 @@
 ---
 
 > [!IMPORTANT]
-> **Receipt-Driven Development (RDD) is the supported stable path, and it is opt-in.** `v2.2.0` was the historical release where that path became supported after RDD began in `v1.47.0`: small work stays direct, broader implementation is delegated, SDD stays optional, and once RDD is enabled every route converges on structural proof, bounded review, an exact receipt, and delivery authorization. RDD is off until you enable it with `gentle-ai review mode enable --scope global`.
+> **This repository is the source-first initial Shevanio AI runtime.** No Shevanio AI release or Homebrew formula has been published yet. Build and install locally using the commands below.
 >
-> The current stable release is [`v2.3.0`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.3.0). `@latest` is the stable channel:
->
-> ```bash
-> go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest
-> ```
->
-> To opt into the current prerelease, [`v2.4.0-rc.1`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.4.0-rc.1), install its exact tag:
->
-> ```bash
-> go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@v2.4.0-rc.1
-> ```
->
-> Use `@main` only for unreleased development changes. See the [full RDD version policy](docs/quickstart.md#version-policy).
->
-> Note the `/v2` suffix: Go requires it for major version 2 and above. Releases before `v2.0.0` use the unsuffixed import path.
+> Receipt-Driven Development (RDD) remains opt-in. Enable it with `shevanio-ai review mode enable --scope global` only after the local runtime is installed.
+
+Shevanio AI is derived from [Gentle AI v2.4.0](https://github.com/Gentleman-Programming/gentle-ai/tree/v2.4.0). The original MIT license, copyright, contributors, and Git history remain part of this repository; see [NOTICE](NOTICE), [LICENSE](LICENSE), and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## What It Does
 
-Gentle-AI is NOT an AI agent installer. It adapts the agent runtime(s) already on your machine; it never installs one for you. If a selected agent isn't detected, Gentle-AI refuses and names the exact command you'd run yourself instead. It is an **ecosystem configurator** that equips the AI coding agent(s) you already use with persistent memory, Spec-Driven Development (SDD), curated skills, MCP servers, model routing, a teaching-oriented persona, and bounded native review.
+Shevanio AI is NOT an AI agent installer. It adapts the agent runtime(s) already on your machine; it never installs one for you. If a selected agent isn't detected, Shevanio AI refuses and names the exact command you'd run yourself instead. It is an **ecosystem configurator** that equips the AI coding agent(s) you already use with persistent memory, Spec-Driven Development (SDD), curated skills, MCP servers, model routing, a teaching-oriented persona, and bounded native review.
 
 **Before**: "I installed Claude Code / OpenCode / Cursor, but it's just a chatbot that writes code."
 
@@ -88,28 +76,28 @@ Implementation routing does not decide review strength, and per-action test, bui
 
 ## Quick Start
 
-### Install (recommended)
+### Build locally
 
 > [!NOTE]
-> `gentle-ai install` requires Node.js 18+ and npm on every platform (it warns if either is missing). See [Prerequisites](docs/quickstart.md#prerequisites) for your distro's install hint.
-
-**macOS / Linux**
+> `shevanio-ai install` requires Node.js 18+ and npm on every platform (it warns if either is missing). See [Prerequisites](docs/quickstart.md#prerequisites) for your distro's install hint.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh | bash
+go build -trimpath -o ./bin/shevanio-ai ./cmd/shevanio-ai
+./bin/shevanio-ai version
 ```
 
-**Windows (PowerShell)**
+### Install locally
 
-```powershell
-go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest
+```bash
+mkdir -p "$HOME/.local/bin"
+install -m 0755 ./bin/shevanio-ai "$HOME/.local/bin/shevanio-ai"
+"$HOME/.local/bin/shevanio-ai" install --dry-run
 ```
 
-> [!WARNING]
-> Windows source builds and CI/runtime tests remain supported, but official Windows binary distribution and Scoop are temporarily unavailable. Windows installation and upgrades require Go 1.25.10+ and fail closed to source-install guidance; they never download an unsigned Gentle AI executable or execute a remote update script.
+Ensure `$HOME/.local/bin` is on `PATH`, then run `shevanio-ai install` when the dry run looks correct. Windows users can build `./cmd/shevanio-ai` with Go and place `shevanio-ai.exe` on `PATH`; no official Windows archive is published.
 
 > [!IMPORTANT]
-> After replacing or upgrading the `gentle-ai` binary, run `gentle-ai sync` to refresh its managed assets. See the [sync and upgrade reference](docs/usage.md#sync).
+> After replacing or upgrading the `shevanio-ai` binary, run `shevanio-ai sync` to refresh its managed assets. See the [sync and upgrade reference](docs/usage.md#sync).
 
 ### Configure project context
 
@@ -118,80 +106,32 @@ Once your agents are configured, open your AI agent in a project and run these t
 | Command                            | What it does                                                                | When to re-run                                                                 |
 | ---------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `/sdd-init`                        | Detects stack, testing capabilities, activates Strict TDD Mode if available | When your project adds/removes test frameworks, or first time in a new project |
-| `gentle-ai skill-registry refresh` | Scans installed skills and project conventions, builds the registry         | After installing/removing skills, or first time in a new project               |
+| `shevanio-ai skill-registry refresh` | Scans installed skills and project conventions, builds the registry         | After installing/removing skills, or first time in a new project               |
 
 These are **not required** for basic usage. The SDD orchestrator runs `/sdd-init` automatically if it detects no context. Startup hooks normally keep the skill registry fresh for agents that support hooks, including Codex, Claude Code, OpenCode, and Pi through `gentle-pi`. If you start Pi with `pi -ns`, startup skill loading/hooks are skipped, so run the registry refresh manually when you need updated project rules.
 
-Run `gentle-ai doctor` at any time for a read-only health check of your ecosystem (tool binaries, `state.json`, Engram reachability, disk space).
+Run `shevanio-ai doctor` at any time for a read-only health check of your ecosystem (tool binaries, `state.json`, Engram reachability, disk space).
 
 <details>
-<summary><strong>Alternative install and scope options</strong></summary>
+<summary><strong>Future distribution and scope options</strong></summary>
 
-**Homebrew (macOS / Linux)**
+**Homebrew:** GoReleaser is configured for `Shevanio/homebrew-tap` and formula `shevanio-ai`, but the formula is not published. Do not run `brew install shevanio/tap/shevanio-ai` until a release announcement explicitly confirms availability.
 
-```bash
-brew tap Gentleman-Programming/homebrew-tap
-brew trust --formula gentleman-programming/tap/gentle-ai  # one-time, for Homebrew tap trust
-brew install gentle-ai
-```
+**Go install:** the canonical future module command is `go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@<tag>`. There is no Shevanio AI tag to install yet.
 
-**Go install: stable channel (any platform with Go 1.25.10+)**
+**Release security:** local/source builds carry no Minisign trust anchor, so binary auto-upgrade fails closed. Publication remains unavailable until Shevanio AI provisions its own signing key and trusted public-key channel; upstream Gentle AI signatures are not trusted.
+
+By default, `shevanio-ai install` writes agent-scoped files to each selected agent's global config directory. To keep the Gentleman stack isolated to one project, run:
 
 ```bash
-go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest
-```
-
-Note the `/v2` in the module path: Go requires it for major version 2 and
-above. Releases before `v2.0.0` use the unsuffixed path.
-
-**Scoop (Windows)** — temporarily unavailable while official Windows binary distribution is held for public-trust Authenticode signing. Use the Windows `go install` command above.
-
-By default, `gentle-ai install` writes agent-scoped files to each selected agent's global config directory. To keep the Gentleman stack isolated to one project, run:
-
-```bash
-gentle-ai install --scope=workspace
+shevanio-ai install --scope=workspace
 ```
 
 Workspace scope applies to selected agents for agent-scoped files such as system prompts, skills, SDD agents, and persona files. Global-only integrations remain global by design.
 
-**Unreleased development channel (`main`)** — use only to test changes that are not part of a release. The managed beta installer tracks `main`; it requires Go 1.25.10+:
-
-```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh | bash -s -- --channel beta
-
-# Windows (PowerShell)
-$env:GENTLE_AI_CHANNEL="beta"; go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@main
-```
-
 ### RDD version policy
 
-Receipt-Driven Development (RDD) started in `gentle-ai` `v1.47.0` on 2026-07-10, with the first bounded native review transactions, and became the supported stable path in `v2.2.0`. Those are historical milestones; the negotiated public review contract was published in `v2.1.6`.
-
-The current stable release is [`v2.3.0`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.3.0). The current prerelease is [`v2.4.0-rc.1`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.4.0-rc.1). `main` is unreleased development.
-
-**Stable channel (`@latest`, currently `v2.3.0`)**
-
-```bash
-go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest
-gentle-ai version
-```
-
-**Prerelease channel (`v2.4.0-rc.1`)**
-
-```bash
-go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@v2.4.0-rc.1
-gentle-ai version
-```
-
-**Unreleased development (`main`)**
-
-```bash
-go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@main
-gentle-ai version
-```
-
-The managed installer tracks the channel's latest version and does not accept an arbitrary release pin. Use `go install` when reproducibility requires an exact version.
+RDD began upstream in Gentle AI `v1.47.0`, became its supported stable path in `v2.2.0`, and is inherited from the `v2.4.0` source baseline. These are upstream historical milestones, not Shevanio AI release claims.
 
 </details>
 
@@ -209,8 +149,8 @@ The managed installer tracks the channel's latest version and does not accept an
 5. **Upgrade, then sync.** Refresh the binary and the managed agent assets together:
 
    ```bash
-   gentle-ai upgrade
-   gentle-ai sync
+   shevanio-ai upgrade
+   shevanio-ai sync
    ```
 
 ### The flow at a glance
@@ -298,9 +238,9 @@ Size, file count, or perceived risk never select SDD on their own — only an ex
 Review mode is user-owned and available independently of the review lifecycle. **Receipt-driven development is opt-in: it is off until you turn it on.**
 
 ```bash
-gentle-ai review mode status --cwd .
-gentle-ai review mode enable --scope global --cwd .
-gentle-ai review mode disable --cwd .
+shevanio-ai review mode status --cwd .
+shevanio-ai review mode enable --scope global --cwd .
+shevanio-ai review mode disable --cwd .
 ```
 
 `status` is read-only. With no source expressing an opinion the effective mode is `off`, reported as decided by `default`; only an explicit global enable turns review on. Any global or clone-local disabled source wins; a clone can opt out with `--scope clone` but cannot force review on, so `--scope global` is the only way in. Enabling applies only to future candidates, while declining a one-candidate review prompt does not change the mode. When review is off, existing exact governing receipts remain authoritative; otherwise native review gates report `disabled/unmanaged` and defer delivery to ordinary repository policy without fabricating approval.
@@ -309,13 +249,13 @@ Historical note: `v2.2.2` introduced the native delivery-gate `disabled/unmanage
 
 ### Release verification
 
-Official macOS and Linux release archives require an authenticated `checksums.txt`. The built-in upgrader verifies its Minisign signature, its exact `Gentleman-Programming/gentle-ai` + release-tag binding, and the selected archive checksum **before** replacing the installed binary. Release archives are capped at **128 MiB**, including chunked or unknown-length responses. Missing, oversized, malformed, untrusted, or placeholder key material fails closed without changing the installed binary.
+No Shevanio AI release archive is published. The release pipeline is prepared to require an authenticated `checksums.txt`, a Shevanio-owned Minisign trust anchor, the exact `Shevanio/shevanio-ai` + release-tag binding, and the selected archive checksum before replacing a binary. Local/source builds keep the trust anchor unset and therefore fail closed without changing the installed binary.
 
 To verify a release manually, obtain the production public-key payload and fingerprint from a maintainer-controlled channel, then download `checksums.txt` and `checksums.txt.minisig` from the same release:
 
 ```bash
-minisign -VQm checksums.txt -x checksums.txt.minisig -P "$GENTLE_AI_MINISIGN_PUBLIC_KEY"
-# Expected output: repo=Gentleman-Programming/gentle-ai;tag=vX.Y.Z
+minisign -VQm checksums.txt -x checksums.txt.minisig -P "$SHEVANIO_AI_MINISIGN_PUBLIC_KEY"
+# Expected output: repo=Shevanio/shevanio-ai;tag=vX.Y.Z
 sha256sum --check --strict --ignore-missing checksums.txt
 ```
 
@@ -330,7 +270,7 @@ For a monorepo or shared worktree, explicitly review exactly what is in the Git 
 ```bash
 git add apps/my-service
 git diff --cached
-gentle-ai review start --projection staged
+shevanio-ai review start --projection staged
 ```
 
 The staged projection freezes the **complete existing index**, including all previously staged paths. It starts review but does not itself issue an approved receipt; unstaged and untracked worktree content is excluded. The default `workspace` projection remains the complete workspace review, and an existing authority is never auto-converted between projections. See the [review authority threat model](docs/review-authority-threat-model.md) for delivery and base-ref details.
@@ -351,10 +291,10 @@ Assign different AI models to different SDD phases -- a powerful model for desig
 
 ```bash
 # Via CLI
-gentle-ai sync --profile cheap:openrouter/qwen/qwen3-30b-a3b:free
-gentle-ai sync --profile-phase cheap:sdd-design:anthropic/claude-sonnet-4-20250514
+shevanio-ai sync --profile cheap:openrouter/qwen/qwen3-30b-a3b:free
+shevanio-ai sync --profile-phase cheap:sdd-design:anthropic/claude-sonnet-4-20250514
 
-# Or via TUI: gentle-ai → "OpenCode SDD Profiles" → Create
+# Or via TUI: shevanio-ai → "OpenCode SDD Profiles" → Create
 ```
 
 After creating a profile, open OpenCode and press **Tab** to switch between `gentle-orchestrator` (default) and your custom profiles.
@@ -386,7 +326,7 @@ engram tui                    # Visual memory browser
 
 | Your task | Start here |
 | --- | --- |
-| Understand the Gentle-AI mental model | [Intended Usage](docs/intended-usage.md) |
+| Understand the Shevanio AI mental model | [Intended Usage](docs/intended-usage.md) |
 | Choose direct, delegated, or optional SDD routing | [Organic Implementation Routing](docs/trigger-rules.md) |
 | Plan substantial work with SDD | [Intended Usage](docs/intended-usage.md) and [OpenSpec Config](docs/openspec-config.md) |
 | Configure a supported agent | [Agents](docs/agents.md) for the feature matrix and per-agent notes |
@@ -395,7 +335,7 @@ engram tui                    # Visual memory browser
 | Review or deliver a change safely | [Review Integration Contract](docs/review-integration.md) for provider consumers; [Review Authority Threat Model](docs/review-authority-threat-model.md) for technical boundaries; [Chapter 21 — Verifiable Trust](https://the-amazing-gentleman-programming-book.vercel.app/en/book/Chapter21_Verifiable-Trust) for the mental model |
 | Find or share persistent context | [Engram Commands](docs/engram.md) |
 | Refresh or troubleshoot an installation | [Usage](docs/usage.md), [Backup & Rollback](docs/rollback.md), and [Platforms](docs/platforms.md) |
-| Extend or contribute to Gentle AI | [Codebase Guide](docs/CODEBASE-GUIDE.md), [Components, Skills & Presets](docs/components.md), [Skill Registry](docs/skill-registry.md), and [Architecture & Development](docs/architecture.md) |
+| Extend or contribute to Shevanio AI | [Codebase Guide](docs/CODEBASE-GUIDE.md), [Components, Skills & Presets](docs/components.md), [Skill Registry](docs/skill-registry.md), and [Architecture & Development](docs/architecture.md) |
 | Understand how agent behavior is tested | [Testing Agents Deterministically](docs/testing-agents-deterministically.md) for the real-agent E2E and its model fixture |
 
 ---
@@ -409,7 +349,7 @@ This project gets better when the community builds on top of it.
 - [sub-agent-statusline](https://github.com/Joaquinvesapa/sub-agent-statusline) — optional OpenCode TUI plugin that shows sub-agent activity, status, elapsed time, and token/context usage when OpenCode exposes it.
 - [sdd-engram-plugin](https://github.com/j0k3r-dev-rgl/sdd-engram-plugin) — optional OpenCode TUI plugin to manage SDD profiles and browse Engram memories directly from OpenCode, with runtime profile activation and no restart required.
 
-When you select OpenCode in the installer, Gentle-AI asks whether to register each community plugin and offers a browser shortcut to review the repository first. Gentle-AI only ensures `~/.config/opencode/tui.json` exists and adds the plugin package names to its `plugin` array; OpenCode installs/loads those packages the next time it starts. Once OpenCode has materialized a plugin under `~/.config/opencode/node_modules/`, `gentle-ai update` can compare its local `package.json` version with the plugin's GitHub releases.
+When you select OpenCode in the installer, Shevanio AI asks whether to register each community plugin and offers a browser shortcut to review the repository first. Shevanio AI only ensures `~/.config/opencode/tui.json` exists and adds the plugin package names to its `plugin` array; OpenCode installs/loads those packages the next time it starts. Once OpenCode has materialized a plugin under `~/.config/opencode/node_modules/`, `shevanio-ai update` can compare its local `package.json` version with the plugin's GitHub releases.
 
 ### Contributors
 
@@ -423,12 +363,12 @@ This project exists because of the community. See [CONTRIBUTORS.md](CONTRIBUTORS
 
 ## Next Steps
 
-- **Just installed?** Read [Intended Usage](docs/intended-usage.md) for the mental model, then run `gentle-ai doctor` if anything looks wrong.
+- **Just installed?** Read [Intended Usage](docs/intended-usage.md) for the mental model, then run `shevanio-ai doctor` if anything looks wrong.
 - **Starting work?** Read [Organic Implementation Routing](docs/trigger-rules.md) to understand direct, delegated, and optional SDD behavior.
 - **Reviewing a focused change?** Start with the [Organic RDD architecture](docs/architecture/organic-rdd.md) and [review authority threat model](docs/review-authority-threat-model.md).
-- **Maintaining Gentle AI?** Use the [Codebase Guide](docs/CODEBASE-GUIDE.md) to find package ownership and review boundaries.
+- **Maintaining Shevanio AI?** Use the [Codebase Guide](docs/CODEBASE-GUIDE.md) to find package ownership and review boundaries.
 - **Using Pi?** Read [Pi Agent](docs/pi.md) for the `gentle-pi` harness, Pi commands, persona, and model assignments.
-- **Ready to contribute?** Start at the [Community Roadmap](docs/community-roadmap.md) — everything labelled [`up-for-grabs`](https://github.com/Gentleman-Programming/gentle-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, approved and unclaimed. Then read [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Ready to contribute?** Start at the [Community Roadmap](docs/community-roadmap.md) — everything labelled [`up-for-grabs`](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, approved and unclaimed. Then read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

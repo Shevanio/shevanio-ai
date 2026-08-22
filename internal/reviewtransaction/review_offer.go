@@ -11,7 +11,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 // OfferRequest names the one candidate an offer decision would be made for.
@@ -44,7 +44,7 @@ type Offer struct {
 // ResolveRDDMode path every other gate uses (internal/cli's review-validate
 // gates, AuthorizeRDDCandidate, AuthorizeRDDOperation) — never the global
 // scope alone. A clone can disable reviews locally without touching the
-// global switch (`gentle-ai review mode disable --scope clone`), and that
+// global switch (`shevanio-ai review mode disable --scope clone`), and that
 // clone-local disable must be just as invisible to the offer as a global
 // disable: reading only the global scope missed exactly this case (a
 // reproduced regression, CRITICAL-3 of the corrective verify cycle).

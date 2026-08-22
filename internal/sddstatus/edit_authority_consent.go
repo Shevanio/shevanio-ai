@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/consentenvelope"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/consentenvelope"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // Issue #2563 (S4b of #2540): the status layer owns the change-instance
@@ -25,7 +25,7 @@ import (
 // token from artifact content instead was rejected: a recreated change with
 // byte-identical artifacts would inherit the archived change's authority,
 // which is the resurrection hazard S5 exists to close.
-const changeInstanceMarkerFile = ".gentle-ai-instance"
+const changeInstanceMarkerFile = ".shevanio-ai-instance"
 
 const (
 	// sddConsentGrantActor and sddConsentGrantReason are the audit fields the
@@ -77,7 +77,7 @@ func ensureChangeInstanceMarker(changeRoot string) (string, error) {
 // revision) derives a fresh id.
 func sddConsentGrantRequestID(change, instance, expectedRevision string, roots []string) string {
 	hash := sha256.New()
-	for _, part := range append([]string{"gentle-ai.sdd-consent-grant-request/v1", change, instance, expectedRevision}, roots...) {
+	for _, part := range append([]string{"shevanio-ai.sdd-consent-grant-request/v1", change, instance, expectedRevision}, roots...) {
 		hash.Write([]byte(part))
 		hash.Write([]byte{0})
 	}
@@ -92,7 +92,7 @@ func sddConsentGrantRequestID(change, instance, expectedRevision string, roots [
 // declined choice re-enters through native status. The envelope satisfies
 // SDDIntegrationConsentResult.Validate by construction.
 func newEditAuthorityConsent(change, workspaceRoot string, missingRoots []string, instance, expectedRevision string) SDDIntegrationConsentResult {
-	statusInvocation := fmt.Sprintf("gentle-ai sdd-status %s --cwd %s", change, pathquote.Quote(workspaceRoot))
+	statusInvocation := fmt.Sprintf("shevanio-ai sdd-status %s --cwd %s", change, pathquote.Quote(workspaceRoot))
 	evidence := make([]string, 0, len(missingRoots))
 	for _, root := range missingRoots {
 		evidence = append(evidence, fmt.Sprintf("%s is outside the authorized edit roots", root))

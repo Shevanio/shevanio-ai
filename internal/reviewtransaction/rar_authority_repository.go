@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	RARVerificationAuthoritySchema = "gentle-ai.rar-verification-authority/v1"
-	RARNativeReceiptSchema         = "gentle-ai.rar-native-review-receipt/v1"
+	RARVerificationAuthoritySchema = "shevanio-ai.rar-verification-authority/v1"
+	RARNativeReceiptSchema         = "shevanio-ai.rar-native-review-receipt/v1"
 
-	rarAuthorityIndexSchema  = "gentle-ai.rar-authority-index/v1"
-	rarAuthorityDigestDomain = "gentle-ai.rar-verification-authority-digest/v1"
+	rarAuthorityIndexSchema  = "shevanio-ai.rar-authority-index/v1"
+	rarAuthorityDigestDomain = "shevanio-ai.rar-verification-authority-digest/v1"
 	rarAuthorityDirectory    = "rar-authority"
 	rarAuthorityVersion      = "v1"
 	rarAuthorityMaxBytes     = 4 << 20
@@ -260,7 +260,7 @@ func OpenRARAuthorityRepositoryWithRepositoryIdentityLease(
 	identity := reviewRepositoryIdentityRecordFromLease(lease)
 	root := filepath.Join(
 		identity.GitCommonDir,
-		"gentle-ai",
+		"shevanio-ai",
 		"review-transactions",
 		rarAuthorityDirectory,
 		rarAuthorityVersion,
@@ -560,7 +560,7 @@ func (repository *RARAuthorityRepository) validateIdentity(ctx context.Context) 
 	}
 	wantRoot := filepath.Join(
 		live.GitCommonDir,
-		"gentle-ai",
+		"shevanio-ai",
 		"review-transactions",
 		rarAuthorityDirectory,
 		rarAuthorityVersion,

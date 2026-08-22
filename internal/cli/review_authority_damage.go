@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // reviewAuthorityCorruptionDetail names, for a gate denial over a damaged
@@ -35,6 +35,6 @@ func reviewAuthorityCorruptionDetail(ctx context.Context, repo string) string {
 		return ""
 	}
 	return strings.Join(kinds, "; ") +
-		". Capture the complete machine-readable diagnosis for every affected lineage with `gentle-ai review inspect-authority --cwd " +
+		". Capture the complete machine-readable diagnosis for every affected lineage with `shevanio-ai review inspect-authority --cwd " +
 		strconv.Quote(repo) + "`"
 }

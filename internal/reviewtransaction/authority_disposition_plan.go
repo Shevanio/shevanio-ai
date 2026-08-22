@@ -8,11 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // AuthorityDispositionPlanSchema identifies AuthorityDispositionPlan's shape.
-const AuthorityDispositionPlanSchema = "gentle-ai.review-authority-disposition-plan/v1"
+const AuthorityDispositionPlanSchema = "shevanio-ai.review-authority-disposition-plan/v1"
 
 // AuthorityDispositionPlan is the generic, deterministically-derived
 // disposition plan for a closed-classified authority graph anomaly
@@ -62,7 +62,7 @@ type AuthorityDispositionSelector struct {
 // compactContentMismatchedRecoveryAuthorizationClass is the one closed
 // anomaly class Wave 2 derives a plan for: a recovery successor whose
 // persisted maintainer authorization carries the exact
-// gentle-ai.review-recovery-authorization/v1 schema prefix but binds
+// shevanio-ai.review-recovery-authorization/v1 schema prefix but binds
 // different content than the successor's own recorded fields — corruption
 // rather than a pre-contract legacy authorization
 // (classifyCompactRecoveryEdgeAnomalies, compact_reconcile.go). It is
@@ -276,7 +276,7 @@ func authorityInventoryRevision(records map[string]CompactRecord, historical map
 	for lineage, record := range historical {
 		revisions[lineage] = record.RawDigest
 	}
-	return classifiedAuthorityRepairDigest("gentle-ai.review-authority-inventory-revision/v1", revisions)
+	return classifiedAuthorityRepairDigest("shevanio-ai.review-authority-inventory-revision/v1", revisions)
 }
 
 // authorityDispositionPlanDigest computes plan_digest over the seven derived
@@ -308,15 +308,15 @@ func authorityDispositionPlanDigest(plan AuthorityDispositionPlan) (string, erro
 		AuthorityInventoryRevision: plan.AuthorityInventoryRevision, AnomalyClass: plan.AnomalyClass,
 		Selector: plan.Selector, SeedSet: plan.SeedSet, Closure: plan.Closure, ExpectedRevisions: plan.ExpectedRevisions,
 	}
-	return classifiedAuthorityRepairDigest("gentle-ai.review-disposition-plan-digest/v1", canonical)
+	return classifiedAuthorityRepairDigest("shevanio-ai.review-disposition-plan-digest/v1", canonical)
 }
 
 // authorityDispositionAuthorizationSchema is the first line of the exact
-// seven-line gentle-ai.review-disposition-authorization/v1 binding a
+// seven-line shevanio-ai.review-disposition-authorization/v1 binding a
 // maintainer must supply verbatim (rdd-authority-disposition-plan /
 // "Authorization Binds to Digest and Revision, No Wall-Clock Expiry",
 // pending-confirmation assumption 1).
-const authorityDispositionAuthorizationSchema = "gentle-ai.review-disposition-authorization/v1"
+const authorityDispositionAuthorizationSchema = "shevanio-ai.review-disposition-authorization/v1"
 
 // AuthorityDispositionAuthorizationSchema is the exported form of
 // authorityDispositionAuthorizationSchema for Wave 6 Slice S4's negotiated-
@@ -390,8 +390,8 @@ func validateAuthorityDispositionAuthorization(plan AuthorityDispositionPlan, ca
 func compactRepairCommandText(repo string, plan AuthorityDispositionPlan) string {
 	template := plan
 	template.Actor, template.Reason = "<actor>", "<why-it-is-repaired>"
-	return fmt.Sprintf("`gentle-ai review repair --cwd %s --plan-digest %q --inventory-revision %q --actor \"<actor>\" --reason \"<why-it-is-repaired>\" --authorization \"<maintainer-authorization>\"`"+
-		" (`gentle-ai review repair --preflight --cwd %s` re-confirms these are still current);"+
+	return fmt.Sprintf("`shevanio-ai review repair --cwd %s --plan-digest %q --inventory-revision %q --actor \"<actor>\" --reason \"<why-it-is-repaired>\" --authorization \"<maintainer-authorization>\"`"+
+		" (`shevanio-ai review repair --preflight --cwd %s` re-confirms these are still current);"+
 		" the repair quarantines the entry whole and rewrites nothing, so the recorded authorization bytes survive exactly as persisted."+
 		" --authorization is exactly these seven lines, joined by LF, with no trailing newline, using the same --actor and --reason with surrounding whitespace trimmed:\n%s",
 		pathquote.Quote(repo), plan.PlanDigest, plan.AuthorityInventoryRevision, pathquote.Quote(repo), authorityDispositionAuthorizationBinding(template))

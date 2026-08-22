@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui"
 )
 
 func TestInstallDefaultsMatchTUIModelDefaults(t *testing.T) {
@@ -241,7 +241,7 @@ func TestRunArgsSyncHelpIncludesBackgroundFlag(t *testing.T) {
 	}
 }
 
-// TestRunArgsSyncNoAgentsIsNoOp verifies that `gentle-ai sync` with no
+// TestRunArgsSyncNoAgentsIsNoOp verifies that `shevanio-ai sync` with no
 // agents flag and an empty home dir (no config dirs) completes as a no-op
 // and does NOT return an error.
 func TestRunArgsSyncNoAgentsIsNoOp(t *testing.T) {

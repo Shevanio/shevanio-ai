@@ -19,7 +19,7 @@
 
 ## GGA Behavior
 
-`gentle-ai install --component gga` installs/provisions the `gga` binary globally on your machine.
+`shevanio-ai install --component gga` installs/provisions the `gga` binary globally on your machine.
 
 It does **not** run project-level hook setup automatically (`gga init` / `gga install`) because that should be an explicit decision per repository.
 
@@ -34,7 +34,7 @@ gga install
 
 ## Skills
 
-### Included Skills (installed by gentle-ai)
+### Included Skills (installed by shevanio-ai)
 
 22 skill files organized by category, embedded in the binary and injected into your agent's configuration:
 

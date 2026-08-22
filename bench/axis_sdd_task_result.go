@@ -19,8 +19,8 @@ func init() {
 		Title:    "OpenCode SDD task-result transport failures",
 		BlackBox: false,
 		Properties: []string{
-			"Runs the installed OpenCode plugin through Node with a provider-shaped empty task_result; it does not drive the gentle-ai CLI alone.",
-			"Requires GENTLE_AI_BENCH_SDD_PLUGIN and a Node runtime that executes .mts files with built-in TypeScript type stripping; skips honestly when the plugin or runtime capability is unavailable.",
+			"Runs the installed OpenCode plugin through Node with a provider-shaped empty task_result; it does not drive the shevanio-ai CLI alone.",
+			"Requires SHEVANIO_AI_BENCH_SDD_PLUGIN and a Node runtime that executes .mts files with built-in TypeScript type stripping; skips honestly when the plugin or runtime capability is unavailable.",
 		},
 		Journeys: sddTaskResultJourneys,
 	})
@@ -41,12 +41,12 @@ func sddTaskResultJourneys() []Journey {
 }
 
 func sddTaskResultUnavailable(*Sandbox) string {
-	path := os.Getenv("GENTLE_AI_BENCH_SDD_PLUGIN")
+	path := os.Getenv("SHEVANIO_AI_BENCH_SDD_PLUGIN")
 	if path == "" {
-		return "GENTLE_AI_BENCH_SDD_PLUGIN is not set"
+		return "SHEVANIO_AI_BENCH_SDD_PLUGIN is not set"
 	}
 	if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() {
-		return "GENTLE_AI_BENCH_SDD_PLUGIN does not name an installed plugin"
+		return "SHEVANIO_AI_BENCH_SDD_PLUGIN does not name an installed plugin"
 	}
 	node, err := exec.LookPath("node")
 	if err != nil {
@@ -56,13 +56,13 @@ func sddTaskResultUnavailable(*Sandbox) string {
 }
 
 func sddTaskResultNodeUnavailable(node string) string {
-	dir, err := os.MkdirTemp("", "gentle-ai-sdd-task-result-node-*")
+	dir, err := os.MkdirTemp("", "shevanio-ai-sdd-task-result-node-*")
 	if err != nil {
 		return "node TypeScript capability check could not create a temporary directory"
 	}
 	defer os.RemoveAll(dir)
 	capability := filepath.Join(dir, "capability.mts")
-	if err := os.WriteFile(capability, []byte(`const marker: string = "gentle-ai-sdd-task-result"`), 0o600); err != nil {
+	if err := os.WriteFile(capability, []byte(`const marker: string = "shevanio-ai-sdd-task-result"`), 0o600); err != nil {
 		return "node TypeScript capability check could not write a temporary .mts file"
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), sddTaskResultHarnessTimeout)
@@ -118,7 +118,7 @@ func sddEmptyTaskResult(r *journeyRun) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), sddTaskResultHarnessTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "node", "harness.mts", os.Getenv("GENTLE_AI_BENCH_SDD_PLUGIN"), work)
+	cmd := exec.CommandContext(ctx, "node", "harness.mts", os.Getenv("SHEVANIO_AI_BENCH_SDD_PLUGIN"), work)
 	cmd.Dir = root
 	cmd.Env = r.sandbox.env()
 	var output bytes.Buffer

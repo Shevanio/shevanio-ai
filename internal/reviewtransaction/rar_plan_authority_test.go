@@ -241,7 +241,7 @@ func TestRARAuthorityRepositoryRejectsReplacedGitIdentityWithoutPublishing(
 	}
 	replacementRoot := filepath.Join(
 		originalGit,
-		"gentle-ai",
+		"shevanio-ai",
 		"review-transactions",
 		rarAuthorityDirectory,
 		rarAuthorityVersion,

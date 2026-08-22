@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 const reviewTestZeroTarget = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
@@ -33,7 +33,7 @@ func reviewDefectReportDir(t *testing.T, repo string) string {
 	if !filepath.IsAbs(commonDir) {
 		commonDir = filepath.Join(repo, commonDir)
 	}
-	return filepath.Join(commonDir, "gentle-ai", reviewDefectReportDirName)
+	return filepath.Join(commonDir, "shevanio-ai", reviewDefectReportDirName)
 }
 
 // injectReviewStartFault forces an unanticipated internal fault at START's
@@ -134,10 +134,10 @@ func TestDefectReportSaveFailureNeverMasksTheEnvelopeOrError(t *testing.T) {
 	if !filepath.IsAbs(commonDir) {
 		commonDir = filepath.Join(repo, commonDir)
 	}
-	if err := os.MkdirAll(filepath.Join(commonDir, "gentle-ai"), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Join(commonDir, "shevanio-ai"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(commonDir, "gentle-ai", reviewDefectReportDirName), []byte("occupied"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(commonDir, "shevanio-ai", reviewDefectReportDirName), []byte("occupied"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,6 +1,6 @@
 {
-  "schema": "gentle-ai.review-integration.status/v2",
-  "contract": "gentle-ai.review-integration/v1",
+  "schema": "shevanio-ai.review-integration.status/v2",
+  "contract": "shevanio-ai.review-integration/v1",
   "operation": "review.status",
   "applicability": "current_target",
   "authority": {
@@ -20,25 +20,25 @@
     "original_changed_lines": 2,
     "correction_budget": 1
   },
-  "target_identity": "sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49",
+  "target_identity": "sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75",
   "projection": {
-    "schema": "gentle-ai.review-integration.projection/v1",
+    "schema": "shevanio-ai.review-integration.projection/v1",
     "kind": "current-changes",
     "projection": "workspace",
     "base_tree": "3e21a205dd9b55021aeae87965092623807e455f",
     "initial_review_tree": "1c3325617279b38743f073302ba190fc421b5a09",
     "current_candidate_tree": "1c3325617279b38743f073302ba190fc421b5a09",
-    "paths_digest": "sha256:b93fca961a97d240c2b7023e98772f49ebd2995eda7db07043270b57bed75d71",
+    "paths_digest": "sha256:9e039ea2f673815cc9038a4a79d1e968108e477ef2d8e1d4a362daa2d1de8578",
     "paths": [
       "tracked.txt"
     ],
     "intended_untracked": [],
-    "intended_untracked_proof": "sha256:b97229718d4c7fe50a8892eb474ae5aa6491697bccb400e3e31dbaca4894d2f3",
-    "initial_snapshot_identity": "sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49",
-    "current_snapshot_identity": "sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49"
+    "intended_untracked_proof": "sha256:42a03215737104e9f00fe8e1bdcee45d2b2d109a5de64e454848658bcbc1171e",
+    "initial_snapshot_identity": "sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75",
+    "current_snapshot_identity": "sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75"
   },
   "repair": {
-    "schema": "gentle-ai.review-authority-repair-assessment/v1",
+    "schema": "shevanio-ai.review-authority-repair-assessment/v1",
     "status": "unsupported",
     "counts": {
       "lineages": 0,
@@ -54,7 +54,7 @@
       "review/complete-fix",
       "review/validate-fix"
     ],
-    "authorization_schema": "gentle-ai.review-repair-authorization/v1"
+    "authorization_schema": "shevanio-ai.review-repair-authorization/v1"
   },
   "candidates": [],
   "eligibility": {
@@ -123,7 +123,7 @@
       "inputs": [
         {
           "name": "reviewer_result",
-          "schema": "https://gentle-ai.dev/schema/review/reviewer/v1",
+          "schema": "https://shevanio-ai.dev/schema/review/reviewer/v1",
           "capture_operation": "review.capture-result",
           "arguments": [
             {
@@ -138,8 +138,8 @@
             },
             {
               "name": "target",
-              "value": "sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49",
-              "token": "--target=sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49"
+              "value": "sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75",
+              "token": "--target=sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75"
             },
             {
               "name": "repository-context",
@@ -158,13 +158,13 @@
             }
           ],
           "artifact_subject": {
-            "schema": "gentle-ai.review-artifact-subject/v1",
-            "subject_hash": "sha256:d8f46ff5cdcd86385033ce73f18cbfd61651c81deba1340b743e034cdf9dce48",
+            "schema": "shevanio-ai.review-artifact-subject/v1",
+            "subject_hash": "sha256:5040cf33270721e7f4c0344a341cb62a07c82576f425002708a8e4bcb3f24e30",
             "lineage_id": "review-status-fixture",
             "authority_revision": "sha256:c978e5383ae788a963c5e80c4f887d3b65ca415767398d57de827a9f0905f423",
-            "target_identity": "sha256:00c0d796b4136e365d0130886f300c954ecf9431c45d96d8031155c415507d49",
+            "target_identity": "sha256:6d260f123d6e918a99798667a38baebd4f447e18c040d84202ef297237649a75",
             "candidate_diff_sha256": "sha256:8ed4bd24d5beb3f73f6026355f6755f5aef7feebcd76447be820860c22bc47c6",
-            "changed_path_manifest_sha256": "sha256:64d028ff676fb4ef10f2d4a3488d568854b364b4cc4399578b5932d144d2347b",
+            "changed_path_manifest_sha256": "sha256:d13780665f7a78b565c1547a0ed269a5cd313e43b06422e385d733486f904d33",
             "lens": "review-reliability",
             "selected_order": 0
           },

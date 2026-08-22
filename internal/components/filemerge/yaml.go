@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 // UpsertYAMLMCPServerBlock removes any existing <serverID>: block nested under
@@ -281,7 +281,7 @@ func UpsertHermesContext7Block(content string) string {
 // ReadYAMLMCPServerCommand recovers the executable of a named MCP server's
 // command from a YAML config (read-only — never mutates). It is the YAML
 // counterpart of the JSON path inside engram's existingMergedEngramCommand,
-// enabling gentle-ai to preserve a command already written for a server
+// enabling shevanio-ai to preserve a command already written for a server
 // (e.g. an absolute path) instead of clobbering it on re-run.
 //
 // Algorithm (hand-rolled, NO gopkg.in/yaml.v3 — read-only block scanning):

@@ -21,37 +21,37 @@ func TestPrintedCommandArguments(t *testing.T) {
 	}{
 		{
 			name:    "plain flags",
-			command: "gentle-ai review finalize --lineage=review-1 --captured-results=true",
+			command: "shevanio-ai review finalize --lineage=review-1 --captured-results=true",
 			want:    []string{"review", "finalize", "--lineage=review-1", "--captured-results=true"},
 		},
 		{
 			name:    "single quoted value keeps its spaces",
-			command: "gentle-ai review repair --reason='the store lost a leaf'",
+			command: "shevanio-ai review repair --reason='the store lost a leaf'",
 			want:    []string{"review", "repair", "--reason=the store lost a leaf"},
 		},
 		{
 			name:    "single quoted value keeps its newlines",
-			command: "gentle-ai review recover '--maintainer-authorization=schema/v1\nactor=maintainer'",
+			command: "shevanio-ai review recover '--maintainer-authorization=schema/v1\nactor=maintainer'",
 			want:    []string{"review", "recover", "--maintainer-authorization=schema/v1\nactor=maintainer"},
 		},
 		{
 			name:    "escaped quote survives",
-			command: `gentle-ai review repair --reason='it'\''s broken'`,
+			command: `shevanio-ai review repair --reason='it'\''s broken'`,
 			want:    []string{"review", "repair", "--reason=it's broken"},
 		},
 		{
 			name:    "double quoted escapes follow POSIX rules",
-			command: `gentle-ai review repair "--reason=literal\q \$HOME \"quoted\" \\slash"`,
+			command: `shevanio-ai review repair "--reason=literal\q \$HOME \"quoted\" \\slash"`,
 			want:    []string{"review", "repair", `--reason=literal\q $HOME "quoted" \slash`},
 		},
 		{
 			name:    "double quoted escaped newline is a line continuation",
-			command: "gentle-ai review repair \"--reason=first\\\nsecond\"",
+			command: "shevanio-ai review repair \"--reason=first\\\nsecond\"",
 			want:    []string{"review", "repair", "--reason=firstsecond"},
 		},
 		{
 			name:    "surrounding whitespace is not an argument",
-			command: "  gentle-ai   review status  ",
+			command: "  shevanio-ai   review status  ",
 			want:    []string{"review", "status"},
 		},
 		{
@@ -66,7 +66,7 @@ func TestPrintedCommandArguments(t *testing.T) {
 		},
 		{
 			name:    "the product name alone is not runnable",
-			command: "gentle-ai",
+			command: "shevanio-ai",
 			wantErr: "names no arguments",
 		},
 		{
@@ -76,12 +76,12 @@ func TestPrintedCommandArguments(t *testing.T) {
 		},
 		{
 			name:    "an unterminated quote is not runnable as printed",
-			command: "gentle-ai review repair --reason='never closed",
+			command: "shevanio-ai review repair --reason='never closed",
 			wantErr: "unterminated quote",
 		},
 		{
 			name:    "a trailing escape is not runnable as printed",
-			command: `gentle-ai review repair --reason=x\`,
+			command: `shevanio-ai review repair --reason=x\`,
 			wantErr: "trailing escape",
 		},
 	}
@@ -127,7 +127,7 @@ func TestRunPrintedTransitionRefusesATransitionWithNothingToRun(t *testing.T) {
 		},
 		{
 			name: "execute with a templated command", kind: "execute", operation: "review.validate",
-			command: "gentle-ai review validate --gate <gate>",
+			command: "shevanio-ai review validate --gate <gate>",
 			wantErr: "is not runnable as printed",
 		},
 	}
@@ -155,7 +155,7 @@ func TestRunPrintedTransitionRefusesATransitionWithNothingToRun(t *testing.T) {
 func TestDeadExecuteTransitionsSeesWhatTheClassifierCannot(t *testing.T) {
 	// The real shape, reduced: a successful `review status --next-transition`
 	// answering with an execute transition that has nothing to run.
-	const dead = `{"schema":"gentle-ai.review-status/v1","action":"recover",` +
+	const dead = `{"schema":"shevanio-ai.review-status/v1","action":"recover",` +
 		`"next_transition":{"kind":"execute","reason_code":"recovery_authorized",` +
 		`"execute":{"operation":"review.recover","arguments":[{"name":"successor-lineage","value":"s"}]}}}`
 
@@ -185,7 +185,7 @@ func TestDeadExecuteTransitionsSeesWhatTheClassifierCannot(t *testing.T) {
 // deliberately carries no command and must never be reported.
 func TestDeadExecuteTransitionsAcceptsWhatIsGenuinelyRunnable(t *testing.T) {
 	for _, stdout := range []string{
-		`{"next_transition":{"kind":"execute","execute":{"operation":"review.finalize","command":"gentle-ai review finalize --lineage=review-1"}}}`,
+		`{"next_transition":{"kind":"execute","execute":{"operation":"review.finalize","command":"shevanio-ai review finalize --lineage=review-1"}}}`,
 		`{"next_transition":{"kind":"collect","collect":{"inputs":[{"capture_operation":"review.capture-result"}]}}}`,
 		`{"result":"allow","allowed":true}`,
 		"Error: not JSON at all",

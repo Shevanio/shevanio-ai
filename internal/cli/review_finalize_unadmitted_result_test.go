@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // startHighRiskCLIReview freezes a candidate the native tier assessment rates
@@ -130,7 +130,7 @@ func TestReviewFinalizeRefusesUnadmittedReviewerResults(t *testing.T) {
 
 	// The terminal artifact is what governs delivery, so its absence is the
 	// load-bearing assertion.
-	receipts, err := filepath.Glob(filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2", "*", "review-receipt.json"))
+	receipts, err := filepath.Glob(filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2", "*", "review-receipt.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

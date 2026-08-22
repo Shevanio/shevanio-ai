@@ -1,6 +1,6 @@
 //go:build !windows
 
-// This file drives the `gentle-ai review mode disable --scope clone` CLI
+// This file drives the `shevanio-ai review mode disable --scope clone` CLI
 // surface, but it lives beside the package it exercises rather than in
 // internal/cli. The filesystem primitives that reproduce a mount ignoring the
 // mode it is handed are unexported by design, and reaching them from another
@@ -19,8 +19,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestReviewModeDisableCloneSucceedsWhenTheMkdirModeDoesNotStick(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const storeLockSchema = "gentle-ai.review-store-lock/v1"
+const storeLockSchema = "shevanio-ai.review-store-lock/v1"
 
 type maintenanceLockMode bool
 
@@ -400,7 +400,7 @@ func (lock *storeLock) release() error {
 }
 
 // secureLockRoot locates the repository's Git common directory that this
-// store lock path is derived from — the parent of the fixed "gentle-ai"
+// store lock path is derived from — the parent of the fixed "shevanio-ai"
 // authority marker — so the secure open walk can anchor there instead of at
 // the filesystem root (1781). It mirrors the authority-root walk in
 // maintenanceLockPathForStoreLock, but absence or ambiguity is not an error
@@ -410,7 +410,7 @@ func secureLockRoot(path string) (string, bool) {
 	cleanPath := filepath.Clean(path)
 	var authorityRoot string
 	for current := filepath.Dir(cleanPath); ; current = filepath.Dir(current) {
-		if filepath.Base(current) == "review-transactions" && filepath.Base(filepath.Dir(current)) == "gentle-ai" {
+		if filepath.Base(current) == "review-transactions" && filepath.Base(filepath.Dir(current)) == "shevanio-ai" {
 			if authorityRoot != "" {
 				return "", false
 			}
@@ -431,7 +431,7 @@ func maintenanceLockPathForStoreLock(path string) (string, error) {
 	cleanPath := filepath.Clean(path)
 	var authorityRoot string
 	for current := filepath.Dir(cleanPath); ; current = filepath.Dir(current) {
-		if filepath.Base(current) == "review-transactions" && filepath.Base(filepath.Dir(current)) == "gentle-ai" {
+		if filepath.Base(current) == "review-transactions" && filepath.Base(filepath.Dir(current)) == "shevanio-ai" {
 			if authorityRoot != "" {
 				return "", errors.New("review store lock path has ambiguous authority roots")
 			}

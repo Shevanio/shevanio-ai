@@ -14,7 +14,7 @@ func captureResultDryRunJourneys() []Journey {
 		ID:     "j77-capture-result-input-preflight-is-read-only",
 		Review: reviewOptedIn,
 		Title:  "Capture-result input preflight validates admission without persistence",
-		Source: "https://github.com/Gentleman-Programming/gentle-ai/issues/2630",
+		Source: "https://github.com/Shevanio/shevanio-ai/issues/2630",
 		Steps: []Step{
 			{Name: "fixture: repo", Fixture: baseRepo},
 			{Name: "fixture: stage ordinary code", Fixture: stageOrdinaryCode},
@@ -80,7 +80,7 @@ func exerciseCaptureResultDryRun(r *journeyRun) error {
 		"schema": true, "operation": true, "validation": true, "lineage_id": true,
 		"lens": true, "selected_order": true, "subject_hash": true, "admission_decision": true,
 	}
-	if response["schema"] != "gentle-ai.review-capture-result-dry-run/v1" || response["operation"] != "review/capture-result" ||
+	if response["schema"] != "shevanio-ai.review-capture-result-dry-run/v1" || response["operation"] != "review/capture-result" ||
 		response["validation"] != "accepted" || response["lineage_id"] != envelope.argument("lineage") ||
 		response["lens"] != envelope.argument("lens") || response["selected_order"] != float64(order) ||
 		response["subject_hash"] != input.ArtifactSubject.SubjectHash || response["admission_decision"] != "completed" ||

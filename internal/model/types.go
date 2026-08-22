@@ -141,7 +141,7 @@ const (
 	SkillWorkUnitCommits     SkillID = "work-unit-commits"
 	SkillRDDDefectWorkflow   SkillID = "rdd-defect-workflow"
 	SkillSystemicIssueTriage SkillID = "systemic-issue-triage"
-	SkillGentleAIBench       SkillID = "gentle-ai-bench"
+	SkillShevanioAIBench     SkillID = "shevanio-ai-bench"
 )
 
 type PersonaID string
@@ -160,7 +160,7 @@ const (
 type SystemPromptStrategy int
 
 const (
-	// StrategyMarkdownSections uses <!-- gentle-ai:ID --> markers to inject sections
+	// StrategyMarkdownSections uses <!-- shevanio-ai:ID --> markers to inject sections
 	// into an existing file without clobbering user content (Claude Code CLAUDE.md).
 	StrategyMarkdownSections SystemPromptStrategy = iota
 	// StrategyFileReplace replaces the entire system prompt file (OpenCode AGENTS.md).

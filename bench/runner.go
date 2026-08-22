@@ -29,7 +29,7 @@ type Sandbox struct {
 	BenchReceiptMutationPath string
 
 	// BenchCrashAtPhase, when non-empty, is read by product binaries built
-	// with `-tags bench_fixture` as GENTLE_AI_BENCH_CRASH_AT_PHASE
+	// with `-tags bench_fixture` as SHEVANIO_AI_BENCH_CRASH_AT_PHASE
 	// (format "<phase>:<lineage_id>"): the deterministic phase-hook
 	// interruption internal/reviewtransaction's own crash-position matrix
 	// uses in-process (compactReclaimPhaseHook), reachable here through the
@@ -41,7 +41,7 @@ type Sandbox struct {
 	BenchCrashAtPhase string
 
 	// NewLineageActivation opts this sandbox's whole isolated process
-	// environment into GENTLE_AI_RDD_NEW_LINEAGE (Wave 3 Slice 5, task 6.7).
+	// environment into SHEVANIO_AI_RDD_NEW_LINEAGE (Wave 3 Slice 5, task 6.7).
 	// It is off by default, matching the product's own default-off
 	// activation switch (design decision 5): every wave1/wave2/edge/sdd
 	// journey that never sets this stays on the legacy `review start` path,
@@ -104,13 +104,13 @@ func (s *Sandbox) env() []string {
 		"LANG=C",
 	}
 	if s.BenchReceiptMutationPath != "" {
-		env = append(env, "GENTLE_AI_BENCH_MUTATE_RECEIPT="+s.BenchReceiptMutationPath)
+		env = append(env, "SHEVANIO_AI_BENCH_MUTATE_RECEIPT="+s.BenchReceiptMutationPath)
 	}
 	if s.BenchCrashAtPhase != "" {
-		env = append(env, "GENTLE_AI_BENCH_CRASH_AT_PHASE="+s.BenchCrashAtPhase)
+		env = append(env, "SHEVANIO_AI_BENCH_CRASH_AT_PHASE="+s.BenchCrashAtPhase)
 	}
 	if s.NewLineageActivation {
-		env = append(env, "GENTLE_AI_RDD_NEW_LINEAGE=1")
+		env = append(env, "SHEVANIO_AI_RDD_NEW_LINEAGE=1")
 	}
 	// Set last so a journey that poisons the process temp directory overrides
 	// the sandbox's own writable TMP/TEMP/TMPDIR defaults above.
@@ -174,7 +174,7 @@ func (s *Sandbox) initRepo(path string) error {
 		return err
 	}
 	// The installed agent config must never leak into a reviewed diff.
-	return s.write(filepath.Join(path, ".gitignore"), ".claude/\n.gentle-ai/\n")
+	return s.write(filepath.Join(path, ".gitignore"), ".claude/\n.shevanio-ai/\n")
 }
 
 func (s *Sandbox) write(path, content string) error {
@@ -433,7 +433,7 @@ type Step struct {
 	// README.
 	DeadEnd bool
 	// ByDesign declares the opposite: a block here is a CORRECT refusal that
-	// already told the operator what to do, in words no `gentle-ai` command
+	// already told the operator what to do, in words no `shevanio-ai` command
 	// could express. It is the second author-declared input, and the more
 	// expensive one — a shape from a closed vocabulary plus a quote of the
 	// product's own next-action text, verified against the emitted bytes.
@@ -469,7 +469,7 @@ const (
 	// reviewPreconditionUndeclared is the zero value, and validateCorpus
 	// rejects it. A new journey has to say which world it runs in.
 	reviewPreconditionUndeclared ReviewPrecondition = ""
-	// reviewOptedIn runs `gentle-ai review mode enable --scope global` in the
+	// reviewOptedIn runs `shevanio-ai review mode enable --scope global` in the
 	// sandbox HOME before the journey's first product command, exactly as a
 	// user opts in, and fails the journey if the product does not then report
 	// the switch on. Global is the only scope that can assert "on": a clone may
@@ -630,7 +630,7 @@ func (r *journeyRun) runInteractive(args []string, modelRun bool, exchange func(
 func runJourney(binary string, journey Journey) JourneyResult {
 	result := JourneyResult{ID: journey.ID, Title: journey.Title, Source: journey.Source, Status: StatusCompleted}
 
-	root, err := os.MkdirTemp("", "gentle-ai-bench-"+journey.ID+"-")
+	root, err := os.MkdirTemp("", "shevanio-ai-bench-"+journey.ID+"-")
 	if err != nil {
 		result.Status = StatusFailed
 		result.FailureReason = err.Error()

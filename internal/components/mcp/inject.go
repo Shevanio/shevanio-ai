@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 type InjectionResult struct {

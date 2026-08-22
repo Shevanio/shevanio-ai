@@ -12,7 +12,7 @@ import (
 
 // CompactRecoveryBindingDomain separates every hash the composed
 // scope_changed recovery binding derives from other review identities.
-const CompactRecoveryBindingDomain = "gentle-ai.compact-recovery-binding/v1"
+const CompactRecoveryBindingDomain = "shevanio-ai.compact-recovery-binding/v1"
 
 // compactRecoveryBinding composes the publication-binding inputs of one
 // unbroken scope_changed recovery chain. Recovery successors always start as

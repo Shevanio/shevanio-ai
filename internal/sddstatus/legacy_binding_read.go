@@ -1,12 +1,12 @@
 package sddstatus
 
-import "github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+import "github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 
 // legacy_binding_read.go is Wave 4 S5's read-only migration path (design.md
-// decision 2): an existing gentle-ai.sdd-review-binding/v1 file parses via
+// decision 2): an existing shevanio-ai.sdd-review-binding/v1 file parses via
 // the unchanged parseBinding validation (review_binding.go) and projects,
 // in memory only, to a reviewtransaction.SDDReceiptRef. It is never
-// rewritten and never unlinked by gentle-ai — deletion is Wave 7's own,
+// rewritten and never unlinked by shevanio-ai — deletion is Wave 7's own,
 // separate, explicitly destructive step (task 8.1), after the replacement
 // path is proven.
 //

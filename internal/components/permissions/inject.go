@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 type InjectionResult struct {
@@ -16,7 +16,7 @@ type InjectionResult struct {
 
 // TargetPath returns the file path that permission injection creates or updates
 // for the adapter, or an empty string when the agent has no supported
-// permission injection target. Codex has no target: gentle-ai relies on Codex's
+// permission injection target. Codex has no target: shevanio-ai relies on Codex's
 // built-in default permissions and does not write its permissions config at all.
 func TargetPath(homeDir string, adapter agents.Adapter) string {
 	if agentOverlay(adapter.Agent()) == nil {
@@ -136,7 +136,7 @@ func agentOverlay(id model.AgentID) []byte {
 		// Cursor manages permissions via cli-config.json, not settings.json.
 		return nil
 	case model.AgentCodex:
-		// Codex relies on its built-in default permissions. gentle-ai writes
+		// Codex relies on its built-in default permissions. shevanio-ai writes
 		// nothing to Codex's permissions config — not a profile, and not the
 		// legacy cleanup that used to strip one. Codex refuses to load a config
 		// that defines a [permissions.*] profile without default_permissions,

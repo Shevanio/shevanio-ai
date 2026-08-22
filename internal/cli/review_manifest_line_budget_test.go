@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // reviewManifestLineBudget is the per-entry line cost this product accepts for
@@ -163,7 +163,7 @@ func TestEncodeReviewJSONLeavesNonManifestPayloadsByteIdentical(t *testing.T) {
 		[]any{},
 		map[string]any{"empty_object": map[string]any{}, "empty_array": []any{}, "nested": map[string]any{"deep": []any{1, 2, 3}}},
 		map[string]any{"escaped": "quote \" backslash \\ newline \n tag <b>&</b>", "unicode": "árbol ✅"},
-		ReviewIntegrationFailure{Schema: "gentle-ai.review-integration.failure/v2", Operation: "review.start", Code: "invalid_request"},
+		ReviewIntegrationFailure{Schema: "shevanio-ai.review-integration.failure/v2", Operation: "review.start", Code: "invalid_request"},
 	}
 	for index, payload := range payloads {
 		var emitted, reference bytes.Buffer
@@ -201,7 +201,7 @@ func TestEncodeReviewJSONPreservesManifestValue(t *testing.T) {
 		Schema              string                                       `json:"schema"`
 		ChangedPathManifest []reviewtransaction.ChangedPathManifestEntry `json:"changed_path_manifest"`
 		Trailing            string                                       `json:"trailing"`
-	}{Schema: "gentle-ai.review-capture-preflight/v1", ChangedPathManifest: manifest, Trailing: "after"}
+	}{Schema: "shevanio-ai.review-capture-preflight/v1", ChangedPathManifest: manifest, Trailing: "after"}
 
 	var emitted bytes.Buffer
 	if err := encodeReviewJSON(&emitted, source); err != nil {

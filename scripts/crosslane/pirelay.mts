@@ -16,7 +16,7 @@
 //   {
 //     "capture_argument_tokens": ["--lineage=...", ...],
 //     "submission": { "operation_token", "argument_tokens", "value"|"values" },
-//     "gentle_ai_executable": "/abs/path/gentle-ai",
+//     "shevanio_ai_executable": "/abs/path/shevanio-ai",
 //     "pi_executable": "pi"
 //   }
 // Output: one JSON result line on stdout:
@@ -38,7 +38,7 @@ interface CaseConfig {
     value?: WireSubmissionValue
     values?: WireSubmissionValue[]
   }
-  gentle_ai_executable: string
+  shevanio_ai_executable: string
   pi_executable: string
 }
 
@@ -57,7 +57,7 @@ const submission = {
 const result = await runReviewHostRelaySlot({
   captureArgumentTokens: config.capture_argument_tokens,
   submission,
-  gentleAiExecutable: config.gentle_ai_executable,
+  shevanioAiExecutable: config.shevanio_ai_executable,
   piExecutable: config.pi_executable,
   environment: { ...process.env, GENTLE_PI_REVIEW_RELAY_CONTRACT: "gentle-pi.review-relay/v1" },
 })

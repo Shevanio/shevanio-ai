@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestReviewCaptureEvidenceRepositoryResolverDiagnostics(t *testing.T) {

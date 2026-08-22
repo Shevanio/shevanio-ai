@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // damageReviewAuthorityTree makes this clone's review-transactions tree fail
@@ -14,7 +14,7 @@ import (
 // pointing outside the repository, so every ancestor walk over it refuses.
 func damageReviewAuthorityTree(t *testing.T, repo string) {
 	t.Helper()
-	gentle := filepath.Join(repo, ".git", "gentle-ai")
+	gentle := filepath.Join(repo, ".git", "shevanio-ai")
 	if err := os.MkdirAll(gentle, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func damageReviewAuthorityTree(t *testing.T, repo string) {
 // consequence: with authority failing RAR path safety, `review mode disable
 // --scope clone` exited non-zero without persisting, and the mode stayed on.
 //
-// This matters beyond one command. `gentle-ai review mode disable --scope
+// This matters beyond one command. `shevanio-ai review mode disable --scope
 // clone` is the continuation the stop-reason table names for most
 // unrecoverable review states, including corrupted_or_unverifiable_authority.
 // Those codes were pointing at an exit that did not work in precisely the

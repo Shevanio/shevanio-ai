@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // reviewLensContextTimeout bounds the whole assembly, not one read. The surface
@@ -43,14 +43,14 @@ const reviewLensContextTimeout = 120 * time.Second
 const reviewLensContextByteBudget = reviewtransaction.MaxFrozenCandidateDiffBytes
 
 const (
-	reviewLensContextBindingHeader = "GENTLE_AI_REVIEW_BINDING"
-	reviewLensContextContextHeader = "GENTLE_AI_REVIEW_CONTEXT"
-	reviewLensContextNameStatus    = "GENTLE_AI_REVIEW_NAME_STATUS"
-	reviewLensContextNumstat       = "GENTLE_AI_REVIEW_NUMSTAT"
-	reviewLensContextInstruction   = "GENTLE_AI_REVIEW_INSTRUCTION"
-	reviewLensContextResultSchema  = "GENTLE_AI_REVIEW_RESULT_SCHEMA"
-	reviewLensContextPatch         = "GENTLE_AI_REVIEW_PATCH"
-	reviewLensContextTerminator    = "GENTLE_AI_REVIEW_CONTEXT_END"
+	reviewLensContextBindingHeader = "SHEVANIO_AI_REVIEW_BINDING"
+	reviewLensContextContextHeader = "SHEVANIO_AI_REVIEW_CONTEXT"
+	reviewLensContextNameStatus    = "SHEVANIO_AI_REVIEW_NAME_STATUS"
+	reviewLensContextNumstat       = "SHEVANIO_AI_REVIEW_NUMSTAT"
+	reviewLensContextInstruction   = "SHEVANIO_AI_REVIEW_INSTRUCTION"
+	reviewLensContextResultSchema  = "SHEVANIO_AI_REVIEW_RESULT_SCHEMA"
+	reviewLensContextPatch         = "SHEVANIO_AI_REVIEW_PATCH"
+	reviewLensContextTerminator    = "SHEVANIO_AI_REVIEW_CONTEXT_END"
 )
 
 // reviewLensContextBinding is the machine data a relaying orchestrator used to
@@ -199,14 +199,14 @@ func runReviewLensContext(args []string, help io.Writer, deps reviewLensContextD
 		return nil, nil
 	}
 	if flags.NArg() != 0 || strings.TrimSpace(*repositoryContext) == "" || strings.TrimSpace(*lens) == "" {
-		return nil, reviewPreflightError(errors.New("review lens-context requires the exact provider-issued repository context and lens carried by the collect transition; run `gentle-ai review lens-context --help` for the closed command form"))
+		return nil, reviewPreflightError(errors.New("review lens-context requires the exact provider-issued repository context and lens carried by the collect transition; run `shevanio-ai review lens-context --help` for the closed command form"))
 	}
 	level := reviewtransaction.ReviewerContextLevel(strings.TrimSpace(*delivery))
 	if level == reviewtransaction.ReviewerContextLevelProviderContract {
 		return nil, reviewPreflightError(errors.New("review lens-context delivery provider_contract is reserved for Go-owned provider execution and cannot be declared by callers")) // refusal:by-design world-action: only the live Go transport may record its provider contract provenance
 	}
 	if !reviewtransaction.ReviewerContextLevelAccepted(level) {
-		return nil, reviewPreflightError(fmt.Errorf("unknown reviewer context delivery %q; run `gentle-ai review lens-context --help` for the closed command form", *delivery))
+		return nil, reviewPreflightError(fmt.Errorf("unknown reviewer context delivery %q; run `shevanio-ai review lens-context --help` for the closed command form", *delivery))
 	}
 
 	authority, err := resolveReviewLensAuthority(ctx, deps, strings.TrimSpace(*repositoryContext), strings.TrimSpace(*lens))
@@ -551,7 +551,7 @@ func reviewLensContextInstructionText(binding reviewLensContextBinding, paths in
 	if !found {
 		return "", reviewLensContextRefusal("lens_context_lens_not_selected", reviewLensContextRefreshAction)
 	}
-	return fmt.Sprintf(`You are the %s lens of one bounded Gentle AI review. %s
+	return fmt.Sprintf(`You are the %s lens of one bounded Shevanio AI review. %s
 
 Scope. The %s sections below are the complete and only view of this candidate: all %d changed paths are present in full, in the canonical manifest order carried by %s. Do not read the working tree, the index, HEAD, or any other file, and do not run any command. Nothing outside these sections is part of this candidate, and anything you cannot see here is not evidence.
 

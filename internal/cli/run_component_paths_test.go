@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/agentguidance"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/opencodedefault"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/agentguidance"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestComponentPathsSDDIncludesSystemPromptForAllSupportedAgents(t *testing.T) {
@@ -139,18 +139,18 @@ func TestComponentPersonaPiUsesResolvedScopePath(t *testing.T) {
 	selection := model.Selection{Persona: model.PersonaNeutral}
 
 	global := componentPathsWithWorkspaceScoped(home, workspace, ScopeGlobal, selection, adapters, model.ComponentPersona)
-	if !containsPath(global, filepath.Join(home, ".pi", "gentle-ai", "persona.json")) {
+	if !containsPath(global, filepath.Join(home, ".pi", "shevanio-ai", "persona.json")) {
 		t.Fatalf("global Pi persona paths = %v, missing home-scoped config", global)
 	}
-	if !containsPath(global, filepath.Join(workspace, ".pi", "gentle-ai", "persona.json")) {
+	if !containsPath(global, filepath.Join(workspace, ".pi", "shevanio-ai", "persona.json")) {
 		t.Fatalf("global Pi persona paths = %v, missing active workspace config", global)
 	}
 
 	workspacePaths := componentPathsWithWorkspaceScoped(home, workspace, ScopeWorkspace, selection, adapters, model.ComponentPersona)
-	if !containsPath(workspacePaths, filepath.Join(workspace, ".pi", "gentle-ai", "persona.json")) {
+	if !containsPath(workspacePaths, filepath.Join(workspace, ".pi", "shevanio-ai", "persona.json")) {
 		t.Fatalf("workspace Pi persona paths = %v, missing workspace-scoped config", workspacePaths)
 	}
-	if containsPath(workspacePaths, filepath.Join(home, ".pi", "gentle-ai", "persona.json")) {
+	if containsPath(workspacePaths, filepath.Join(home, ".pi", "shevanio-ai", "persona.json")) {
 		t.Fatalf("workspace Pi persona paths = %v, unexpectedly contains home config", workspacePaths)
 	}
 
@@ -188,18 +188,18 @@ func TestInstallPiPersonaWritesManagedScopePaths(t *testing.T) {
 				t.Fatalf("componentApplyStep.Run() error = %v", err)
 			}
 
-			want := filepath.Join(root, ".pi", "gentle-ai", "persona.json")
+			want := filepath.Join(root, ".pi", "shevanio-ai", "persona.json")
 			if _, err := os.Stat(want); err != nil {
 				t.Fatalf("Pi persona config %q was not written: %v", want, err)
 			}
 			if tt.scope == ScopeGlobal {
-				workspacePath := filepath.Join(workspace, ".pi", "gentle-ai", "persona.json")
+				workspacePath := filepath.Join(workspace, ".pi", "shevanio-ai", "persona.json")
 				if _, err := os.Stat(workspacePath); err != nil {
 					t.Fatalf("global Pi persona config %q was not seeded: %v", workspacePath, err)
 				}
 				return
 			}
-			unwanted := filepath.Join(other, ".pi", "gentle-ai", "persona.json")
+			unwanted := filepath.Join(other, ".pi", "shevanio-ai", "persona.json")
 			if _, err := os.Stat(unwanted); !os.IsNotExist(err) {
 				t.Fatalf("workspace-scoped Pi persona config %q was written outside scope; stat err = %v", unwanted, err)
 			}
@@ -515,7 +515,7 @@ func TestComponentPathsEngramCodexIncludesConfigTOML(t *testing.T) {
 }
 
 // TestComponentPathsPermissionsCodexContributesNoPaths pins that the
-// Permission component claims nothing under ~/.codex. gentle-ai does not write
+// Permission component claims nothing under ~/.codex. shevanio-ai does not write
 // Codex's permissions config — not a profile, and not the legacy cleanup that
 // used to strip one — so there is no injection target to verify and nothing to
 // snapshot for rollback. A path reappearing here would mean something started
@@ -622,10 +622,10 @@ func containsPath(paths []string, want string) bool {
 // the optional SDD component must still receive it (issue #1794).
 
 const (
-	routingOpenMarker  = "<!-- gentle-ai:" + agentguidance.RoutingSectionID + " -->"
-	routingCloseMarker = "<!-- /gentle-ai:" + agentguidance.RoutingSectionID + " -->"
+	routingOpenMarker  = "<!-- shevanio-ai:" + agentguidance.RoutingSectionID + " -->"
+	routingCloseMarker = "<!-- /shevanio-ai:" + agentguidance.RoutingSectionID + " -->"
 
-	legacyTriggerRulesOpenMarker = "<!-- gentle-ai:trigger-rules -->"
+	legacyTriggerRulesOpenMarker = "<!-- shevanio-ai:trigger-rules -->"
 )
 
 // newTestInstallRuntime builds an install runtime whose resolved plan mirrors
@@ -734,7 +734,7 @@ func TestInstallDeliversRoutingGuidanceWithoutSDDComponent(t *testing.T) {
 }
 
 func TestInstallRoutingGuidanceIsIndependentOfSDDSelection(t *testing.T) {
-	const sddMarker = "<!-- gentle-ai:sdd-orchestrator -->"
+	const sddMarker = "<!-- shevanio-ai:sdd-orchestrator -->"
 
 	withoutSDD := t.TempDir()
 	runInstallInjectionSteps(t, newTestInstallRuntime(t, withoutSDD, model.Selection{

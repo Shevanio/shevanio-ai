@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 var (
@@ -22,11 +22,11 @@ var (
 	codeGraphTempDir     = os.TempDir
 )
 
-// RunCodeGraph exposes the safe, Gentle-AI-owned initialization boundary used
+// RunCodeGraph exposes the safe, Shevanio AI-owned initialization boundary used
 // by generated agent guidance. It intentionally accepts no raw CodeGraph args.
 func RunCodeGraph(args []string, stdout io.Writer) error {
 	if len(args) != 3 || args[0] != "init" || args[1] != "--cwd" || strings.TrimSpace(args[2]) == "" {
-		return fmt.Errorf("usage: gentle-ai codegraph init --cwd <project-root>")
+		return fmt.Errorf("usage: shevanio-ai codegraph init --cwd <project-root>")
 	}
 	root, err := canonicalCodeGraphProjectRoot(args[2])
 	if err != nil {

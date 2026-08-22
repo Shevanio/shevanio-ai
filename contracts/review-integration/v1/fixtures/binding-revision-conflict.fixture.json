@@ -1,6 +1,6 @@
 {
-  "schema": "gentle-ai.review-integration.failure/v1",
-  "contract": "gentle-ai.review-integration/v1",
+  "schema": "shevanio-ai.review-integration.failure/v1",
+  "contract": "shevanio-ai.review-integration/v1",
   "operation": "review.bind_sdd",
   "phase": "pre_native",
   "code": "binding_revision_conflict",

@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/consentenvelope"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/consentenvelope"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewIntegrationConsentSchema = "gentle-ai.review-integration.consent/v1"
-const ReviewIntegrationConsentSchemaID = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/consent.schema.json"
-const ReviewIntegrationConsentSchemaV2 = "gentle-ai.review-integration.consent/v2"
-const ReviewIntegrationConsentSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/consent.schema.json"
-const ReviewIntegrationConsentSchemaV3 = "gentle-ai.review-integration.consent/v3"
-const ReviewIntegrationConsentSchemaIDV3 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/consent-v3.schema.json"
+const ReviewIntegrationConsentSchema = "shevanio-ai.review-integration.consent/v1"
+const ReviewIntegrationConsentSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/consent.schema.json"
+const ReviewIntegrationConsentSchemaV2 = "shevanio-ai.review-integration.consent/v2"
+const ReviewIntegrationConsentSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/consent.schema.json"
+const ReviewIntegrationConsentSchemaV3 = "shevanio-ai.review-integration.consent/v3"
+const ReviewIntegrationConsentSchemaIDV3 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/consent-v3.schema.json"
 
 // ReviewIntegrationConsentResult is the typed per-candidate consent question a
 // relay-declared negotiated START answers with instead of proceeding. It is a
@@ -99,7 +99,7 @@ func reviewConsentEnvelopeTextFor(locale reviewConsentLocale, assessment reviewt
 		}
 	}
 	return reviewConsentEnvelopeText{
-		headline:       "Gentle AI puede revisar este cambio antes de que lo des por terminado.",
+		headline:       "Shevanio AI puede revisar este cambio antes de que lo des por terminado.",
 		reason:         reviewConsentSpanishReason(assessment),
 		value:          "La revisión lleva un poco más de tiempo y hace que el resultado sea considerablemente más seguro.",
 		evidence:       reviewConsentSpanishRiskEvidence(assessment),
@@ -359,7 +359,7 @@ func (result ReviewIntegrationConsentResult) Validate() error {
 		return err
 	}
 	for _, choice := range result.Choices {
-		if !strings.HasPrefix(choice.Invocation, "gentle-ai review start ") ||
+		if !strings.HasPrefix(choice.Invocation, "shevanio-ai review start ") ||
 			!strings.Contains(choice.Invocation, " --target "+result.TargetIdentity) ||
 			!strings.Contains(choice.Invocation, " --consent "+choice.Answer) {
 			return fmt.Errorf("consent choice %q does not name a runnable candidate-scoped invocation", choice.Answer) // refusal:by-design world-action: this envelope is built and validated by the same file; the exit is a code fix, not a command

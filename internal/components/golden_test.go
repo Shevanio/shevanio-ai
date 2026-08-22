@@ -8,23 +8,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/antigravity"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	codexagent "github.com/gentleman-programming/gentle-ai/v2/internal/agents/codex"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/cursor"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/gemini"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/kiro"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/vscode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/windsurf"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/engram"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/mcp"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/persona"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/sdd"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/skills"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/antigravity"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	codexagent "github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/cursor"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/gemini"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/kiro"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/vscode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/windsurf"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/mcp"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/persona"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -176,7 +176,7 @@ func TestGoldenSDD_OpenCode_Multi(t *testing.T) {
 		}
 	}
 	assertGolden(t, "sdd-opencode-multi-settings.golden", settingsJSON)
-	if strings.Contains(string(settingsJSON), "<!-- gentle-ai:opencode-background-subagents -->") {
+	if strings.Contains(string(settingsJSON), "<!-- shevanio-ai:opencode-background-subagents -->") {
 		t.Fatal("default OpenCode golden output unexpectedly contains background policy")
 	}
 
@@ -202,8 +202,8 @@ func TestGoldenSDD_Cursor(t *testing.T) {
 		t.Fatalf("sdd.Inject(cursor) changed = false")
 	}
 
-	// Cursor writes SDD orchestrator to ~/.cursor/rules/gentle-ai.mdc.
-	rulesFile := readTestFile(t, filepath.Join(home, ".cursor", "rules", "gentle-ai.mdc"))
+	// Cursor writes SDD orchestrator to ~/.cursor/rules/shevanio-ai.mdc.
+	rulesFile := readTestFile(t, filepath.Join(home, ".cursor", "rules", "shevanio-ai.mdc"))
 	assertGolden(t, "sdd-cursor-rules.golden", rulesFile)
 
 	// Golden-check a representative SDD skill file.
@@ -426,7 +426,7 @@ func TestGoldenSDD_Kiro(t *testing.T) {
 		t.Fatalf("sdd.Inject(kiro) changed = false")
 	}
 
-	// Kiro writes SDD orchestrator to ~/.kiro/steering/gentle-ai.md
+	// Kiro writes SDD orchestrator to ~/.kiro/steering/shevanio-ai.md
 	// (StrategySteeringFile). Use the adapter to resolve the platform-specific path.
 	promptPath := adapter.SystemPromptFile(home)
 	instructionsFile := readTestFile(t, promptPath)

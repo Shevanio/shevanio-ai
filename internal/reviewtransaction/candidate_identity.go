@@ -67,7 +67,7 @@ func shadowChangedPathsModesDigest(ctx context.Context, repo string, paths []str
 		return "", err
 	}
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.paths-modes/v1\x00"))
+	hash.Write([]byte("shevanio-ai.paths-modes/v1\x00"))
 	for _, path := range paths {
 		modes, ok := modesByPath[path]
 		if !ok {

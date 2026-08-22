@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 type InjectionResult struct {
@@ -22,7 +22,7 @@ type InjectionResult struct {
 // Pi resolves this file relative to the active agent configuration root, which
 // is the user's home for global install and the workspace for workspace install.
 func PiPersonaConfigPath(rootDir string) string {
-	return filepath.Join(rootDir, ".pi", "gentle-ai", "persona.json")
+	return filepath.Join(rootDir, ".pi", "shevanio-ai", "persona.json")
 }
 
 // InjectPiPersona writes the small runtime config consumed by gentle-pi.
@@ -75,12 +75,12 @@ var openCodeAgentOverlayJSON = []byte("{\n  \"agent\": {\n    \"gentleman\": {\n
 
 // Inject performs a full persona injection: the marker-bound markdown block,
 // the OpenCode/Kilocode `gentleman` agent definition in settings JSON, AND
-// the Claude Code output-style overlay. Used by `gentle-ai install`.
+// the Claude Code output-style overlay. Used by `shevanio-ai install`.
 func Inject(homeDir string, adapter agents.Adapter, persona model.PersonaID) (InjectionResult, error) {
 	return injectInternal(homeDir, adapter, persona, false)
 }
 
-// InjectForSync regenerates the persona assets that `gentle-ai sync` is
+// InjectForSync regenerates the persona assets that `shevanio-ai sync` is
 // allowed to touch. It writes:
 //   - The marker-bound persona block in the agent's prompt file (markdown).
 //   - The Gentleman output-style file + outputStyle settings overlay (Claude
@@ -463,7 +463,7 @@ func injectOpenClawSoulPersona(workspaceDir, content string) (InjectionResult, e
 }
 
 // shouldStripManagedLegacyPersona returns true ONLY when the existing file
-// already contains a <!-- gentle-ai:persona --> section. That is the strongest
+// already contains a <!-- shevanio-ai:persona --> section. That is the strongest
 // evidence that the pre-marker persona content is stale legacy text written by
 // an older installer, not user-authored content that happens to share headings.
 //
@@ -493,7 +493,7 @@ func isExactLegacyPersonaAsset(existing string) bool {
 }
 
 func shouldStripManagedLegacyPersona(existing string) bool {
-	return strings.Contains(existing, "<!-- gentle-ai:persona -->")
+	return strings.Contains(existing, "<!-- shevanio-ai:persona -->")
 }
 
 // isGentlemanConversationPersona reports whether the persona keeps the voseo
@@ -600,7 +600,7 @@ var osReadFile = func(path string) ([]byte, error) {
 }
 
 // preserveManagedSections checks whether the existing file content has
-// gentle-ai managed sections (SDD orchestrator, engram protocol, etc.) and
+// shevanio-ai managed sections (SDD orchestrator, engram protocol, etc.) and
 // returns new content that preserves those sections while replacing only the
 // persona text before them. Returns ("", false) when no preservation is needed
 // (empty file, Gentleman persona, or no managed markers found).
@@ -609,7 +609,7 @@ func preserveManagedSections(existing, newPersona string, persona model.PersonaI
 		return "", false
 	}
 
-	idx := strings.Index(existing, "<!-- gentle-ai:")
+	idx := strings.Index(existing, "<!-- shevanio-ai:")
 	if idx < 0 {
 		return "", false
 	}
@@ -641,7 +641,7 @@ func readFileOrEmpty(path string) (string, error) {
 
 func wrapInstructionsFile(content string) string {
 	frontmatter := "---\n" +
-		"name: Gentle AI Persona\n" +
+		"name: Shevanio AI Persona\n" +
 		"description: Teaching-oriented persona with SDD orchestration and Engram protocol\n" +
 		"applyTo: \"**\"\n" +
 		"---\n\n"

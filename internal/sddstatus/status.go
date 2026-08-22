@@ -12,11 +12,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const SchemaName = "gentle-ai.sdd-status"
+const SchemaName = "shevanio-ai.sdd-status"
 const SchemaVersion = 1
 
 type ArtifactStore string
@@ -231,7 +231,7 @@ type Status struct {
 	ReVerify *ReVerifyBlock `json:"reVerify,omitempty"`
 	// Consent is #2563's (S4b of #2540) edit-authority consent question:
 	// present exactly when the status reports blocked(edit_authority_missing),
-	// carrying the typed gentle-ai.sdd-integration.consent/v1 envelope whose
+	// carrying the typed shevanio-ai.sdd-integration.consent/v1 envelope whose
 	// granted choice names the exact runnable grant invocation. Structural
 	// absence (nil, omitempty) everywhere else — the same optional-block
 	// discipline ReviewOffer established.
@@ -282,7 +282,7 @@ func applyReviewOfferRouting(ctx context.Context, status *Status, workspaceRoot,
 	status.ReviewOffer = &ReviewOfferBlock{
 		Available:  offer.Available,
 		LineageID:  offer.LineageID,
-		Invocation: fmt.Sprintf("gentle-ai review start --cwd %s", pathquote.Quote(workspaceRoot)),
+		Invocation: fmt.Sprintf("shevanio-ai review start --cwd %s", pathquote.Quote(workspaceRoot)),
 	}
 }
 
@@ -477,7 +477,7 @@ func Resolve(options ResolveOptions) (Status, error) {
 				return blockedStatus(ArtifactStoreOpenSpec, workspaceRoot, nil, nil, "sdd-new", []string{
 					"No active OpenSpec changes found under openspec/changes.",
 					fmt.Sprintf(
-						"Exploration-only directories are not active changes: %s. Run `gentle-ai sdd-status <change-name> --cwd %s` to inspect one explicitly.",
+						"Exploration-only directories are not active changes: %s. Run `shevanio-ai sdd-status <change-name> --cwd %s` to inspect one explicitly.",
 						strings.Join(activeChanges, ", "), workspaceRoot,
 					),
 				}, options.IncludeInstructions), nil
@@ -585,7 +585,7 @@ func Resolve(options ResolveOptions) (Status, error) {
 	// consulted once here, mirroring applyReviewGate's own fix. Without this,
 	// a stale-verify-totals fixture reached resolveReviewAuthority's
 	// discovery walk and appended "... run the fresh full review ... with
-	// gentle-ai review start" as a blocked reason while the switch was OFF —
+	// shevanio-ai review start" as a blocked reason while the switch was OFF —
 	// a command the switch itself refuses to run, and archive blocking on
 	// review grounds while OFF at all, both violations of the ratified
 	// "archive consults no reviewGate structured status ... archive cannot
@@ -881,7 +881,7 @@ func applyNativeRuntimeErrorRouting(status *Status, runtimeErr error) {
 		change = *status.ChangeName
 	}
 	reason := fmt.Sprintf(
-		"native SDD runtime authority is unreadable and execution is blocked: %v; do not launch another actor or edit the Git-common-dir authority manually; the compact attempt path reports blocked(corrupt_authority), and full `gentle-ai sdd-attempt status --cwd %s --change %q` is a maintainer diagnostic only",
+		"native SDD runtime authority is unreadable and execution is blocked: %v; do not launch another actor or edit the Git-common-dir authority manually; the compact attempt path reports blocked(corrupt_authority), and full `shevanio-ai sdd-attempt status --cwd %s --change %q` is a maintainer diagnostic only",
 		runtimeErr, pathquote.Quote(status.ActionContext.WorkspaceRoot), change,
 	)
 	status.Dependencies.Apply = DependencyBlocked
@@ -1201,7 +1201,7 @@ func blockedEngramStatus(workspaceRoot string, changeName *string, next string, 
 // apply -> verify -> offer -> archive sequence.
 
 func shouldTryEngram(workspaceRoot string) bool {
-	if os.Getenv("GENTLE_AI_SDD_STATUS_ENGRAM") != "" {
+	if os.Getenv("SHEVANIO_AI_SDD_STATUS_ENGRAM") != "" {
 		return true
 	}
 	if _, err := os.Stat(filepath.Join(workspaceRoot, ".engram")); err == nil {
@@ -1227,7 +1227,7 @@ func configMentionsEngram(content string) bool {
 }
 
 func exportEngramObservations(workspaceRoot string) ([]engramObservation, error) {
-	tmp, err := os.CreateTemp("", "gentle-ai-sdd-engram-*.json")
+	tmp, err := os.CreateTemp("", "shevanio-ai-sdd-engram-*.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1612,7 +1612,7 @@ func resolveWorkspaceRoot(options ResolveOptions) (string, error) {
 	// Nothing legitimate is rejected: no project lives at `/` or at `C:\`, so
 	// there is no false positive to weigh against the confusion this prevents.
 	if filepath.Dir(root) == root {
-		return "", fmt.Errorf("workspace root %q is a filesystem root, which never holds an SDD project: whatever produced this call passed the wrong --cwd. Rerun it against the project: `gentle-ai sdd-status --cwd \"<project-directory>\" --json`. If the change is Engram-backed, this dispatcher is blind to it and should not be called at all", root)
+		return "", fmt.Errorf("workspace root %q is a filesystem root, which never holds an SDD project: whatever produced this call passed the wrong --cwd. Rerun it against the project: `shevanio-ai sdd-status --cwd \"<project-directory>\" --json`. If the change is Engram-backed, this dispatcher is blind to it and should not be called at all", root)
 	}
 	return root, nil
 }
@@ -1630,14 +1630,14 @@ func absOrCWD(path string) (string, error) {
 // The markdown dispatcher already spelled these commands out, but --json never
 // reaches it, and --json is what machine consumers read. #2117 step 5 is the
 // cost: the SDD task-failure envelope hands back
-// `gentle-ai sdd-status --cwd <cwd> --json` as its continuation, which lands
+// `shevanio-ai sdd-status --cwd <cwd> --json` as its continuation, which lands
 // here whenever more than one change is active, and the caller found a reason
 // that listed options and named no command. The list stays first because it is
 // what a human scanning the refusal wants; the commands follow because that is
 // what makes the refusal runnable.
 //
 // The selector is positional: ParseCommandArgs has no --change flag, so the
-// emitted spelling must be `gentle-ai sdd-status <change> --cwd <root>`. The
+// emitted spelling must be `shevanio-ai sdd-status <change> --cwd <root>`. The
 // first shipped spelling used `--change` and every emitted command was
 // rejected by the very parser it targets (#3278, #2790), burning the
 // operator's single sanctioned observation on a syntax error. The guard test
@@ -1648,7 +1648,7 @@ func ambiguousChangeSelectionReasons(subject, workspaceRoot string, changes []st
 	reasons = append(reasons, fmt.Sprintf("%s selection is ambiguous: %s.", subject, strings.Join(changes, ", ")))
 	for _, change := range changes {
 		reasons = append(reasons, fmt.Sprintf(
-			"Run `gentle-ai sdd-status %s --cwd %s` to continue with %s.",
+			"Run `shevanio-ai sdd-status %s --cwd %s` to continue with %s.",
 			change, workspaceRoot, change,
 		))
 	}
@@ -2081,7 +2081,7 @@ const runtimeRemediationVerifyRefreshInstruction = "A passing native remediation
 
 func legacyVerifyReportAttestationInstruction(workspaceRoot, changeName string) string {
 	return fmt.Sprintf(
-		"verification attestation required: persist the exact canonical passing verify-report, then run `gentle-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit \"%s\" --evidence-goal \"attest final verification report\" --max-attempts 1 --max-changed-lines 20`; after state proceed, settle that token with the report's evidence_revision. This distinct current-binary settlement records the required native report digest.",
+		"verification attestation required: persist the exact canonical passing verify-report, then run `shevanio-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit \"%s\" --evidence-goal \"attest final verification report\" --max-attempts 1 --max-changed-lines 20`; after state proceed, settle that token with the report's evidence_revision. This distinct current-binary settlement records the required native report digest.",
 		pathquote.Quote(workspaceRoot), changeName, finalVerifyAttestationWorkUnit,
 	)
 }
@@ -2129,10 +2129,10 @@ func renderPhaseInstructions(status Status) PhaseInstructions {
 func nativeRuntimeInstructions(status Status, change string) []string {
 	workspace := status.ActionContext.WorkspaceRoot
 	instructions := []string{
-		fmt.Sprintf("Before any runtime-bearing apply, verify, or remediation launch, run `gentle-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit \"<label>\" --evidence-goal \"<stable-goal>\" --max-attempts <count> --max-changed-lines <count>`.", pathquote.Quote(workspace), change),
+		fmt.Sprintf("Before any runtime-bearing apply, verify, or remediation launch, run `shevanio-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit \"<label>\" --evidence-goal \"<stable-goal>\" --max-attempts <count> --max-changed-lines <count>`.", pathquote.Quote(workspace), change),
 		"Launch only for state proceed and retain its opaque token. State blocked or complete stops the launch; full runtime status is a diagnostic escape hatch, not normal model context.",
-		fmt.Sprintf("After a failed or passed run, call `gentle-ai sdd-attempt settle --cwd %s --change %q --token \"<acquire-token>\" --request-id \"<unique-request-id>\" --outcome <passed|failed> --evidence-revision <sha256> --diagnosis \"<proven-diagnosis>\" --harness-disposition <reused|invalidated> --cleanup-evidence \"<evidence>\" --process-evidence \"<evidence>\"`; add --successor-lineage only for a distinct approved remediation successor.", pathquote.Quote(workspace), change),
-		fmt.Sprintf("After an interrupted run, call `gentle-ai sdd-attempt settle --cwd %s --change %q --token \"<acquire-token>\" --request-id \"<unique-request-id>\" --outcome interrupted --diagnosis \"<proven-diagnosis>\" --harness-disposition <reused|invalidated> --cleanup-evidence \"<evidence>\" --process-evidence \"<evidence>\"` and omit --evidence-revision.", pathquote.Quote(workspace), change),
+		fmt.Sprintf("After a failed or passed run, call `shevanio-ai sdd-attempt settle --cwd %s --change %q --token \"<acquire-token>\" --request-id \"<unique-request-id>\" --outcome <passed|failed> --evidence-revision <sha256> --diagnosis \"<proven-diagnosis>\" --harness-disposition <reused|invalidated> --cleanup-evidence \"<evidence>\" --process-evidence \"<evidence>\"`; add --successor-lineage only for a distinct approved remediation successor.", pathquote.Quote(workspace), change),
+		fmt.Sprintf("After an interrupted run, call `shevanio-ai sdd-attempt settle --cwd %s --change %q --token \"<acquire-token>\" --request-id \"<unique-request-id>\" --outcome interrupted --diagnosis \"<proven-diagnosis>\" --harness-disposition <reused|invalidated> --cleanup-evidence \"<evidence>\" --process-evidence \"<evidence>\"` and omit --evidence-revision.", pathquote.Quote(workspace), change),
 		"Treat settle state proceed as permission for another bounded acquire, blocked as a hard stop, and complete as terminal. Reset is exceptional, requires an explicit maintainer scope decision, and is never automatic.",
 	}
 	// #2564 status truthfulness: the bounded correction prescription renders
@@ -2156,23 +2156,23 @@ func nativeRuntimeInstructions(status Status, change string) []string {
 		case chainHasFailedEvidence && runtime.Objective != nil && launchable:
 			objective := runtime.Objective
 			instructions = append(instructions,
-				fmt.Sprintf("Disabled/unmanaged remediation has one bounded correction attempt: run `gentle-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit %q --evidence-goal %q --max-attempts %d --max-changed-lines %d --remediates-evidence-revision %s`.", pathquote.Quote(workspace), change, objective.WorkUnit, objective.EvidenceGoal, objective.MaxAttempts, objective.MaxChangedLines, chainEvidence),
+				fmt.Sprintf("Disabled/unmanaged remediation has one bounded correction attempt: run `shevanio-ai sdd-attempt acquire --cwd %s --change %q --request-id \"<unique-request-id>\" --work-unit %q --evidence-goal %q --max-attempts %d --max-changed-lines %d --remediates-evidence-revision %s`.", pathquote.Quote(workspace), change, objective.WorkUnit, objective.EvidenceGoal, objective.MaxAttempts, objective.MaxChangedLines, chainEvidence),
 				fmt.Sprintf("After the candidate changes, settle that token with `--remediates-evidence-revision %s`; a fresh independent verification is required before archive.", chainEvidence),
 			)
 		case chainHasFailedEvidence && terminal && readiness.Reason == CompactBlockMaintainerDecision:
 			instructions = append(instructions,
 				fmt.Sprintf("Disabled/unmanaged remediation for failed evidence %s needs a maintainer scope decision before its one bounded correction can launch.", chainEvidence),
-				fmt.Sprintf("Record the maintainer decision with `gentle-ai sdd-attempt reset --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --actor \"<maintainer>\" --reason \"<decision>\"`, then acquire the bounded correction declaring `--remediates-evidence-revision %s`; the failed-evidence binding derives from the immutable attempt chain and survives the audited reset.", pathquote.Quote(workspace), change, runtime.Revision, chainEvidence),
+				fmt.Sprintf("Record the maintainer decision with `shevanio-ai sdd-attempt reset --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --actor \"<maintainer>\" --reason \"<decision>\"`, then acquire the bounded correction declaring `--remediates-evidence-revision %s`; the failed-evidence binding derives from the immutable attempt chain and survives the audited reset.", pathquote.Quote(workspace), change, runtime.Revision, chainEvidence),
 			)
 		case chainHasFailedEvidence:
 			instructions = append(instructions,
-				fmt.Sprintf("Disabled/unmanaged remediation has one bounded correction attempt: declare `--remediates-evidence-revision %s` on the `gentle-ai sdd-attempt acquire` call above; the failed-evidence binding derives from the immutable attempt chain and survives an audited reset.", chainEvidence),
+				fmt.Sprintf("Disabled/unmanaged remediation has one bounded correction attempt: declare `--remediates-evidence-revision %s` on the `shevanio-ai sdd-attempt acquire` call above; the failed-evidence binding derives from the immutable attempt chain and survives an audited reset.", chainEvidence),
 				fmt.Sprintf("After the candidate changes, settle that token with `--remediates-evidence-revision %s`; a fresh independent verification is required before archive.", chainEvidence),
 			)
 		default:
 			instructions = append(instructions,
 				fmt.Sprintf("Unmanaged remediation for failed evidence %s cannot settle against the current runtime ledger: the attempt chain holds no unremediated failed evidence (nothing failed, or the failure was already corrected by a passed settlement), so do not acquire with `--remediates-evidence-revision`.", status.RemediationState.FailedEvidenceRevision),
-				fmt.Sprintf("Run `gentle-ai sdd-attempt status --cwd %s --change %q` to read the attempt chain, then continue through a fresh verification objective without `--remediates-evidence-revision`; its own failed settlement records the evidence a bounded correction can name.", pathquote.Quote(workspace), change),
+				fmt.Sprintf("Run `shevanio-ai sdd-attempt status --cwd %s --change %q` to read the attempt chain, then continue through a fresh verification objective without `--remediates-evidence-revision`; its own failed settlement records the evidence a bounded correction can name.", pathquote.Quote(workspace), change),
 			)
 		}
 	}
@@ -2211,15 +2211,15 @@ func nonPhaseRoutingInstructions(status Status) ([]string, bool) {
 		return []string{
 			"",
 			"### Next Review Operation",
-			fmt.Sprintf("- Run `gentle-ai review start --cwd %s`; the facade derives intended untracked scope, lineage, tier, lenses, and correction budget from live Git.", pathquote.Quote(status.ActionContext.WorkspaceRoot)),
-			"- Pass reviewer result and verification evidence to `gentle-ai review finalize`; do not hand-author lifecycle operation JSON.",
-			"- Continue discovered authority instead of starting another budget, and reconcile existing terminal mirrors only after `gentle-ai review validate --gate post-apply` allows.",
+			fmt.Sprintf("- Run `shevanio-ai review start --cwd %s`; the facade derives intended untracked scope, lineage, tier, lenses, and correction budget from live Git.", pathquote.Quote(status.ActionContext.WorkspaceRoot)),
+			"- Pass reviewer result and verification evidence to `shevanio-ai review finalize`; do not hand-author lifecycle operation JSON.",
+			"- Continue discovered authority instead of starting another budget, and reconcile existing terminal mirrors only after `shevanio-ai review validate --gate post-apply` allows.",
 		}, true
 	case "select-change":
 		return []string{
 			"",
 			"### Next Selection Operation",
-			fmt.Sprintf("- Rerun with an explicit change name from Blocked Reasons above: `gentle-ai sdd-status --cwd %s <change-name>` or `gentle-ai sdd-continue --cwd %s <change-name>`.", pathquote.Quote(status.ActionContext.WorkspaceRoot), pathquote.Quote(status.ActionContext.WorkspaceRoot)),
+			fmt.Sprintf("- Rerun with an explicit change name from Blocked Reasons above: `shevanio-ai sdd-status --cwd %s <change-name>` or `shevanio-ai sdd-continue --cwd %s <change-name>`.", pathquote.Quote(status.ActionContext.WorkspaceRoot), pathquote.Quote(status.ActionContext.WorkspaceRoot)),
 		}, true
 	default:
 		return nil, false

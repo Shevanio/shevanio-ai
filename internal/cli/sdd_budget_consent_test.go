@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // #2588: the bounded attempt budget was spent entirely on the apply worker
@@ -47,7 +47,7 @@ func TestExhaustedBudgetAsksInsteadOfDeadEnding(t *testing.T) {
 	// The grant has to be runnable verbatim, not described. The whole defect
 	// being fixed is a human being told to assemble a six-flag reset by hand.
 	grant := envelope.Choices[0].Invocation
-	for _, want := range []string{"gentle-ai sdd-attempt reset", "--cwd", "--change", "--expected-revision", "sha256:" + strings.Repeat("a", 64)} {
+	for _, want := range []string{"shevanio-ai sdd-attempt reset", "--cwd", "--change", "--expected-revision", "sha256:" + strings.Repeat("a", 64)} {
 		if !strings.Contains(grant, want) {
 			t.Fatalf("the grant invocation is not runnable verbatim (missing %q):\n%s", want, grant)
 		}
@@ -160,7 +160,7 @@ func TestExhaustedBudgetSurfacesTheQuestionEndToEnd(t *testing.T) {
 	if !scoped.Consent.Blocking || len(scoped.Consent.Choices) != 2 {
 		t.Fatalf("consent = %#v, want a blocking two-choice question", scoped.Consent)
 	}
-	if !strings.Contains(scoped.Consent.Choices[0].Invocation, "gentle-ai sdd-attempt reset") ||
+	if !strings.Contains(scoped.Consent.Choices[0].Invocation, "shevanio-ai sdd-attempt reset") ||
 		!strings.Contains(scoped.Consent.Choices[0].Invocation, scoped.Revision) {
 		t.Fatalf("the grant is not runnable verbatim against this exact ledger revision:\n%s", scoped.Consent.Choices[0].Invocation)
 	}
@@ -177,7 +177,7 @@ func TestExhaustedBudgetSurfacesTheQuestionEndToEnd(t *testing.T) {
 func TestSDDStatusContractRequiresRelayingTheBudgetConsent(t *testing.T) {
 	contract := readSharedSDDStatusContract(t)
 	for _, want := range []string{
-		"gentle-ai.sdd-integration.consent/v1",
+		"shevanio-ai.sdd-integration.consent/v1",
 		"Lossless Blocking Prompt",
 		"never answer on their behalf",
 		"non-interactive runtime, emit the complete envelope and STOP",

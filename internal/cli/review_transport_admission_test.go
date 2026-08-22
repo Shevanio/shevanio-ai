@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // This file is Wave 4 S4 (design.md decision 5, task 5.1-5.6): transport
@@ -36,7 +36,7 @@ func TestAuthorizeReviewTransportCapabilityMatrix(t *testing.T) {
 	})
 	t.Run("absent claim fails closed", func(t *testing.T) {
 		// Every compiled adapter advertises ContractReviewTransportV1 since
-		// gentle-ai#3249 registered Pi, so the absent claim is synthesized
+		// shevanio-ai#3249 registered Pi, so the absent claim is synthesized
 		// through the resolution seam: a valid manifest whose transport
 		// exposure stays dormant.
 		previous := reviewTransportCapabilityForAgent
@@ -126,7 +126,7 @@ func TestReviewTransportAdmissionRefusalNamesWorkingExits(t *testing.T) {
 	if failure.Code != reviewTransportCapabilityUnsupportedCode {
 		t.Fatalf("unrecognised-runtime refusal code = %q, want %q", failure.Code, reviewTransportCapabilityUnsupportedCode)
 	}
-	const exit = "gentle-ai review mode disable --scope clone --cwd <repo>"
+	const exit = "shevanio-ai review mode disable --scope clone --cwd <repo>"
 	if !strings.Contains(failure.Cause, exit) || !strings.Contains(failure.Cause, string(model.AgentClaudeCode)) || !strings.Contains(failure.Cause, string(model.AgentOpenCode)) || !strings.Contains(failure.Cause, string(model.AgentPi)) {
 		t.Fatalf("transport refusal does not name actionable exits: %s", failure.Cause)
 	}

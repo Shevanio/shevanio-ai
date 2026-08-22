@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewInspectAuthoritySchema = "gentle-ai.review-authority-inspection/v1"
+const ReviewInspectAuthoritySchema = "shevanio-ai.review-authority-inspection/v1"
 
 type ReviewInspectAuthorityResult struct {
 	Schema           string                                             `json:"schema"`

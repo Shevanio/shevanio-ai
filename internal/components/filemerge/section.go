@@ -20,10 +20,20 @@ func ExtractHTMLCommentSection(content, name string) string {
 }
 
 const (
-	markerPrefix = "<!-- gentle-ai:"
-	markerSuffix = " -->"
-	closePrefix  = "<!-- /gentle-ai:"
+	markerPrefix       = "<!-- shevanio-ai:"
+	markerSuffix       = " -->"
+	closePrefix        = "<!-- /shevanio-ai:"
+	legacyMarkerPrefix = "<!-- gentle-ai:"
+	legacyClosePrefix  = "<!-- /gentle-ai:"
 )
+
+// MigrateLegacyMarkers converts only product-owned marker prefixes. It does
+// not touch marker bodies or user content, so callers can safely recognize an
+// old managed block and emit only the canonical Shevanio AI form.
+func MigrateLegacyMarkers(content string) string {
+	content = strings.ReplaceAll(content, legacyClosePrefix, closePrefix)
+	return strings.ReplaceAll(content, legacyMarkerPrefix, markerPrefix)
+}
 
 // legacyPersonaFingerprints are substrings that appear in the Gentleman persona
 // asset and reliably identify a stale free-text block written by an old installer
@@ -36,16 +46,17 @@ var legacyPersonaFingerprints = []string{
 }
 
 // StripLegacyPersonaBlock removes a free-text Gentleman persona block that was
-// written to a markdown file outside of <!-- gentle-ai: --> markers.
+// written to a markdown file outside of <!-- shevanio-ai: --> markers.
 //
 // It is safe to call on any file: if no legacy block is detected, the original
 // content is returned unchanged. Stripping requires ALL fingerprints to be
 // present in the pre-marker zone (the region before the first
-// <!-- gentle-ai: --> marker). A fingerprint that exists only inside a marker
+// <!-- shevanio-ai: --> marker). A fingerprint that exists only inside a marker
 // section is ignored — this prevents false positives when a user's own section
 // headers happen to match one or two of the fingerprint strings while the
 // remaining fingerprints live inside a managed marker block.
 func StripLegacyPersonaBlock(content string) string {
+	content = MigrateLegacyMarkers(content)
 	// Quick check: all fingerprints must be present somewhere in the file.
 	for _, fp := range legacyPersonaFingerprints {
 		if !strings.Contains(content, fp) {
@@ -137,10 +148,10 @@ func removeLineStartMarkers(content, marker string) string {
 }
 
 // StripLegacyATLBlock removes the legacy Agent Teams Lite block that was
-// written by the standalone ATL installer before gentle-ai superseded it.
+// written by the standalone ATL installer before shevanio-ai superseded it.
 // The block is wrapped in <!-- BEGIN:agent-teams-lite --> / <!-- END:agent-teams-lite -->
 // HTML comment markers. Its content is now provided by the canonical
-// <!-- gentle-ai:sdd-orchestrator --> section, so keeping both wastes ~150
+// <!-- shevanio-ai:sdd-orchestrator --> section, so keeping both wastes ~150
 // lines of context per conversation.
 //
 // Safe to call on any file: returns content unchanged if no ATL block is found.
@@ -268,7 +279,7 @@ func stripOrphanMarkers(content, open, close string) string {
 }
 
 // InjectMarkdownSection replaces or appends a marked section in a markdown file.
-// Markers use HTML comments: <!-- gentle-ai:SECTION_ID --> ... <!-- /gentle-ai:SECTION_ID -->
+// Markers use HTML comments: <!-- shevanio-ai:SECTION_ID --> ... <!-- /shevanio-ai:SECTION_ID -->
 // If the section already exists, its content is replaced.
 // If it doesn't exist, it's appended at the end.
 // Content outside markers is never touched.
@@ -278,6 +289,7 @@ func stripOrphanMarkers(content, open, close string) string {
 // so that a file corrupted by a previous buggy sync run is repaired in place
 // rather than having another duplicate block appended.
 func InjectMarkdownSection(existing, sectionID, content string) string {
+	existing = MigrateLegacyMarkers(existing)
 	open := openMarker(sectionID)
 	close := closeMarker(sectionID)
 

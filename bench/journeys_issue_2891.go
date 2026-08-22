@@ -78,7 +78,7 @@ func issue2891SameParentStatus(sandbox *Sandbox, observation Observation) error 
 	if len(status.ActionContext.AllowedEditRoots) != 1 || status.ActionContext.AllowedEditRoots[0] != sandbox.Repo {
 		return fmt.Errorf("allowedEditRoots=%v, want only nested planning workspace %s", status.ActionContext.AllowedEditRoots, sandbox.Repo)
 	}
-	if status.Consent == nil || status.Consent.Schema != "gentle-ai.sdd-integration.consent/v1" ||
+	if status.Consent == nil || status.Consent.Schema != "shevanio-ai.sdd-integration.consent/v1" ||
 		len(status.Consent.MissingRoots) != 1 || status.Consent.MissingRoots[0] != wantService {
 		return fmt.Errorf("consent missing_roots=%v, want [%s]", status.Consent, wantService)
 	}
@@ -116,7 +116,7 @@ func issue2891Journeys() []Journey {
 		ID:     "j96-sdd-same-parent-repository-edit-authority",
 		Review: reviewOptedIn,
 		Title:  "Nested planning workspace blocks a sibling directory in the same Git repository",
-		Source: "https://github.com/Gentleman-Programming/gentle-ai/issues/2891",
+		Source: "https://github.com/Shevanio/shevanio-ai/issues/2891",
 		Steps: []Step{
 			{Name: "fixture: nested planning workspace and sibling service share one Git root", Fixture: issue2891SameParentRepository},
 			{Name: "sdd-status blocks the unauthorized same-parent target", Requires: sddStatusCapability,

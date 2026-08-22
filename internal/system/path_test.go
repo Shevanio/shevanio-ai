@@ -195,7 +195,7 @@ func TestRemoveFromUserPathRemovesOneProcessEntryWithoutRegistryMutation(t *test
 }
 
 func TestAddToUserPathWindowsEmptyPersistentPathDoesNotWriteTrailingEntry(t *testing.T) {
-	targetDir := `C:\gentle-ai\bin`
+	targetDir := `C:\shevanio-ai\bin`
 	t.Setenv("PATH", os.Getenv("PATH"))
 	var script string
 	useWindowsUserPathSeam(t, userPathRunnerFunc(func(_ context.Context, args ...string) ([]byte, error) {
@@ -206,7 +206,7 @@ func TestAddToUserPathWindowsEmptyPersistentPathDoesNotWriteTrailingEntry(t *tes
 	if err := AddToUserPath(targetDir); err != nil {
 		t.Fatalf("AddToUserPath() error = %v", err)
 	}
-	if !strings.Contains(script, `$updated = if ($current) { 'C:\gentle-ai\bin;' + $current } else { 'C:\gentle-ai\bin' }`) {
+	if !strings.Contains(script, `$updated = if ($current) { 'C:\shevanio-ai\bin;' + $current } else { 'C:\shevanio-ai\bin' }`) {
 		t.Fatalf("persistent PATH script = %q, want empty path to persist exactly the managed directory", script)
 	}
 }

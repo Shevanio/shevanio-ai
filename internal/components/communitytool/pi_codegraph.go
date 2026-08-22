@@ -17,15 +17,15 @@ import (
 	"strings"
 	"time"
 
-	piagent "github.com/gentleman-programming/gentle-ai/v2/internal/agents/pi"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	piagent "github.com/shevanio/shevanio-ai/v2/internal/agents/pi"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 const (
-	piCodeGraphToolMarker     = "<!-- gentle-ai:pi-codegraph-tool -->"
-	piCodeGraphGuidanceMarker = "<!-- gentle-ai:pi-codegraph-guidance -->"
-	piCodeGraphEndMarker      = "<!-- /gentle-ai:pi-codegraph -->"
+	piCodeGraphToolMarker     = "<!-- shevanio-ai:pi-codegraph-tool -->"
+	piCodeGraphGuidanceMarker = "<!-- shevanio-ai:pi-codegraph-guidance -->"
+	piCodeGraphEndMarker      = "<!-- /shevanio-ai:pi-codegraph -->"
 )
 
 var (
@@ -316,7 +316,7 @@ func reconcilePiMCP(path string, journal *piJournal, changed map[string]struct{}
 	}
 	desired := map[string]any{"command": "codegraph", "args": []any{"serve", "--mcp"}}
 	if entry, found := servers["codegraph"]; found && !equivalentPiMCP(entry) {
-		return existing, fmt.Errorf("misconfigured Pi CodeGraph MCP entry at %q; Gentle AI will not overwrite it", path)
+		return existing, fmt.Errorf("misconfigured Pi CodeGraph MCP entry at %q; Shevanio AI will not overwrite it", path)
 	}
 	if entry, found := servers["codegraph"]; found && equivalentPiMCP(entry) {
 		return existing, nil
@@ -558,7 +558,7 @@ func probePiCodeGraphMCPWithTransport(ctx context.Context, stdin io.WriteCloser,
 	decoder := json.NewDecoder(bufio.NewReader(stdout))
 	if err := encoder.Encode(map[string]any{
 		"jsonrpc": "2.0", "id": 1, "method": "initialize",
-		"params": map[string]any{"protocolVersion": "2025-03-26", "capabilities": map[string]any{}, "clientInfo": map[string]any{"name": "gentle-ai", "version": "1"}},
+		"params": map[string]any{"protocolVersion": "2025-03-26", "capabilities": map[string]any{}, "clientInfo": map[string]any{"name": "shevanio-ai", "version": "1"}},
 	}); err != nil {
 		return PiCodeGraphMCPProbeResult{}, fmt.Errorf("send MCP initialize: %w", err)
 	}
@@ -672,7 +672,7 @@ func inspectPiCodeGraph(homeDir, workspaceDir string) (bool, string, []PiCodeGra
 	}
 	if len(children) == 0 {
 		if _, err := os.Stat(paths.Manifest); err != nil {
-			return false, "no effective Pi children were discovered and no Gentle-AI ownership record exists", nil
+			return false, "no effective Pi children were discovered and no Shevanio AI ownership record exists", nil
 		}
 		if err := verifyPiCodeGraph(paths.MCPConfig, nil); err != nil {
 			return false, err.Error(), nil
@@ -705,7 +705,7 @@ func inspectPiCodeGraph(homeDir, workspaceDir string) (bool, string, []PiCodeGra
 	return true, "verified Pi MCP transport and every effective child", reports
 }
 
-// PiCodeGraphPaths returns only files Gentle AI may reconcile or remove.
+// PiCodeGraphPaths returns only files Shevanio AI may reconcile or remove.
 func PiCodeGraphPaths(homeDir, workspaceDir string) []string {
 	paths := piagent.CodeGraphPaths(homeDir)
 	result := []string{paths.MCPConfig, paths.Manifest}

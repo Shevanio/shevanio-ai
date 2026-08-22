@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // Provenance rule (#2524, root 4 of #2440): a runtime's rendered surface must
@@ -120,7 +120,7 @@ func TestRenderedSurfaceNamesOnlyItsOwnRuntime(t *testing.T) {
 		}
 
 		if raw := len(rawAgentBindingRegexp.FindAllString(string(content), -1)); raw != found {
-			t.Errorf("golden:%s carries %d --agent bindings but only %d sit inside extractable gentle-ai invocations; the difference is invisible to this rule and must be moved into a documented invocation or removed", name, raw, found)
+			t.Errorf("golden:%s carries %d --agent bindings but only %d sit inside extractable shevanio-ai invocations; the difference is invisible to this rule and must be moved into a documented invocation or removed", name, raw, found)
 		}
 	}
 

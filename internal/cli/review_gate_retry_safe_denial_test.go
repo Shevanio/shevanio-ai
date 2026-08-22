@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // This file is issue #3342: read-only delivery gates collapsed EVERY
@@ -33,7 +33,7 @@ func reviewCLICommonDir(t *testing.T, repo string) string {
 
 func reviewCLISharedStoreLockPath(t *testing.T, repo string) string {
 	t.Helper()
-	return filepath.Join(reviewCLICommonDir(t, repo), "gentle-ai", "review-transactions", "v2", "LOCK")
+	return filepath.Join(reviewCLICommonDir(t, repo), "shevanio-ai", "review-transactions", "v2", "LOCK")
 }
 
 func decodeDeniedGateResult(t *testing.T, gateErr error, payload []byte) ReviewValidateResult {
@@ -260,7 +260,7 @@ func reviewCLIDeadPID(t *testing.T) int {
 func writeReviewCLIStoreLockResidue(t *testing.T, lockPath string, pid int, host string) {
 	t.Helper()
 	owner := fmt.Sprintf(
-		`{"schema":"gentle-ai.review-store-lock/v1","owner_id":"deadbeefdeadbeefdeadbeefdeadbeef","pid":%d,"host":%q,"acquired_at":"2026-08-16T00:00:00Z"}`,
+		`{"schema":"shevanio-ai.review-store-lock/v1","owner_id":"deadbeefdeadbeefdeadbeefdeadbeef","pid":%d,"host":%q,"acquired_at":"2026-08-16T00:00:00Z"}`,
 		pid, host,
 	)
 	// The trailing partial record is the interrupted-rewrite residue an

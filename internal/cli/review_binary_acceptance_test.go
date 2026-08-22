@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestWindowsPowerShell51ArtifactManifestFileFinalize(t *testing.T) {
@@ -21,12 +21,12 @@ func TestWindowsPowerShell51ArtifactManifestFileFinalize(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("Windows-only PowerShell 5.1 acceptance test")
 	}
-	binary := os.Getenv("GENTLE_AI_TEST_BINARY")
+	binary := os.Getenv("SHEVANIO_AI_TEST_BINARY")
 	if binary == "" {
-		t.Skip("requires GENTLE_AI_TEST_BINARY built from the branch under test")
+		t.Skip("requires SHEVANIO_AI_TEST_BINARY built from the branch under test")
 	}
 	if _, err := os.Stat(binary); err != nil {
-		t.Fatalf("GENTLE_AI_TEST_BINARY: %v", err)
+		t.Fatalf("SHEVANIO_AI_TEST_BINARY: %v", err)
 	}
 	powershell, err := exec.LookPath("powershell.exe")
 	if err != nil {
@@ -148,12 +148,12 @@ func powerShell51ReviewerPayloadForTest(t *testing.T, repo string, record review
 }
 
 func TestMainBinaryAcceptsCorrectedCandidateFromLinkedWorktree(t *testing.T) {
-	binary := os.Getenv("GENTLE_AI_TEST_BINARY")
+	binary := os.Getenv("SHEVANIO_AI_TEST_BINARY")
 	if binary == "" {
-		t.Skip("requires GENTLE_AI_TEST_BINARY built from the branch under test")
+		t.Skip("requires SHEVANIO_AI_TEST_BINARY built from the branch under test")
 	}
 	if _, err := os.Stat(binary); err != nil {
-		t.Fatalf("GENTLE_AI_TEST_BINARY: %v", err)
+		t.Fatalf("SHEVANIO_AI_TEST_BINARY: %v", err)
 	}
 	reviewEnabledHome(t)
 
@@ -186,7 +186,7 @@ func TestMainBinaryAcceptsCorrectedCandidateFromLinkedWorktree(t *testing.T) {
 		var binding map[string]any
 		decodeBinaryJSON(t, runReviewBinary(t, binary, true,
 			"bind-sdd", "--cwd", corrected, "--change", "binary-review", "--lineage", started.LineageID, "--expected-binding-revision="), &binding)
-		if binding["schema"] != "gentle-ai.sdd-review-binding/v1" {
+		if binding["schema"] != "shevanio-ai.sdd-review-binding/v1" {
 			t.Fatalf("SDD review binding = %#v", binding)
 		}
 	})
@@ -237,12 +237,12 @@ func TestMainBinaryAcceptsCorrectedCandidateFromLinkedWorktree(t *testing.T) {
 }
 
 func TestMainBinaryExecutesSubmissionDescriptorsFromArbitraryCWD(t *testing.T) {
-	binary := os.Getenv("GENTLE_AI_TEST_BINARY")
+	binary := os.Getenv("SHEVANIO_AI_TEST_BINARY")
 	if binary == "" {
-		t.Skip("requires GENTLE_AI_TEST_BINARY built from the branch under test")
+		t.Skip("requires SHEVANIO_AI_TEST_BINARY built from the branch under test")
 	}
 	if _, err := os.Stat(binary); err != nil {
-		t.Fatalf("GENTLE_AI_TEST_BINARY: %v", err)
+		t.Fatalf("SHEVANIO_AI_TEST_BINARY: %v", err)
 	}
 	reviewEnabledHome(t)
 	repo := initReviewCLIRepo(t)
@@ -443,7 +443,7 @@ func prepareBinaryCorrection(t *testing.T, binary string) (string, string, Revie
 	// non-interactive sessions, and it must land on stderr — never on the
 	// stdout JSON contract. Pinning it here keeps the discoverability
 	// behavior intact instead of merely tolerated.
-	if !strings.Contains(startStderr, "Gentle AI reviewed this change without asking") {
+	if !strings.Contains(startStderr, "Shevanio AI reviewed this change without asking") {
 		t.Fatalf("non-interactive review start did not print the consent notice on stderr:\n%s", startStderr)
 	}
 	reviewer := filepath.Join(t.TempDir(), "reviewer.json")
@@ -491,7 +491,7 @@ func runReviewBinaryAt(t *testing.T, binary, dir string, wantSuccess bool, args 
 	command.Stderr = &stderr
 	err := command.Run()
 	if (err == nil) != wantSuccess {
-		t.Fatalf("gentle-ai review from %s %v: %v\nstdout:\n%s\nstderr:\n%s", dir, args, err, stdout.String(), stderr.String())
+		t.Fatalf("shevanio-ai review from %s %v: %v\nstdout:\n%s\nstderr:\n%s", dir, args, err, stdout.String(), stderr.String())
 	}
 	return stdout.Bytes()
 }
@@ -508,7 +508,7 @@ func runReviewBinaryStreams(t *testing.T, binary string, wantSuccess bool, args 
 	command.Stderr = &stderr
 	err := command.Run()
 	if (err == nil) != wantSuccess {
-		t.Fatalf("gentle-ai review %v: %v\nstdout:\n%s\nstderr:\n%s", args, err, stdout.String(), stderr.String())
+		t.Fatalf("shevanio-ai review %v: %v\nstdout:\n%s\nstderr:\n%s", args, err, stdout.String(), stderr.String())
 	}
 	return stdout.Bytes(), stderr.String()
 }

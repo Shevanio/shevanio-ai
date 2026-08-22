@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // pristineReviewingCLIFixture persists one pristine reviewing compact lineage
@@ -276,7 +276,7 @@ func breakForeignCompactSnapshotIdentity(t *testing.T, repo, lineage string) {
 }
 
 // TestReviewAbandonOfAPristineLineageIgnoresAnUnrelatedUnloadableApprovedLineage
-// is issue #3124 driven through the live `gentle-ai review abandon` command.
+// is issue #3124 driven through the live `shevanio-ai review abandon` command.
 //
 // The report, filed against 2.3.0, is that abandoning a pristine `reviewing`
 // lineage -- the documented sanctioned exit for a review that never captured a

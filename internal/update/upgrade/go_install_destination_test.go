@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
 
 // captureStderr runs fn with os.Stderr redirected to a pipe and returns what fn wrote.
@@ -298,8 +298,8 @@ func TestBetaGoInstallMainUpgradeWarnsWhenDestinationDiffers(t *testing.T) {
 	stubDetectOS(t, "linux")
 	gobin := t.TempDir()
 	stale := t.TempDir()
-	installed := writeFakeBinary(t, gobin, "gentle-ai")
-	shadowing := writeFakeBinary(t, stale, "gentle-ai")
+	installed := writeFakeBinary(t, gobin, "shevanio-ai")
+	shadowing := writeFakeBinary(t, stale, "shevanio-ai")
 
 	stubGoEnv(t, map[string]string{"GOBIN": gobin})
 	origLookPath := lookPathFn
@@ -308,9 +308,9 @@ func TestBetaGoInstallMainUpgradeWarnsWhenDestinationDiffers(t *testing.T) {
 
 	r := update.UpdateResult{
 		Tool: update.ToolInfo{
-			Name:          "gentle-ai",
-			Owner:         "Gentleman-Programming",
-			Repo:          "gentle-ai",
+			Name:          "shevanio-ai",
+			Owner:         "Shevanio",
+			Repo:          "shevanio-ai",
 			InstallMethod: update.InstallBinary,
 		},
 		LatestVersion: "main@abc1234",
@@ -347,27 +347,27 @@ func TestGoInstallDestinationNoticeOnWindowsMatchesExeAgainstCaseDifferentPath(t
 	// ...\runner~1\..., and the test failed on a difference it never meant to
 	// introduce. Starting from the resolved form makes that expansion a no-op.
 	gobin := resolvedTempDir(t)
-	writeFakeBinary(t, gobin, "gentle-ai.exe")
+	writeFakeBinary(t, gobin, "shevanio-ai.exe")
 
 	origLookPath := lookPathFn
 	t.Cleanup(func() { lookPathFn = origLookPath })
-	lookPathFn = func(string) (string, error) { return filepath.Join(strings.ToUpper(gobin), "GENTLE-AI"), nil }
+	lookPathFn = func(string) (string, error) { return filepath.Join(strings.ToUpper(gobin), "SHEVANIO-AI"), nil }
 
-	if notice := goInstallDestinationNotice("gentle-ai", "windows", gobin, nil); notice != "" {
+	if notice := goInstallDestinationNotice("shevanio-ai", "windows", gobin, nil); notice != "" {
 		t.Fatalf("windows destination must match despite case and .exe suffix; notice = %q", notice)
 	}
 
-	lookPathFn = func(string) (string, error) { return filepath.Join(t.TempDir(), "gentle-ai.exe"), nil }
-	notice := goInstallDestinationNotice("gentle-ai", "windows", gobin, nil)
-	if !strings.Contains(notice, filepath.Join(gobin, "gentle-ai.exe")) {
+	lookPathFn = func(string) (string, error) { return filepath.Join(t.TempDir(), "shevanio-ai.exe"), nil }
+	notice := goInstallDestinationNotice("shevanio-ai", "windows", gobin, nil)
+	if !strings.Contains(notice, filepath.Join(gobin, "shevanio-ai.exe")) {
 		t.Fatalf("windows mismatch must name the .exe destination; notice = %q", notice)
 	}
 }
 
 func TestSameBinaryPathForOSHandlesWindowsCaseAndExeSuffix(t *testing.T) {
 	base := t.TempDir()
-	installed := filepath.Join(base, "gentle-ai.exe")
-	effective := filepath.Join(strings.ToUpper(base), "GENTLE-AI")
+	installed := filepath.Join(base, "shevanio-ai.exe")
+	effective := filepath.Join(strings.ToUpper(base), "SHEVANIO-AI")
 
 	if !sameBinaryPathForOS(installed, effective, "windows") {
 		t.Errorf("windows comparison must ignore case and the .exe suffix: %q vs %q", installed, effective)
@@ -375,7 +375,7 @@ func TestSameBinaryPathForOSHandlesWindowsCaseAndExeSuffix(t *testing.T) {
 	if sameBinaryPathForOS(installed, effective, "linux") {
 		t.Errorf("non-windows comparison must stay case-sensitive: %q vs %q", installed, effective)
 	}
-	if sameBinaryPathForOS(filepath.Join(base, "a", "gentle-ai.exe"), filepath.Join(base, "b", "gentle-ai.exe"), "windows") {
+	if sameBinaryPathForOS(filepath.Join(base, "a", "shevanio-ai.exe"), filepath.Join(base, "b", "shevanio-ai.exe"), "windows") {
 		t.Error("different windows directories must not compare equal")
 	}
 	if sameBinaryPathForOS("", installed, "windows") || sameBinaryPathForOS(installed, "", "windows") {

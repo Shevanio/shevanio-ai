@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	// refusal:by-design world-action: the exit is a filesystem repair (chown, takeown, icacls /setowner, or deleting the offending link) that only the operator can perform; no gentle-ai command may rewrite ownership of paths it refuses to trust
+	// refusal:by-design world-action: the exit is a filesystem repair (chown, takeown, icacls /setowner, or deleting the offending link) that only the operator can perform; no shevanio-ai command may rewrite ownership of paths it refuses to trust
 	errUnsafeRARAuthorityPath = errors.New(
 		"unsafe RAR authority path; restore trusted ownership of the reported " +
 			"path (chown on POSIX; takeown or icacls /setowner on Windows) or " +
@@ -47,18 +47,18 @@ func unsafeRARPathError(path string, directory bool) error {
 
 func ensureRARRepositoryRoot(commonDir, root string, create bool) error {
 	want := filepath.Join(
-		"gentle-ai",
+		"shevanio-ai",
 		"review-transactions",
 		rarAuthorityDirectory,
 		rarAuthorityVersion,
 	)
-	// rar-authority and every descendant are owner-only; gentle-ai and
+	// rar-authority and every descendant are owner-only; shevanio-ai and
 	// review-transactions are the shared ancestors above it.
 	return ensureRARDirectoryChain(commonDir, root, want, 2, create)
 }
 
 // ensureRARSwitchRoot validates the kill switch's own root, a sibling of
-// review-transactions under gentle-ai. It reuses this file's walk, permission
+// review-transactions under shevanio-ai. It reuses this file's walk, permission
 // rules, and private-directory helpers unchanged; the only thing it does not
 // reuse is the authority tree itself, because #2882 showed the switch must not
 // be unreachable whenever that tree is damaged.
@@ -66,7 +66,7 @@ func ensureRARSwitchRoot(commonDir, root string, create bool) error {
 	// The shape mirrors the authority path exactly -- two shared ancestors,
 	// then owner-only from rar-authority down -- so the switch inherits the
 	// proven permission layout and differs only in its second component.
-	want := filepath.Join("gentle-ai", rddModeSwitchDirectory, rarAuthorityDirectory, rarAuthorityVersion)
+	want := filepath.Join("shevanio-ai", rddModeSwitchDirectory, rarAuthorityDirectory, rarAuthorityVersion)
 	return ensureRARDirectoryChain(commonDir, root, want, 2, create)
 }
 

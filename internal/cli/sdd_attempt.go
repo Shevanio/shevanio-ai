@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // RunSDDAttempt exposes the artifact-store-agnostic native runtime authority.
@@ -422,16 +422,16 @@ func sddAttemptKnownHelpFlag(argument string) (hasInlineValue, known bool) {
 
 func renderSDDAttemptHelp(operation string, stdout io.Writer) error {
 	if operation == "" {
-		_, _ = fmt.Fprintf(stdout, "Usage: gentle-ai sdd-attempt <%s> [flags]\n", strings.Join(sddAttemptOperationNames(), "|"))
+		_, _ = fmt.Fprintf(stdout, "Usage: shevanio-ai sdd-attempt <%s> [flags]\n", strings.Join(sddAttemptOperationNames(), "|"))
 		_, _ = fmt.Fprintln(stdout, "\nOperations:")
 		for _, definition := range sddAttemptOperationDefinitions {
 			_, _ = fmt.Fprintf(stdout, "  %-7s %s\n", definition.name, definition.purpose)
 		}
-		_, _ = fmt.Fprintf(stdout, "\nUse gentle-ai sdd-attempt <operation> %s for flags, required inputs, defaults, and limits.\n", strings.Join(sddAttemptHelpAliases, " or "))
+		_, _ = fmt.Fprintf(stdout, "\nUse shevanio-ai sdd-attempt <operation> %s for flags, required inputs, defaults, and limits.\n", strings.Join(sddAttemptHelpAliases, " or "))
 		return nil
 	}
 	definition, _ := sddAttemptOperationDefinition(operation)
-	_, _ = fmt.Fprintf(stdout, "Usage: gentle-ai sdd-attempt %s [flags]\n\n%s.\n\nFlags:\n", operation, definition.purpose)
+	_, _ = fmt.Fprintf(stdout, "Usage: shevanio-ai sdd-attempt %s [flags]\n\n%s.\n\nFlags:\n", operation, definition.purpose)
 	for _, flagDefinition := range definition.flags {
 		value := "<value>"
 		if flagDefinition.kind == sddAttemptIntFlag {
@@ -553,7 +553,7 @@ func missingSDDAttemptOperationError(operation string, missing []string) error {
 	message := fmt.Sprintf("sdd-attempt %s requires %s", operation, strings.Join(missing, ", "))
 	switch operation {
 	case "acquire", "settle", "handoff", "grant":
-		message += fmt.Sprintf("; rerun `gentle-ai sdd-attempt %s` with those missing flags", operation)
+		message += fmt.Sprintf("; rerun `shevanio-ai sdd-attempt %s` with those missing flags", operation)
 	}
 	return errors.New(message)
 }

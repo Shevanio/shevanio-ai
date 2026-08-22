@@ -147,7 +147,7 @@ var reviewStopInvariantClassification = map[string]reviewStopDisposition{
 	},
 	"rdd_disabled": {
 		Terminal:      false,
-		Justification: "caller-continuable: receipt-driven development is disabled; run `gentle-ai review mode enable` to turn it back on, then re-run the exact `review status --next-transition --contract <contract> <selector-args>` command that produced this stop — a concrete, flag-driven continuation; the same typed error the start gate already names",
+		Justification: "caller-continuable: receipt-driven development is disabled; run `shevanio-ai review mode enable` to turn it back on, then re-run the exact `review status --next-transition --contract <contract> <selector-args>` command that produced this stop — a concrete, flag-driven continuation; the same typed error the start gate already names",
 	},
 	"staged_delivery_candidate_required": {
 		Terminal:      false,

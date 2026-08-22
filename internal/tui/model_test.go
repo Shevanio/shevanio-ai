@@ -13,22 +13,22 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/backup"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/communitytool"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/opencodeplugin"
-	componentuninstall "github.com/gentleman-programming/gentle-ai/v2/internal/components/uninstall"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pipeline"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/screens"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade"
 	"github.com/muesli/termenv"
+	"github.com/shevanio/shevanio-ai/v2/internal/backup"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodeplugin"
+	componentuninstall "github.com/shevanio/shevanio-ai/v2/internal/components/uninstall"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/screens"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
 )
 
 func TestNavigationWelcomeToDetection(t *testing.T) {
@@ -1617,18 +1617,18 @@ func TestUpgradePhaseCompletedClearsUpdateResults(t *testing.T) {
 	}
 }
 
-func TestReportUpgradedGentleAI(t *testing.T) {
+func TestReportUpgradedShevanioAI(t *testing.T) {
 	report := upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
 		{ToolName: "engram", Status: upgrade.UpgradeSucceeded},
-		{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded},
+		{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded},
 	}}
-	if !reportUpgradedGentleAI(report) {
-		t.Fatal("reportUpgradedGentleAI() = false, want true")
+	if !reportUpgradedShevanioAI(report) {
+		t.Fatal("reportUpgradedShevanioAI() = false, want true")
 	}
 
 	report.Results[1].Status = upgrade.UpgradeFailed
-	if reportUpgradedGentleAI(report) {
-		t.Fatal("reportUpgradedGentleAI() = true for failed gentle-ai upgrade")
+	if reportUpgradedShevanioAI(report) {
+		t.Fatal("reportUpgradedShevanioAI() = true for failed shevanio-ai upgrade")
 	}
 }
 
@@ -2450,7 +2450,7 @@ func TestStartUninstall_FullRemoveHomebrewManagedBinaryAddsManualAction(t *testi
 		return componentuninstall.Result{}, nil
 	}
 
-	restoreExec := setOSExecutableForTest("/opt/homebrew/bin/gentle-ai", nil)
+	restoreExec := setOSExecutableForTest("/opt/homebrew/bin/shevanio-ai", nil)
 	defer restoreExec()
 
 	removeCalled := false
@@ -2470,7 +2470,7 @@ func TestStartUninstall_FullRemoveHomebrewManagedBinaryAddsManualAction(t *testi
 	if len(msg.Result.ManualActions) == 0 {
 		t.Fatal("ManualActions should include Homebrew uninstall guidance")
 	}
-	if !strings.Contains(msg.Result.ManualActions[0], "brew uninstall gentle-ai") {
+	if !strings.Contains(msg.Result.ManualActions[0], "brew uninstall shevanio-ai") {
 		t.Fatalf("manual action = %q, want brew uninstall guidance", msg.Result.ManualActions[0])
 	}
 }
@@ -2484,7 +2484,7 @@ func TestStartUninstall_FullRemoveNonBrewRemovesBinary(t *testing.T) {
 		return componentuninstall.Result{}, nil
 	}
 
-	restoreExec := setOSExecutableForTest("/tmp/gentle-ai", nil)
+	restoreExec := setOSExecutableForTest("/tmp/shevanio-ai", nil)
 	defer restoreExec()
 
 	removedPath := ""
@@ -2498,8 +2498,8 @@ func TestStartUninstall_FullRemoveNonBrewRemovesBinary(t *testing.T) {
 	if msg.Err != nil {
 		t.Fatalf("UninstallDoneMsg.Err = %v, want nil", msg.Err)
 	}
-	if removedPath != "/tmp/gentle-ai" {
-		t.Fatalf("os.Remove path = %q, want %q", removedPath, "/tmp/gentle-ai")
+	if removedPath != "/tmp/shevanio-ai" {
+		t.Fatalf("os.Remove path = %q, want %q", removedPath, "/tmp/shevanio-ai")
 	}
 }
 
@@ -5570,24 +5570,24 @@ func TestCodexModelPickerCustomModeEscResetsCursor(t *testing.T) {
 	}
 }
 
-func TestGentleAIUpgradeVersionDetectsSucceededGentleAI(t *testing.T) {
+func TestShevanioAIUpgradeVersionDetectsSucceededShevanioAI(t *testing.T) {
 	report := upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
 		{ToolName: "engram", Status: upgrade.UpgradeSucceeded, NewVersion: "1.0.0"},
-		{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
+		{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
 	}}
 	m := Model{UpgradeReport: &report}
-	got, ok := m.GentleAIUpgradeVersion()
+	got, ok := m.ShevanioAIUpgradeVersion()
 	if !ok {
-		t.Fatal("GentleAIUpgradeVersion() ok = false, want true")
+		t.Fatal("ShevanioAIUpgradeVersion() ok = false, want true")
 	}
 	if got != "1.40.0" {
-		t.Fatalf("GentleAIUpgradeVersion() = %q, want %q", got, "1.40.0")
+		t.Fatalf("ShevanioAIUpgradeVersion() = %q, want %q", got, "1.40.0")
 	}
 }
 
-func TestUpgradeResultEnterQuitsWhenGentleAIWasUpgraded(t *testing.T) {
+func TestUpgradeResultEnterQuitsWhenShevanioAIWasUpgraded(t *testing.T) {
 	report := upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
-		{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
+		{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
 	}}
 	m := Model{Screen: ScreenUpgrade, UpgradeReport: &report}
 	_, cmd := m.confirmSelection()
@@ -5599,9 +5599,9 @@ func TestUpgradeResultEnterQuitsWhenGentleAIWasUpgraded(t *testing.T) {
 	}
 }
 
-func TestUpgradeSyncResultEscQuitsWhenGentleAIWasUpgraded(t *testing.T) {
+func TestUpgradeSyncResultEscQuitsWhenShevanioAIWasUpgraded(t *testing.T) {
 	report := upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
-		{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
+		{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "v1.40.0"},
 	}}
 	m := Model{Screen: ScreenUpgradeSync, UpgradeReport: &report, HasSyncRun: true}
 	_, cmd := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyEsc})
@@ -5660,12 +5660,12 @@ func executeUpgradeSyncSequence(t *testing.T, m Model) []tea.Msg {
 	return msgs
 }
 
-// TestStartUpgradeSync_SetsPendingSyncWhenGentleAIUpgraded verifies that when
-// the UpgradeFn reports gentle-ai as upgraded, the syncCmd branch of
+// TestStartUpgradeSync_SetsPendingSyncWhenShevanioAIUpgraded verifies that when
+// the UpgradeFn reports shevanio-ai as upgraded, the syncCmd branch of
 // startUpgradeSync writes PendingSync=true to state.json before returning
 // SyncDoneMsg. This is the TUI-path equivalent of the selfupdate.go path tested
 // in TestSelfUpdate_SetsPendingSyncOnSuccess.
-func TestStartUpgradeSync_SetsPendingSyncWhenGentleAIUpgraded(t *testing.T) {
+func TestStartUpgradeSync_SetsPendingSyncWhenShevanioAIUpgraded(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
@@ -5674,11 +5674,11 @@ func TestStartUpgradeSync_SetsPendingSyncWhenGentleAIUpgraded(t *testing.T) {
 	m.Screen = ScreenUpgradeSync
 	m.OperationRunning = true
 
-	// UpgradeFn reports gentle-ai as successfully upgraded.
+	// UpgradeFn reports shevanio-ai as successfully upgraded.
 	m.UpgradeFn = func(_ context.Context, _ []update.UpdateResult) upgrade.UpgradeReport {
 		return upgrade.UpgradeReport{
 			Results: []upgrade.ToolUpgradeResult{
-				{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+				{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 			},
 		}
 	}
@@ -5709,14 +5709,14 @@ func TestStartUpgradeSync_SetsPendingSyncWhenGentleAIUpgraded(t *testing.T) {
 		t.Fatalf("state.Read(%q) error = %v (PendingSync was not written)", home, err)
 	}
 	if !s.PendingSync {
-		t.Errorf("PendingSync = false after gentle-ai self-upgrade in TUI flow, want true")
+		t.Errorf("PendingSync = false after shevanio-ai self-upgrade in TUI flow, want true")
 	}
 }
 
-// TestStartUpgradeSync_DoesNotSetPendingSyncWhenGentleAINotUpgraded verifies
-// that when gentle-ai was NOT upgraded (e.g. only engram was upgraded), the
+// TestStartUpgradeSync_DoesNotSetPendingSyncWhenShevanioAINotUpgraded verifies
+// that when shevanio-ai was NOT upgraded (e.g. only engram was upgraded), the
 // syncCmd branch does NOT set PendingSync, and sync proceeds normally via SyncFn.
-func TestStartUpgradeSync_DoesNotSetPendingSyncWhenGentleAINotUpgraded(t *testing.T) {
+func TestStartUpgradeSync_DoesNotSetPendingSyncWhenShevanioAINotUpgraded(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
@@ -5725,7 +5725,7 @@ func TestStartUpgradeSync_DoesNotSetPendingSyncWhenGentleAINotUpgraded(t *testin
 	m.Screen = ScreenUpgradeSync
 	m.OperationRunning = true
 
-	// UpgradeFn reports only engram upgraded, not gentle-ai.
+	// UpgradeFn reports only engram upgraded, not shevanio-ai.
 	m.UpgradeFn = func(_ context.Context, _ []update.UpdateResult) upgrade.UpgradeReport {
 		return upgrade.UpgradeReport{
 			Results: []upgrade.ToolUpgradeResult{
@@ -5744,10 +5744,10 @@ func TestStartUpgradeSync_DoesNotSetPendingSyncWhenGentleAINotUpgraded(t *testin
 
 	// SyncFn must have been called (not the deferred-PendingSync path).
 	if !syncCalled {
-		t.Errorf("SyncFn was not called — expected normal sync when gentle-ai was not upgraded")
+		t.Errorf("SyncFn was not called — expected normal sync when shevanio-ai was not upgraded")
 	}
 
-	// PendingSync must NOT be set when gentle-ai was not upgraded.
+	// PendingSync must NOT be set when shevanio-ai was not upgraded.
 	// state.json may not exist at all if nothing wrote it; that is expected and
 	// means PendingSync was never set (correct). Any other read error is
 	// unexpected and should fail the test loudly.
@@ -5758,7 +5758,7 @@ func TestStartUpgradeSync_DoesNotSetPendingSyncWhenGentleAINotUpgraded(t *testin
 		}
 		// File absent → PendingSync was never set — correct.
 	} else if s.PendingSync {
-		t.Errorf("PendingSync = true after non-gentle-ai upgrade, want false")
+		t.Errorf("PendingSync = true after non-shevanio-ai upgrade, want false")
 	}
 
 	// Verify SyncDoneMsg arrived.
@@ -5786,7 +5786,7 @@ func TestStartUpgradeSync_NoClobberOnCorruptStateFile(t *testing.T) {
 	t.Setenv("USERPROFILE", home)
 
 	// Write a corrupt state file so state.Read returns a non-ErrNotExist error.
-	stateDir := filepath.Join(home, ".gentle-ai")
+	stateDir := filepath.Join(home, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
@@ -5800,11 +5800,11 @@ func TestStartUpgradeSync_NoClobberOnCorruptStateFile(t *testing.T) {
 	m.Screen = ScreenUpgradeSync
 	m.OperationRunning = true
 
-	// UpgradeFn reports gentle-ai as successfully upgraded.
+	// UpgradeFn reports shevanio-ai as successfully upgraded.
 	m.UpgradeFn = func(_ context.Context, _ []update.UpdateResult) upgrade.UpgradeReport {
 		return upgrade.UpgradeReport{
 			Results: []upgrade.ToolUpgradeResult{
-				{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+				{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 			},
 		}
 	}
@@ -5952,7 +5952,7 @@ func TestWelcomeView_LongAdvisoryStaysWithinWindowWidth(t *testing.T) {
 }
 
 func TestWelcomeAdvisory_BoundsAndScrollsOverflow(t *testing.T) {
-	const releaseURL = "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.49.0"
+	const releaseURL = "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.49.0"
 	m := NewModel(system.DetectionResult{}, "dev")
 	m.Width = 60
 	m.Height = 50
@@ -5969,7 +5969,8 @@ func TestWelcomeAdvisory_BoundsAndScrollsOverflow(t *testing.T) {
 	if !strings.Contains(initial, "PgUp/PgDn: scroll") {
 		t.Fatalf("overflowing advisory missing scroll affordance\nview:\n%s", initial)
 	}
-	if !strings.Contains(initial, "Latest release:") || !strings.Contains(initial, "v1.49.0") {
+	visibleText := strings.Join(strings.Fields(strings.ReplaceAll(initial, "║", " ")), "")
+	if !strings.Contains(initial, "Latest release:") || !strings.Contains(visibleText, releaseURL) {
 		t.Fatalf("overflowing advisory did not keep release link visible\nview:\n%s", initial)
 	}
 	if !strings.Contains(initial, "Start installation") {
@@ -5995,7 +5996,7 @@ func TestWelcomeAdvisory_BoundsAndScrollsOverflow(t *testing.T) {
 }
 
 func TestWelcomeAdvisory_FittingContentShowsLatestReleaseWithoutScrollHint(t *testing.T) {
-	const releaseURL = "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.49.0"
+	const releaseURL = "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.49.0"
 	m := NewModel(system.DetectionResult{}, "dev")
 	m.Width = 100
 	m.Height = 60
@@ -6021,7 +6022,7 @@ func TestWelcomeAdvisory_SmallTerminalPreservesMenu(t *testing.T) {
 	baselineHeight := lipgloss.Height(m.View())
 	updated, _ := m.Update(AdvisoryMsg{Advisory: update.Advisory{
 		Message: strings.Repeat("long advisory ", 80),
-		URL:     "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.49.0",
+		URL:     "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.49.0",
 	}})
 	view := updated.(Model).View()
 
@@ -6039,7 +6040,7 @@ func TestWelcomeAdvisory_ResizeAndContentChangesClampScroll(t *testing.T) {
 	m.Height = 60
 	updated, _ := m.Update(AdvisoryMsg{Advisory: update.Advisory{
 		Message: strings.Repeat("release detail ", 12),
-		URL:     "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.49.0",
+		URL:     "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.49.0",
 	}})
 	state := updated.(Model)
 	updated, _ = state.Update(tea.KeyMsg{Type: tea.KeyPgDown})
@@ -6318,7 +6319,7 @@ func TestAdvisoryMsg_SanitizesOnStore(t *testing.T) {
 // makeUpdateResult returns a minimal UpdateResult with the given status and release URL.
 func makeUpdateResult(status update.UpdateStatus, releaseURL string) update.UpdateResult {
 	return update.UpdateResult{
-		Tool:             update.ToolInfo{Name: "gentle-ai"},
+		Tool:             update.ToolInfo{Name: "shevanio-ai"},
 		Status:           status,
 		InstalledVersion: "1.0.0",
 		LatestVersion:    "2.0.0",

@@ -252,7 +252,7 @@ func TestCompactSettleReplaysCanonicalLegacyInterruptedRequest(t *testing.T) {
 			ChangedLines: 0, EvidenceRevision: runtimeTestHash('a'), Diagnosis: "legacy interrupted record",
 			HarnessDisposition: HarnessInvalidated, CleanupEvidence: "clean", ProcessEvidence: "none",
 		}}
-	legacy.RequestDigest = runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
+	legacy.RequestDigest = runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
 		ExpectedRevision: legacy.PreviousRevision, RequestID: legacy.RequestID, Outcome: legacy.Finish.Outcome,
 		EvidenceRevision: legacy.Finish.EvidenceRevision, Diagnosis: legacy.Finish.Diagnosis,
 		HarnessDisposition: legacy.Finish.HarnessDisposition, CleanupEvidence: legacy.Finish.CleanupEvidence,

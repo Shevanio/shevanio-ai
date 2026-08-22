@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func assertScopeChangeRecovery(t *testing.T, failure ReviewIntegrationFailure, lineage, privatePath string) {
@@ -207,7 +207,7 @@ func TestUnrelatedReceiptDenialNamesTheCandidateSituationNotOtherLineages(t *tes
 		t.Fatalf("denial = %#v, want a fail-closed %q\n%s", result.Context.Denial, ReviewReceiptUnrelated, output.String())
 	}
 	if !strings.Contains(result.Reason, "no approved review receipt covers this candidate") ||
-		!strings.Contains(result.Reason, "gentle-ai review start") {
+		!strings.Contains(result.Reason, "shevanio-ai review start") {
 		t.Fatalf("denial reason = %q, want it to lead with this candidate's own situation and name its route", result.Reason)
 	}
 	payload := output.String()
@@ -229,7 +229,7 @@ func TestUnrelatedReceiptDenialNamesTheCandidateSituationNotOtherLineages(t *tes
 	failure := newReviewIntegrationFailure("review.validate", nil, discoveryErr)
 	if failure.Code != string(ReviewReceiptUnrelated) ||
 		!strings.Contains(failure.Message, "No approved review receipt covers this candidate") ||
-		!strings.Contains(failure.Message, "gentle-ai review start") {
+		!strings.Contains(failure.Message, "shevanio-ai review start") {
 		t.Fatalf("negotiated unrelated failure = %#v", failure)
 	}
 }
@@ -453,7 +453,7 @@ func TestUnqualifiedPrePushDiscoveryKeepsCorruptAuthorityPrecedence(t *testing.T
 	beforeOutput, beforeErr := unqualifiedPrePush()
 
 	commonDir := filepath.Clean(strings.TrimSpace(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir")))
-	broken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "corrupt-target-candidate")
+	broken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "corrupt-target-candidate")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -788,7 +788,7 @@ func TestUnscopedGateDiscoveryToleratesCorruptedUnrelatedLegacyInventory(t *test
 	repo := initReviewCLIRepo(t)
 	started, _ := approveDiscoveryMarkdown(t, repo, "review-discovery-valid", "docs/valid.md", "valid\n")
 	commonDir := filepath.Clean(string(bytes.TrimSpace([]byte(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir")))))
-	broken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v1", "unrelated-broken")
+	broken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v1", "unrelated-broken")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -797,7 +797,7 @@ func TestUnscopedGateDiscoveryToleratesCorruptedUnrelatedLegacyInventory(t *test
 	}
 
 	var explicit bytes.Buffer
-	statePath := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", started.LineageID, "review-state.json")
+	statePath := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", started.LineageID, "review-state.json")
 	before, err := os.ReadFile(statePath)
 	if err != nil {
 		t.Fatal(err)
@@ -879,7 +879,7 @@ func TestReleaseGateToleratesCorruptionConfinedToLegacyEntriesIncludingLockResid
 	}
 
 	commonDir := filepath.Clean(strings.TrimSpace(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir")))
-	legacyBroken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v1", "legacy-alias-broken")
+	legacyBroken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v1", "legacy-alias-broken")
 	if err := os.MkdirAll(legacyBroken, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -921,7 +921,7 @@ func TestReleaseGateToleratesCorruptionConfinedToLegacyEntriesIncludingLockResid
 	if !result.Allowed || result.Context.LineageID != started.LineageID {
 		t.Fatalf("release gate across legacy-confined corruption = %#v", result)
 	}
-	incompleteCompact := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "compact-incomplete")
+	incompleteCompact := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "compact-incomplete")
 	if err := os.MkdirAll(incompleteCompact, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -941,7 +941,7 @@ func TestReleaseGateToleratesCorruptionConfinedToLegacyEntriesIncludingLockResid
 		t.Fatalf("release validation mutated legacy lock residue: %v", err)
 	}
 
-	sharedLock := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "LOCK")
+	sharedLock := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "LOCK")
 	originalSharedLock, err := os.ReadFile(sharedLock)
 	if err != nil {
 		t.Fatal(err)
@@ -961,7 +961,7 @@ func TestReleaseGateToleratesCorruptionConfinedToLegacyEntriesIncludingLockResid
 		t.Fatal(err)
 	}
 
-	compactBroken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "compact-broken")
+	compactBroken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "compact-broken")
 	if err := os.MkdirAll(compactBroken, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -1107,7 +1107,7 @@ func TestUnscopedGateDiscoveryFailsClosedOnCorruptedCompactLeaf(t *testing.T) {
 	repo := initReviewCLIRepo(t)
 	approveDiscoveryMarkdown(t, repo, "review-discovery-valid", "docs/valid.md", "valid\n")
 	commonDir := filepath.Clean(string(bytes.TrimSpace([]byte(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir")))))
-	broken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "unrelated-broken")
+	broken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "unrelated-broken")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}

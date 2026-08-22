@@ -1,10 +1,10 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Gentle-AI source installer for Windows.
+    Shevanio AI source installer for Windows.
 
 .DESCRIPTION
-    Installs Gentle AI from source with Go. Official Windows binary distribution
+    Installs Shevanio AI from source with Go. Official Windows binary distribution
     and Scoop are temporarily unavailable until public-trust Authenticode signing
     is enforced. Accepted channels: stable (default), beta, nightly.
 
@@ -26,10 +26,10 @@ $null = & chcp 65001 2>$null
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 $GITHUB_OWNER = "Gentleman-Programming"
-$GITHUB_REPO = "gentle-ai"
-$BINARY_NAME = "gentle-ai"
+$GITHUB_REPO = "shevanio-ai"
+$BINARY_NAME = "shevanio-ai"
 $WINDOWS_DISTRIBUTION_HOLD = "Windows binary distribution and Scoop are temporarily unavailable until publicly trusted Authenticode signing is enforced."
-$STABLE_SOURCE_COMMAND = "go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest"
+$STABLE_SOURCE_COMMAND = "go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest"
 
 function Write-Info    { param([string]$Message) Write-Host "[info]    $Message" -ForegroundColor Blue }
 function Write-Success { param([string]$Message) Write-Host "[ok]      $Message" -ForegroundColor Green }
@@ -51,7 +51,7 @@ function Show-Banner {
     Write-Host " | |_| |  __/ | | | |_| |  __/_____/ ___ \ | | " -ForegroundColor Cyan
     Write-Host "  \____|\___|_| |_|\__|_|\___|    /_/   \_\___|" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "  Gentle-AI - Ecosystem, Frameworks, Workflows" -ForegroundColor DarkGray
+    Write-Host "  Shevanio AI - Ecosystem, Frameworks, Workflows" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -98,9 +98,9 @@ function Install-ViaGo {
     Write-Info "Running: go install $goPackage"
 
     if ($Channel -eq "beta") {
-        Add-GoEnvPattern -Name "GONOSUMDB" -Pattern "github.com/gentleman-programming/gentle-ai/v2"
-        Add-GoEnvPattern -Name "GOPRIVATE" -Pattern "github.com/gentleman-programming/gentle-ai/v2"
-        Add-GoEnvPattern -Name "GONOPROXY" -Pattern "github.com/gentleman-programming/gentle-ai/v2"
+        Add-GoEnvPattern -Name "GONOSUMDB" -Pattern "github.com/shevanio/shevanio-ai/v2"
+        Add-GoEnvPattern -Name "GOPRIVATE" -Pattern "github.com/shevanio/shevanio-ai/v2"
+        Add-GoEnvPattern -Name "GONOPROXY" -Pattern "github.com/shevanio/shevanio-ai/v2"
     }
 
     & go install $goPackage
@@ -150,9 +150,9 @@ function Test-Installation {
         return
     }
 
-    $env:GENTLE_AI_NO_SELF_UPDATE = "1"
+    $env:SHEVANIO_AI_NO_SELF_UPDATE = "1"
     $versionOutput = & $binaryPath --version 2>&1
-    Remove-Item Env:GENTLE_AI_NO_SELF_UPDATE -ErrorAction SilentlyContinue
+    Remove-Item Env:SHEVANIO_AI_NO_SELF_UPDATE -ErrorAction SilentlyContinue
     Write-Success "$BINARY_NAME installed at $binaryPath`: $versionOutput"
 }
 
@@ -163,7 +163,7 @@ function Show-NextSteps {
     Write-Host "Installation complete!" -ForegroundColor Green
     Write-Host ""
     if ($Channel -eq "beta") {
-        Write-Host ('  Run ''$env:GENTLE_AI_CHANNEL = "beta"; {0} install'' to keep using the beta channel' -f $BINARY_NAME) -ForegroundColor Cyan
+        Write-Host ('  Run ''$env:SHEVANIO_AI_CHANNEL = "beta"; {0} install'' to keep using the beta channel' -f $BINARY_NAME) -ForegroundColor Cyan
     } else {
         Write-Host "  Run '$BINARY_NAME' to start the TUI installer" -ForegroundColor Cyan
     }
@@ -178,7 +178,7 @@ function Main {
         [string]$Method = "auto",
 
         [ValidateSet("stable", "beta", "nightly")]
-        [string]$Channel = $(if ($env:GENTLE_AI_CHANNEL) { $env:GENTLE_AI_CHANNEL } else { "stable" }),
+        [string]$Channel = $(if ($env:SHEVANIO_AI_CHANNEL) { $env:SHEVANIO_AI_CHANNEL } else { "stable" }),
 
         [string]$InstallDir = "",
 

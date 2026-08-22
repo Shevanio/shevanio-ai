@@ -1,5 +1,5 @@
 {
-  "schema": "gentle-ai.review-gate-result/v1",
+  "schema": "shevanio-ai.review-gate-result/v1",
   "result": "allow",
   "allowed": true,
   "action": "continue",
@@ -13,7 +13,7 @@
     "candidate_tree": "dda629df9960312d5fa455c0757f92502d06fcbc",
     "paths_digest": "",
     "fix_delta_hash": "",
-    "policy_hash": "sha256:34fb63d7f29f8613cd4431382b1057398a4816f8a4c20fc34677fffc80a184f6",
+    "policy_hash": "sha256:809a89275332806b3e6d98997b671467e166dc27dc9f58e47e128471a3f86cb2",
     "ledger_hash": "",
     "evidence_hash": "",
     "base_relationship_valid": true,

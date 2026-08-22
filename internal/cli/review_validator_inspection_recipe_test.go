@@ -10,14 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // The targeted validator is the one review role that is expected to inspect an
 // immutable candidate itself instead of being handed prompt-carried evidence
 // alone. Issue #3380: it was granted the capability and withheld the recipe.
 // Its provider prompt named no inspection command, and the one native command
-// that can read the frozen corrected tree -- `gentle-ai review
+// that can read the frozen corrected tree -- `shevanio-ai review
 // inspect-candidate --purpose targeted-validation` -- requires an opaque
 // `--repository-context` handle that the prompt never carried, so the recipe
 // was not merely unnamed but underivable. Two runtimes hit the same wall: one
@@ -44,7 +44,7 @@ func TestTargetedValidatorPromptCarriesTheInspectionRecipe(t *testing.T) {
 	prompt := string(targetedValidatorProviderPrompt(t, repo, state, revision))
 
 	for _, want := range []string{
-		"gentle-ai review inspect-candidate",
+		"shevanio-ai review inspect-candidate",
 		reviewTargetedValidationPurpose,
 	} {
 		if !strings.Contains(prompt, want) {

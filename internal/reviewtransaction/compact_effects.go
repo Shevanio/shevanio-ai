@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-const compactEffectMarkerSchema = "gentle-ai.review-effect-marker/v1"
+const compactEffectMarkerSchema = "shevanio-ai.review-effect-marker/v1"
 
 type compactEffectMarkerState string
 type compactEffectObservation string

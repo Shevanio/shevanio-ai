@@ -6,13 +6,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	opencodeactivation "github.com/gentleman-programming/gentle-ai/v2/internal/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/verify"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
 
-const OpenCodeBackgroundSubagentsEnv = "GENTLE_AI_OPENCODE_BACKGROUND_SUBAGENTS"
+const OpenCodeBackgroundSubagentsEnv = "SHEVANIO_AI_OPENCODE_BACKGROUND_SUBAGENTS"
 
 // OpenCodeBackgroundResolveInput contains already-discovered sources. The
 // resolver is pure so loading state and reading the process environment remain

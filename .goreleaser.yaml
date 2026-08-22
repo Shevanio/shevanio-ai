@@ -1,14 +1,14 @@
 version: 2
 
-project_name: gentle-ai
+project_name: shevanio-ai
 
 before:
   hooks:
     - go run ./internal/providercontractbundlecmd generate --out .goreleaser-provider-contract
 
 builds:
-  - main: ./cmd/gentle-ai
-    binary: gentle-ai
+  - main: ./cmd/shevanio-ai
+    binary: shevanio-ai
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,7 +23,7 @@ builds:
       - >-
         -s -w
         -X main.version={{ .Version }}
-        -X github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys={{ .Env.MINISIGN_PUBLIC_KEYS_CANONICAL }}
+        -X github.com/shevanio/shevanio-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys={{ .Env.MINISIGN_PUBLIC_KEYS_CANONICAL }}
 
 archives:
   - formats:
@@ -42,7 +42,7 @@ archives:
     meta: true
     formats:
       - tar.gz
-    name_template: "gentle-ai-review-provider-contract-{{ .Env.PROVIDER_CONTRACT_SEMVER }}"
+    name_template: "shevanio-ai-review-provider-contract-{{ .Env.PROVIDER_CONTRACT_SEMVER }}"
     files:
       - src: .goreleaser-provider-contract/README.md
         strip_parent: true
@@ -87,9 +87,9 @@ signs:
       - "-x"
       - "${signature}"
       - "-c"
-      - "signature from gentle-ai release"
+      - "signature from shevanio-ai release"
       - "-t"
-      - "repo=Gentleman-Programming/gentle-ai;tag={{ .Tag }}"
+      - "repo=Shevanio/shevanio-ai;tag={{ .Tag }}"
     output: true
 
 changelog:
@@ -102,12 +102,12 @@ changelog:
 
 brews:
   - repository:
-      owner: Gentleman-Programming
+      owner: Shevanio
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Formula
-    name: gentle-ai
-    homepage: "https://github.com/Gentleman-Programming/gentle-ai"
-    description: "Gentle-AI — Ecosystem, Frameworks, Workflows for AI coding agents."
+    name: shevanio-ai
+    homepage: "https://github.com/Shevanio/shevanio-ai"
+    description: "Shevanio AI — Ecosystem, Frameworks, Workflows for AI coding agents."
     license: "MIT"
-    commit_msg_template: "chore: update gentle-ai formula to {{ .Tag }}"
+    commit_msg_template: "chore: update shevanio-ai formula to {{ .Tag }}"

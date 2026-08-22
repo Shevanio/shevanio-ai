@@ -6,12 +6,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 // CodexModelPreset represents a named effort-tier preset for Codex per-phase
-// reasoning_effort assignments. Efforts are Gentle AI workload policy, not Codex defaults.
+// reasoning_effort assignments. Efforts are Shevanio AI workload policy, not Codex defaults.
 type CodexModelPreset string
 
 const (

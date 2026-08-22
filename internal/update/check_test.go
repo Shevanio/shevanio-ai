@@ -14,11 +14,11 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestMain(m *testing.M) {
-	if err := os.Unsetenv("GENTLE_AI_CHANNEL"); err != nil {
+	if err := os.Unsetenv("SHEVANIO_AI_CHANNEL"); err != nil {
 		panic(err)
 	}
 
@@ -37,14 +37,14 @@ func TestDetectInstalledVersion(t *testing.T) {
 		wantVersion   string
 	}{
 		{
-			name:         "gentle-ai uses build var",
-			tool:         ToolInfo{Name: "gentle-ai", DetectCmd: nil},
+			name:         "shevanio-ai uses build var",
+			tool:         ToolInfo{Name: "shevanio-ai", DetectCmd: nil},
 			currentBuild: "1.5.0",
 			wantVersion:  "1.5.0",
 		},
 		{
-			name:         "gentle-ai dev build",
-			tool:         ToolInfo{Name: "gentle-ai", DetectCmd: nil},
+			name:         "shevanio-ai dev build",
+			tool:         ToolInfo{Name: "shevanio-ai", DetectCmd: nil},
 			currentBuild: "dev",
 			wantVersion:  "dev",
 		},
@@ -322,8 +322,8 @@ func TestCheckSingleToolOpenCodePluginRegisteredNotMaterialized(t *testing.T) {
 	}
 }
 
-func TestCheckSingleToolGentleAIBetaComparesMainHead(t *testing.T) {
-	t.Setenv("GENTLE_AI_CHANNEL", "beta")
+func TestCheckSingleToolShevanioAIBetaComparesMainHead(t *testing.T) {
+	t.Setenv("SHEVANIO_AI_CHANNEL", "beta")
 
 	origClient := httpClient
 	t.Cleanup(func() { httpClient = origClient })
@@ -331,10 +331,10 @@ func TestCheckSingleToolGentleAIBetaComparesMainHead(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
-			json.NewEncoder(w).Encode(githubCommit{SHA: "972997650b51abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/commit/972997650b51abcdef0123456789abcdef012345"})
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
+			json.NewEncoder(w).Encode(githubCommit{SHA: "972997650b51abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Shevanio/shevanio-ai/commit/972997650b51abcdef0123456789abcdef012345"})
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -358,7 +358,7 @@ func TestCheckSingleToolGentleAIBetaComparesMainHead(t *testing.T) {
 	}
 }
 
-func TestCheckSingleToolGentleAIPseudoVersionComparesMainHeadWithoutChannel(t *testing.T) {
+func TestCheckSingleToolShevanioAIPseudoVersionComparesMainHeadWithoutChannel(t *testing.T) {
 	unsetUpdateChannelEnv(t)
 
 	origClient := httpClient
@@ -367,10 +367,10 @@ func TestCheckSingleToolGentleAIPseudoVersionComparesMainHeadWithoutChannel(t *t
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
-			json.NewEncoder(w).Encode(githubCommit{SHA: "b6872c69e3e4abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/commit/b6872c69e3e4abcdef0123456789abcdef012345"})
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
+			json.NewEncoder(w).Encode(githubCommit{SHA: "b6872c69e3e4abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Shevanio/shevanio-ai/commit/b6872c69e3e4abcdef0123456789abcdef012345"})
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -446,7 +446,7 @@ func TestUsesBetaMainHeadCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.channelSet {
-				t.Setenv("GENTLE_AI_CHANNEL", tt.channel)
+				t.Setenv("SHEVANIO_AI_CHANNEL", tt.channel)
 			} else {
 				unsetUpdateChannelEnv(t)
 			}
@@ -459,7 +459,7 @@ func TestUsesBetaMainHeadCheck(t *testing.T) {
 	}
 }
 
-func TestCheckSingleToolGentleAIStableVersionWithoutChannelComparesLatestRelease(t *testing.T) {
+func TestCheckSingleToolShevanioAIStableVersionWithoutChannelComparesLatestRelease(t *testing.T) {
 	unsetUpdateChannelEnv(t)
 
 	origClient := httpClient
@@ -469,9 +469,9 @@ func TestCheckSingleToolGentleAIStableVersionWithoutChannelComparesLatestRelease
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.4", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.4"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.4", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.4"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
 			// Record the prohibited request; the assertion runs on the
 			// main goroutine after the check completes.
 			mainHeadRequested.Store(true)
@@ -499,13 +499,13 @@ func TestCheckSingleToolGentleAIStableVersionWithoutChannelComparesLatestRelease
 	if result.LatestVersion != "1.40.4" {
 		t.Fatalf("LatestVersion = %q, want 1.40.4", result.LatestVersion)
 	}
-	if result.ReleaseURL != "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.4" {
+	if result.ReleaseURL != "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.4" {
 		t.Fatalf("ReleaseURL = %q, want latest release URL", result.ReleaseURL)
 	}
 }
 
-func TestCheckSingleToolGentleAIBetaAcceptsLocalCommitPrefix(t *testing.T) {
-	t.Setenv("GENTLE_AI_CHANNEL", "beta")
+func TestCheckSingleToolShevanioAIBetaAcceptsLocalCommitPrefix(t *testing.T) {
+	t.Setenv("SHEVANIO_AI_CHANNEL", "beta")
 
 	origClient := httpClient
 	t.Cleanup(func() { httpClient = origClient })
@@ -513,10 +513,10 @@ func TestCheckSingleToolGentleAIBetaAcceptsLocalCommitPrefix(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
-			json.NewEncoder(w).Encode(githubCommit{SHA: "6eff4a1ba110abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/commit/6eff4a1ba110abcdef0123456789abcdef012345"})
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
+			json.NewEncoder(w).Encode(githubCommit{SHA: "6eff4a1ba110abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Shevanio/shevanio-ai/commit/6eff4a1ba110abcdef0123456789abcdef012345"})
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -537,7 +537,7 @@ func TestCheckSingleToolGentleAIBetaAcceptsLocalCommitPrefix(t *testing.T) {
 	}
 }
 
-func TestCheckSingleToolBrewOwnedGentleAIAdvertisesStableChannel(t *testing.T) {
+func TestCheckSingleToolBrewOwnedShevanioAIAdvertisesStableChannel(t *testing.T) {
 	// A brew-owned install can only ever receive the tap's stable formula, so
 	// the checker must not advertise a main-head beta target it cannot deliver
 	// (issue #2323 / #2319 offer half: advertisement derived from the installer's
@@ -555,9 +555,9 @@ func TestCheckSingleToolBrewOwnedGentleAIAdvertisesStableChannel(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.4", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.4"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.4", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.4"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
 			// Record the prohibited request; the assertion runs on the
 			// main goroutine after the check completes.
 			mainHeadRequested.Store(true)
@@ -576,7 +576,7 @@ func TestCheckSingleToolBrewOwnedGentleAIAdvertisesStableChannel(t *testing.T) {
 	result := checkSingleTool(context.Background(), Tools[0], "1.40.3-0.20260614151827-6eff4a1ba110", profile)
 
 	if mainHeadRequested.Load() {
-		t.Fatal("brew-owned gentle-ai must not request main HEAD: brew cannot deliver a main@sha target")
+		t.Fatal("brew-owned shevanio-ai must not request main HEAD: brew cannot deliver a main@sha target")
 	}
 	if strings.HasPrefix(result.LatestVersion, "main@") {
 		t.Fatalf("LatestVersion = %q, want the stable release brew would deliver, not a main-head advertisement", result.LatestVersion)
@@ -587,12 +587,12 @@ func TestCheckSingleToolBrewOwnedGentleAIAdvertisesStableChannel(t *testing.T) {
 	if result.Status != UpdateAvailable {
 		t.Fatalf("status = %q, want %q", result.Status, UpdateAvailable)
 	}
-	if result.UpdateHint != "brew upgrade --formula gentle-ai" {
+	if result.UpdateHint != "brew upgrade --formula shevanio-ai" {
 		t.Fatalf("UpdateHint = %q, want the brew instruction that delivers the advertised target", result.UpdateHint)
 	}
 }
 
-func TestCheckSingleToolGentleAIBetaHintNamesAdvertisedTarget(t *testing.T) {
+func TestCheckSingleToolShevanioAIBetaHintNamesAdvertisedTarget(t *testing.T) {
 	// When the checker advertises main@<sha>, the printed instruction must
 	// install that channel. The stable install.sh hint silently replaces a beta
 	// build with the latest stable release (issue #2323).
@@ -604,10 +604,10 @@ func TestCheckSingleToolGentleAIBetaHintNamesAdvertisedTarget(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
-			json.NewEncoder(w).Encode(githubCommit{SHA: "972997650b51abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/commit/972997650b51abcdef0123456789abcdef012345"})
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
+			json.NewEncoder(w).Encode(githubCommit{SHA: "972997650b51abcdef0123456789abcdef012345", HTMLURL: "https://github.com/Shevanio/shevanio-ai/commit/972997650b51abcdef0123456789abcdef012345"})
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -627,16 +627,16 @@ func TestCheckSingleToolGentleAIBetaHintNamesAdvertisedTarget(t *testing.T) {
 	if result.LatestVersion != "main@972997650b51" {
 		t.Fatalf("LatestVersion = %q, want main@972997650b51", result.LatestVersion)
 	}
-	derived := GentleAISourceInstallCommand(result.LatestVersion)
+	derived := ShevanioAISourceInstallCommand(result.LatestVersion)
 	if result.UpdateHint != derived {
 		t.Fatalf("UpdateHint = %q, want the instruction derived from the advertised target: %q", result.UpdateHint, derived)
 	}
-	if result.UpdateHint != "go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@main" {
+	if result.UpdateHint != "go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@main" {
 		t.Fatalf("UpdateHint = %q, want the go install @main command", result.UpdateHint)
 	}
 }
 
-func TestCheckSingleToolGentleAIBetaNewerLocalPseudoVersionIsNotOffered(t *testing.T) {
+func TestCheckSingleToolShevanioAIBetaNewerLocalPseudoVersionIsNotOffered(t *testing.T) {
 	// A local build whose pseudo-version timestamp is newer than the remote
 	// main-head commit date is not behind main: offering "update available" on
 	// a bare prefix mismatch advertises a downgrade as an upgrade (issue #2319
@@ -649,11 +649,11 @@ func TestCheckSingleToolGentleAIBetaNewerLocalPseudoVersionIsNotOffered(t *testi
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
 			// Real API shape: the commit date rides inside commit.committer.date.
-			fmt.Fprint(w, `{"sha":"aaaabbbbcccc0123456789abcdef0123456789ab","html_url":"https://github.com/Gentleman-Programming/gentle-ai/commit/aaaabbbbcccc0123456789abcdef0123456789ab","commit":{"committer":{"date":"2026-07-25T10:00:00Z"}}}`)
+			fmt.Fprint(w, `{"sha":"aaaabbbbcccc0123456789abcdef0123456789ab","html_url":"https://github.com/Shevanio/shevanio-ai/commit/aaaabbbbcccc0123456789abcdef0123456789ab","commit":{"committer":{"date":"2026-07-25T10:00:00Z"}}}`)
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -673,7 +673,7 @@ func TestCheckSingleToolGentleAIBetaNewerLocalPseudoVersionIsNotOffered(t *testi
 	}
 }
 
-func TestCheckSingleToolGentleAIBetaOlderLocalPseudoVersionStillOffered(t *testing.T) {
+func TestCheckSingleToolShevanioAIBetaOlderLocalPseudoVersionStillOffered(t *testing.T) {
 	// The ordering guard must not suppress the genuine offer: a local build
 	// older than the remote main-head commit keeps UpdateAvailable.
 	unsetUpdateChannelEnv(t)
@@ -684,10 +684,10 @@ func TestCheckSingleToolGentleAIBetaOlderLocalPseudoVersionStillOffered(t *testi
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/repos/Gentleman-Programming/gentle-ai/releases/latest":
-			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.40.3"})
-		case "/repos/Gentleman-Programming/gentle-ai/commits/main":
-			fmt.Fprint(w, `{"sha":"aaaabbbbcccc0123456789abcdef0123456789ab","html_url":"https://github.com/Gentleman-Programming/gentle-ai/commit/aaaabbbbcccc0123456789abcdef0123456789ab","commit":{"committer":{"date":"2026-08-01T00:00:00Z"}}}`)
+		case "/repos/Shevanio/shevanio-ai/releases/latest":
+			json.NewEncoder(w).Encode(githubRelease{TagName: "v1.40.3", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.40.3"})
+		case "/repos/Shevanio/shevanio-ai/commits/main":
+			fmt.Fprint(w, `{"sha":"aaaabbbbcccc0123456789abcdef0123456789ab","html_url":"https://github.com/Shevanio/shevanio-ai/commit/aaaabbbbcccc0123456789abcdef0123456789ab","commit":{"committer":{"date":"2026-08-01T00:00:00Z"}}}`)
 		default:
 			// Stray or misdirected request: reply 404 and let the test's
 			// main-goroutine assertions decide (see simulateStrayForeignRequest).
@@ -928,8 +928,8 @@ func TestFetchLatestRelease_GithubToken(t *testing.T) {
 		t.Fatalf("Authorization = %q, want %q", gotAuth, "Bearer test-token-123")
 	}
 
-	if gotUserAgent != "gentle-ai-update-check" {
-		t.Fatalf("User-Agent = %q, want %q", gotUserAgent, "gentle-ai-update-check")
+	if gotUserAgent != "shevanio-ai-update-check" {
+		t.Fatalf("User-Agent = %q, want %q", gotUserAgent, "shevanio-ai-update-check")
 	}
 }
 
@@ -978,8 +978,8 @@ func TestCheckAll(t *testing.T) {
 		path := r.URL.Path
 		var release githubRelease
 		switch {
-		case contains(path, "gentle-ai"):
-			release = githubRelease{TagName: "v1.5.0", HTMLURL: "https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v1.5.0"}
+		case contains(path, "shevanio-ai"):
+			release = githubRelease{TagName: "v1.5.0", HTMLURL: "https://github.com/Shevanio/shevanio-ai/releases/tag/v1.5.0"}
 		case contains(path, "gentleman-guardian-angel"):
 			release = githubRelease{TagName: "v2.0.0", HTMLURL: "https://github.com/Gentleman-Programming/gentleman-guardian-angel/releases/tag/v2.0.0"}
 		case contains(path, "sub-agent-statusline"):
@@ -1034,8 +1034,8 @@ func TestCheckAll(t *testing.T) {
 		t.Fatalf("len(results) = %d, want 5", len(results))
 	}
 
-	// gentle-ai: 1.5.0 local == 1.5.0 remote → UpToDate
-	assertResult(t, results[0], "gentle-ai", UpToDate, "1.5.0", "1.5.0")
+	// shevanio-ai: 1.5.0 local == 1.5.0 remote → UpToDate
+	assertResult(t, results[0], "shevanio-ai", UpToDate, "1.5.0", "1.5.0")
 
 	// engram: 0.3.2 local < 0.4.0 remote → UpdateAvailable
 	assertResult(t, results[1], "engram", UpdateAvailable, "0.3.2", "0.4.0")
@@ -1127,13 +1127,13 @@ func TestCheckAll_NetworkError(t *testing.T) {
 	profile := system.PlatformProfile{OS: "linux", LinuxDistro: "ubuntu", PackageManager: "apt", Supported: true}
 	results := CheckAll(context.Background(), "1.0.0", profile)
 
-	// gentle-ai has no DetectCmd, so it gets currentBuildVersion "1.0.0" as local
+	// shevanio-ai has no DetectCmd, so it gets currentBuildVersion "1.0.0" as local
 	// but fetch fails → CheckFailed (it has a local version).
 	if results[0].Status != CheckFailed {
-		t.Fatalf("gentle-ai status = %q, want %q", results[0].Status, CheckFailed)
+		t.Fatalf("shevanio-ai status = %q, want %q", results[0].Status, CheckFailed)
 	}
 	if results[0].Err == nil {
-		t.Fatalf("gentle-ai expected error, got nil")
+		t.Fatalf("shevanio-ai expected error, got nil")
 	}
 
 	if results[1].Status != CheckFailed {
@@ -1195,29 +1195,29 @@ func TestUpdateHint(t *testing.T) {
 		want          string
 	}{
 		{
-			name:          "gentle-ai macOS brew-owned",
-			tool:          ToolInfo{Name: "gentle-ai"},
+			name:          "shevanio-ai macOS brew-owned",
+			tool:          ToolInfo{Name: "shevanio-ai"},
 			profile:       system.PlatformProfile{OS: "darwin", PackageManager: "brew"},
 			brewInstalled: true,
-			want:          "brew upgrade gentle-ai",
+			want:          "brew upgrade shevanio-ai",
 		},
 		{
-			name:    "gentle-ai macOS non-brew",
-			tool:    ToolInfo{Name: "gentle-ai"},
+			name:    "shevanio-ai macOS non-brew",
+			tool:    ToolInfo{Name: "shevanio-ai"},
 			profile: system.PlatformProfile{OS: "darwin", PackageManager: "brew"},
-			want:    "gentle-ai upgrade (downloads pre-built binary)",
+			want:    "shevanio-ai upgrade (downloads pre-built binary)",
 		},
 		{
-			name:    "gentle-ai linux",
-			tool:    ToolInfo{Name: "gentle-ai"},
+			name:    "shevanio-ai linux",
+			tool:    ToolInfo{Name: "shevanio-ai"},
 			profile: system.PlatformProfile{OS: "linux", PackageManager: "apt"},
-			want:    "curl -fsSL https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh | bash",
+			want:    "curl -fsSL https://raw.githubusercontent.com/Shevanio/shevanio-ai/main/scripts/install.sh | bash",
 		},
 		{
-			name:    "gentle-ai windows",
-			tool:    ToolInfo{Name: "gentle-ai"},
+			name:    "shevanio-ai windows",
+			tool:    ToolInfo{Name: "shevanio-ai"},
 			profile: system.PlatformProfile{OS: "windows", PackageManager: "winget"},
-			want:    "Windows binary distribution and Scoop are temporarily unavailable until publicly trusted Authenticode signing is enforced. Install/update from source with Go 1.25.10+: go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@latest",
+			want:    "Windows binary distribution and Scoop are temporarily unavailable until publicly trusted Authenticode signing is enforced. Install/update from source with Go 1.25.10+: go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest",
 		},
 		{
 			name:          "engram macOS brew-owned",
@@ -1230,19 +1230,19 @@ func TestUpdateHint(t *testing.T) {
 			name:    "engram macOS non-brew",
 			tool:    ToolInfo{Name: "engram"},
 			profile: system.PlatformProfile{OS: "darwin", PackageManager: "brew"},
-			want:    "gentle-ai upgrade (downloads pre-built binary)",
+			want:    "shevanio-ai upgrade (downloads pre-built binary)",
 		},
 		{
 			name:    "engram linux",
 			tool:    ToolInfo{Name: "engram"},
 			profile: system.PlatformProfile{OS: "linux", PackageManager: "apt"},
-			want:    "gentle-ai upgrade (downloads pre-built binary)",
+			want:    "shevanio-ai upgrade (downloads pre-built binary)",
 		},
 		{
 			name:    "engram windows",
 			tool:    ToolInfo{Name: "engram"},
 			profile: system.PlatformProfile{OS: "windows", PackageManager: "winget"},
-			want:    "gentle-ai upgrade (downloads pre-built binary)",
+			want:    "shevanio-ai upgrade (downloads pre-built binary)",
 		},
 		{
 			name:          "gga macOS brew-owned",
@@ -1286,33 +1286,33 @@ func TestUpdateHint(t *testing.T) {
 }
 
 func TestHomebrewPackageInstalledWithRequiresActiveBrewPath(t *testing.T) {
-	brewPrefix := filepath.Join(t.TempDir(), "opt", "gentle-ai")
-	brewBin := filepath.Join(brewPrefix, "bin", "gentle-ai")
-	nonBrewBin := filepath.Join(t.TempDir(), "gentle-ai")
+	brewPrefix := filepath.Join(t.TempDir(), "opt", "shevanio-ai")
+	brewBin := filepath.Join(brewPrefix, "bin", "shevanio-ai")
+	nonBrewBin := filepath.Join(t.TempDir(), "shevanio-ai")
 
 	run := func(name string, args ...string) *exec.Cmd {
 		if name != "brew" {
 			return mockCmd("false")
 		}
-		if len(args) >= 3 && args[0] == "list" && args[1] == "--formula" && args[2] == "gentle-ai" {
+		if len(args) >= 3 && args[0] == "list" && args[1] == "--formula" && args[2] == "shevanio-ai" {
 			return mockCmd("true")
 		}
-		if len(args) == 2 && args[0] == "--prefix" && args[1] == "gentle-ai" {
+		if len(args) == 2 && args[0] == "--prefix" && args[1] == "shevanio-ai" {
 			return mockCmd("echo", brewPrefix)
 		}
 		return mockCmd("false")
 	}
 
-	if !homebrewPackageInstalledWith(run, func(string) (string, error) { return brewBin, nil }, "gentle-ai") {
+	if !homebrewPackageInstalledWith(run, func(string) (string, error) { return brewBin, nil }, "shevanio-ai") {
 		t.Fatal("expected brew-owned active path to be treated as Homebrew installed")
 	}
-	if homebrewPackageInstalledWith(run, func(string) (string, error) { return nonBrewBin, nil }, "gentle-ai") {
+	if homebrewPackageInstalledWith(run, func(string) (string, error) { return nonBrewBin, nil }, "shevanio-ai") {
 		t.Fatal("expected shadowing non-brew active path to avoid Homebrew")
 	}
-	if homebrewPackageInstalledWith(func(string, ...string) *exec.Cmd { return mockCmd("false") }, func(string) (string, error) { return brewBin, nil }, "gentle-ai") {
+	if homebrewPackageInstalledWith(func(string, ...string) *exec.Cmd { return mockCmd("false") }, func(string) (string, error) { return brewBin, nil }, "shevanio-ai") {
 		t.Fatal("expected brew list failure to avoid Homebrew")
 	}
-	if homebrewPackageInstalledWith(func(string, ...string) *exec.Cmd { return mockCmd("true") }, func(string) (string, error) { return "", fmt.Errorf("not found") }, "gentle-ai") {
+	if homebrewPackageInstalledWith(func(string, ...string) *exec.Cmd { return mockCmd("true") }, func(string) (string, error) { return "", fmt.Errorf("not found") }, "shevanio-ai") {
 		t.Fatal("expected active path lookup failure to avoid Homebrew")
 	}
 }
@@ -1454,7 +1454,7 @@ func TestRegistryContents(t *testing.T) {
 		owner string
 		repo  string
 	}{
-		"gentle-ai":                    {owner: "Gentleman-Programming", repo: "gentle-ai"},
+		"shevanio-ai":                  {owner: "Shevanio", repo: "shevanio-ai"},
 		"engram":                       {owner: "Gentleman-Programming", repo: "engram"},
 		"gga":                          {owner: "Gentleman-Programming", repo: "gentleman-guardian-angel"},
 		"opencode-subagent-statusline": {owner: "Joaquinvesapa", repo: "sub-agent-statusline"},
@@ -1474,9 +1474,9 @@ func TestRegistryContents(t *testing.T) {
 		}
 	}
 
-	// gentle-ai must have nil DetectCmd.
+	// shevanio-ai must have nil DetectCmd.
 	if Tools[0].DetectCmd != nil {
-		t.Fatalf("gentle-ai DetectCmd should be nil")
+		t.Fatalf("shevanio-ai DetectCmd should be nil")
 	}
 
 	// engram and gga must have non-nil DetectCmd.
@@ -1509,7 +1509,7 @@ func TestCheckAll_DevVersion(t *testing.T) {
 	origLookPath := lookPath
 	origExecCommand := execCommand
 
-	// Override only the first tool (gentle-ai) by running CheckAll with "dev".
+	// Override only the first tool (shevanio-ai) by running CheckAll with "dev".
 	origTools := Tools
 	t.Cleanup(func() {
 		httpClient = origClient
@@ -1521,7 +1521,7 @@ func TestCheckAll_DevVersion(t *testing.T) {
 	httpClient = server.Client()
 	httpClient.Transport = &testTransport{server: server}
 
-	// Restrict to just gentle-ai to isolate the test.
+	// Restrict to just shevanio-ai to isolate the test.
 	Tools = []ToolInfo{Tools[0]}
 
 	lookPath = func(string) (string, error) { return "", fmt.Errorf("not found") }
@@ -1536,14 +1536,14 @@ func TestCheckAll_DevVersion(t *testing.T) {
 
 	// The spec requires: "dev" build MUST be reported as DevBuild, not VersionUnknown.
 	if results[0].Status != DevBuild {
-		t.Fatalf("gentle-ai dev status = %q, want %q", results[0].Status, DevBuild)
+		t.Fatalf("shevanio-ai dev status = %q, want %q", results[0].Status, DevBuild)
 	}
 }
 
 // --- TestCheckFiltered ---
 
 // TestCheckFiltered verifies that CheckFiltered restricts results to the named tools
-// and that the dev-build sentinel causes gentle-ai to be reported as DevBuild.
+// and that the dev-build sentinel causes shevanio-ai to be reported as DevBuild.
 func TestCheckFiltered_SubsetOfTools(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1652,14 +1652,14 @@ func TestCheckFiltered_UnknownToolIgnored(t *testing.T) {
 	}
 }
 
-// TestCheckFiltered_DevBuildSemanticsForGentleAI verifies the design requirement:
-// when the running gentle-ai binary reports version "dev", it is identified as a
+// TestCheckFiltered_DevBuildSemanticsForShevanioAI verifies the design requirement:
+// when the running shevanio-ai binary reports version "dev", it is identified as a
 // DevBuild and NOT reported as UpdateAvailable or VersionUnknown.
 //
 // The spec says:
 //   - Dev build MUST be reported as development-build semantic
-//   - gentle-ai self-upgrade is skipped while engram/gga remain eligible
-func TestCheckFiltered_DevBuildSemanticsForGentleAI(t *testing.T) {
+//   - shevanio-ai self-upgrade is skipped while engram/gga remain eligible
+func TestCheckFiltered_DevBuildSemanticsForShevanioAI(t *testing.T) {
 	mockNoHomebrew(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1683,7 +1683,7 @@ func TestCheckFiltered_DevBuildSemanticsForGentleAI(t *testing.T) {
 	httpClient.Transport = &testTransport{server: server}
 	lookPath = func(string) (string, error) { return "", fmt.Errorf("not found") }
 	execCommand = func(name string, args ...string) *exec.Cmd { return mockCmd("false") }
-	Tools = []ToolInfo{Tools[0]} // gentle-ai only
+	Tools = []ToolInfo{Tools[0]} // shevanio-ai only
 
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew", Supported: true}
 
@@ -1693,8 +1693,8 @@ func TestCheckFiltered_DevBuildSemanticsForGentleAI(t *testing.T) {
 	}
 
 	r := results[0]
-	if r.Tool.Name != "gentle-ai" {
-		t.Fatalf("tool = %q, want gentle-ai", r.Tool.Name)
+	if r.Tool.Name != "shevanio-ai" {
+		t.Fatalf("tool = %q, want shevanio-ai", r.Tool.Name)
 	}
 
 	// Dev build should be reported as DevBuild status, not VersionUnknown or UpdateAvailable.
@@ -1704,7 +1704,7 @@ func TestCheckFiltered_DevBuildSemanticsForGentleAI(t *testing.T) {
 }
 
 // TestCheckFiltered_DevBuildSkipNotEligible verifies that in a mixed run,
-// gentle-ai with "dev" version gets DevBuild while engram with a real version stays eligible.
+// shevanio-ai with "dev" version gets DevBuild while engram with a real version stays eligible.
 func TestCheckFiltered_DevBuildSkipNotEligible(t *testing.T) {
 	mockNoHomebrew(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1714,7 +1714,7 @@ func TestCheckFiltered_DevBuildSkipNotEligible(t *testing.T) {
 		path := r.URL.Path
 		var release githubRelease
 		switch {
-		case contains(path, "gentle-ai"):
+		case contains(path, "shevanio-ai"):
 			release = githubRelease{TagName: "v9.9.9"}
 		case contains(path, "engram"):
 			release = githubRelease{TagName: "v2.0.0"}
@@ -1752,7 +1752,7 @@ func TestCheckFiltered_DevBuildSkipNotEligible(t *testing.T) {
 		}
 		return mockCmd("false")
 	}
-	// Only gentle-ai and engram for this test
+	// Only shevanio-ai and engram for this test
 	Tools = []ToolInfo{Tools[0], Tools[1]}
 
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew", Supported: true}
@@ -1762,9 +1762,9 @@ func TestCheckFiltered_DevBuildSkipNotEligible(t *testing.T) {
 		t.Fatalf("len = %d, want 2", len(results))
 	}
 
-	// gentle-ai should be DevBuild
+	// shevanio-ai should be DevBuild
 	if results[0].Status != DevBuild {
-		t.Fatalf("gentle-ai status = %q, want DevBuild", results[0].Status)
+		t.Fatalf("shevanio-ai status = %q, want DevBuild", results[0].Status)
 	}
 
 	// engram should be UpdateAvailable (1.0.0 < 2.0.0)
@@ -1821,7 +1821,7 @@ func TestNoUpdatesPath(t *testing.T) {
 		}
 		return mockCmd("false")
 	}
-	// Only engram and gga for this test (skip gentle-ai to avoid dev-build behavior)
+	// Only engram and gga for this test (skip shevanio-ai to avoid dev-build behavior)
 	Tools = []ToolInfo{Tools[1], Tools[2]}
 
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew", Supported: true}
@@ -2029,19 +2029,19 @@ func TestDetectInstalledVersionPs1FallbackInvokesViaPowershell(t *testing.T) {
 func unsetUpdateChannelEnv(t *testing.T) {
 	t.Helper()
 
-	oldValue, hadValue := os.LookupEnv("GENTLE_AI_CHANNEL")
-	if err := os.Unsetenv("GENTLE_AI_CHANNEL"); err != nil {
-		t.Fatalf("unset GENTLE_AI_CHANNEL: %v", err)
+	oldValue, hadValue := os.LookupEnv("SHEVANIO_AI_CHANNEL")
+	if err := os.Unsetenv("SHEVANIO_AI_CHANNEL"); err != nil {
+		t.Fatalf("unset SHEVANIO_AI_CHANNEL: %v", err)
 	}
 	t.Cleanup(func() {
 		if hadValue {
-			if err := os.Setenv("GENTLE_AI_CHANNEL", oldValue); err != nil {
-				t.Fatalf("restore GENTLE_AI_CHANNEL: %v", err)
+			if err := os.Setenv("SHEVANIO_AI_CHANNEL", oldValue); err != nil {
+				t.Fatalf("restore SHEVANIO_AI_CHANNEL: %v", err)
 			}
 			return
 		}
-		if err := os.Unsetenv("GENTLE_AI_CHANNEL"); err != nil {
-			t.Fatalf("restore unset GENTLE_AI_CHANNEL: %v", err)
+		if err := os.Unsetenv("SHEVANIO_AI_CHANNEL"); err != nil {
+			t.Fatalf("restore unset SHEVANIO_AI_CHANNEL: %v", err)
 		}
 	})
 }

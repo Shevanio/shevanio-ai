@@ -60,14 +60,14 @@ jobs:
       - name: Build, vet, and test benchmark module
         working-directory: bench
         run: |
-          go build -o "$RUNNER_TEMP/gentle-ai-bench" .
+          go build -o "$RUNNER_TEMP/shevanio-ai-bench" .
           go vet ./...
           go test ./...
 
       - name: Run benchmark evidence
         run: |
-          go build -trimpath -o "$RUNNER_TEMP/gentle-ai" ./cmd/gentle-ai
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai" --out "$RUNNER_TEMP/bench-portable.json"
+          go build -trimpath -o "$RUNNER_TEMP/shevanio-ai" ./cmd/shevanio-ai
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai" --out "$RUNNER_TEMP/bench-portable.json"
           jq -e '
             def completed_once($id):
               [.journeys[] | select(.id == $id)] as $matches
@@ -83,7 +83,7 @@ jobs:
             completed_once("j81-rc1-consecutive-rescope-repair-executes-printed-command") and
             completed_once("j75-intended-untracked-selection-executes-printed-start")
           ' "$RUNNER_TEMP/bench-portable.json"
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai" --only j105-compiled-provider-capture-retries-same-binding --out "$RUNNER_TEMP/bench-provider-capture.json"
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai" --only j105-compiled-provider-capture-retries-same-binding --out "$RUNNER_TEMP/bench-provider-capture.json"
           jq -e '
             def completed_once($id):
               [.journeys[] | select(.id == $id)] as $matches
@@ -93,7 +93,7 @@ jobs:
           # Transition axis (#2829): sequences of ordinary operations, which is
           # how #2830 shipped. #2830 now refuses the second consecutive rescope
           # before publication, so every transition journey must complete.
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai" --axis transition --out "$RUNNER_TEMP/bench-transition.json"
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai" --axis transition --out "$RUNNER_TEMP/bench-transition.json"
           jq -e '
             def completed_once($id):
               [.journeys[] | select(.id == $id)] as $matches
@@ -112,29 +112,29 @@ jobs:
             completed_once("tr10-scope-change-after-the-review-is-bound") and
             completed_once("tr11-abandon-the-review-while-an-attempt-is-open")
           ' "$RUNNER_TEMP/bench-transition.json"
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai" --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed --out "$RUNNER_TEMP/bench-source-coupled-untagged.json"
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai" --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed --out "$RUNNER_TEMP/bench-source-coupled-untagged.json"
           jq -e '
             def unsupported_once($id):
               [.journeys[] | select(.id == $id)] as $matches
               | ($matches | length == 1) and ($matches[0].status == "unsupported");
             unsupported_once("j57-sdd-authority-drift-during-discovery-fails-closed")
           ' "$RUNNER_TEMP/bench-source-coupled-untagged.json"
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai" --axis model-picker --only j97-opencode-custom-agent-model-picker-runtime --out "$RUNNER_TEMP/bench-model-picker-untagged.json"
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai" --axis model-picker --only j97-opencode-custom-agent-model-picker-runtime --out "$RUNNER_TEMP/bench-model-picker-untagged.json"
           jq -e '
             def unsupported_once($id):
               [.journeys[] | select(.id == $id)] as $matches
               | ($matches | length == 1) and ($matches[0].status == "unsupported");
             unsupported_once("j97-opencode-custom-agent-model-picker-runtime")
           ' "$RUNNER_TEMP/bench-model-picker-untagged.json"
-          go build -tags bench_fixture -trimpath -o "$RUNNER_TEMP/gentle-ai-bench-fixture" ./cmd/gentle-ai
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai-bench-fixture" --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed --out "$RUNNER_TEMP/bench-source-coupled.json"
+          go build -tags bench_fixture -trimpath -o "$RUNNER_TEMP/shevanio-ai-bench-fixture" ./cmd/shevanio-ai
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai-bench-fixture" --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed --out "$RUNNER_TEMP/bench-source-coupled.json"
           jq -e '
             def completed_once($id):
               [.journeys[] | select(.id == $id)] as $matches
               | ($matches | length == 1) and ($matches[0].status == "completed");
             completed_once("j57-sdd-authority-drift-during-discovery-fails-closed")
           ' "$RUNNER_TEMP/bench-source-coupled.json"
-          "$RUNNER_TEMP/gentle-ai-bench" run --binary "$RUNNER_TEMP/gentle-ai-bench-fixture" --axis model-picker --only j97-opencode-custom-agent-model-picker-runtime --out "$RUNNER_TEMP/bench-model-picker.json"
+          "$RUNNER_TEMP/shevanio-ai-bench" run --binary "$RUNNER_TEMP/shevanio-ai-bench-fixture" --axis model-picker --only j97-opencode-custom-agent-model-picker-runtime --out "$RUNNER_TEMP/bench-model-picker.json"
           jq -e '
             def completed_once($id):
               [.journeys[] | select(.id == $id)] as $matches
@@ -164,14 +164,14 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Build pinned Claude runtime proof image
-        run: docker build -f e2e/Dockerfile.claude-network-none -t gentle-ai-claude-network-none:ci .
+        run: docker build -f e2e/Dockerfile.claude-network-none -t shevanio-ai-claude-network-none:ci .
       - name: Prove Claude transport without external networking
         run: |
           docker run --rm --pull=never --network none --cap-drop=ALL \
             --security-opt=no-new-privileges --read-only \
             --tmpfs /tmp:rw,noexec,nosuid,nodev,mode=1777 \
-            -e GENTLE_AI_PARENT_NETNS="$(stat -Lc %i /proc/self/ns/net)" \
-            gentle-ai-claude-network-none:ci
+            -e SHEVANIO_AI_PARENT_NETNS="$(stat -Lc %i /proc/self/ns/net)" \
+            shevanio-ai-claude-network-none:ci
 
   windows-runtime:
     name: Windows Runtime
@@ -206,7 +206,7 @@ jobs:
         run: |
           Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE -ErrorAction SilentlyContinue
           Add-MpPreference -ExclusionPath $env:RUNNER_TEMP -ErrorAction SilentlyContinue
-          Add-MpPreference -ExclusionProcess 'git.exe','go.exe','gentle-ai.exe' -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess 'git.exe','go.exe','shevanio-ai.exe' -ErrorAction SilentlyContinue
 
       - name: Checkout exact event candidate
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
@@ -240,14 +240,14 @@ jobs:
 
       - name: Build native test binary
         shell: pwsh
-        run: go build -trimpath -ldflags="-s -w -X main.version=ci" -o "$env:RUNNER_TEMP\gentle-ai.exe" ./cmd/gentle-ai
+        run: go build -trimpath -ldflags="-s -w -X main.version=ci" -o "$env:RUNNER_TEMP\shevanio-ai.exe" ./cmd/shevanio-ai
 
       - name: Run Windows release-blocker tests
         shell: pwsh
         timeout-minutes: 10
         env:
-          GENTLE_AI_TEST_BINARY: ${{ runner.temp }}\gentle-ai.exe
-          GENTLE_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER: "1"
+          SHEVANIO_AI_TEST_BINARY: ${{ runner.temp }}\shevanio-ai.exe
+          SHEVANIO_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER: "1"
         run: go test -v ./internal/cli ./internal/reviewtransaction ./internal/sddstatus ./internal/components/engram -run '^(TestRARSharedOwnerAcceptsOnlyCurrentWindowsPrincipals|TestRARPrivateOwnerRemainsTokenUserOnly|TestWindowsSecureOpenRetriesDirectDriveDeviceWithoutWeakeningFlags|TestWindowsSecureOpenDriveFallbackFailsClosed|TestWindowsSecureOpenDoesNotRetryOtherErrors|TestWindowsStoreLockUsesExistingInodeAdvisoryTruth|TestRunGitBoundsLocalAndRemoteCommands|TestRunGitDistinguishesAggregateDeadlineAndTypedExit|TestStoreLockReportsLiveOwnerAndCannotBeStolen|TestStoreLockRecoversCrashAndCorruptOwnerRecords|TestStoreLockIsReleasedWhenOwnerProcessExits|TestConcurrentStoreLockRecoverersCannotBothWin|TestCompactStoresShareRepositoryWriteLock|TestCompactStoreRejectsConcurrentLockedWriter|TestAuthorityLockCancellationPreservesSentinelAndCallerDeadline|TestCompactStatusLoadContextCancelsUnderExclusiveMaintenance|TestRepairClassifiedAuthorityConcurrentExecutionCommitsAndReplays|TestRepairClassifiedAuthorityResumesEachDurablePhase|TestReviewFacadeCorrectionFlowResumesFromEachCompactIntermediateState|TestReviewFacadeFinalizeRejectsCorrectionCreatedUntrackedPath|TestRejectFacadeCorrectionUntrackedRespectsStagedProjection|TestMainBinaryAcceptsCorrectedCandidateFromLinkedWorktree|TestWindowsPowerShell51ArtifactManifestFileFinalize|TestNegotiatedStatusUnderUnavailableProcessTempOffersFreshStartOnBothContracts|TestNegotiatedStatusUnderUnavailableProcessTempResolvesWorkspaceOverlayBaseRef|TestNegotiatedStatusUnderUnavailableProcessTempContinuesCompactCorrection|TestNegotiatedStatusLeavesNoTemporaryGitArtifactsAfterFailure|TestNegotiatedReviewStatusFreshLargeDirtyCandidateOffersStart|TestFrozenCandidateReviewerDiffUsesRegularAttributesFileAndIgnoresMutableSources|TestStdioHandshake_TerminatesDescendantOnContextEnd|TestStdioHandshake_PreservesEarlierDeadline|TestStdioHandshake_PreservesCallerCancellation|TestProbeStdio_MissingAbsoluteConfiguredCommandFails|TestProbeStdio_MissingRelativeWindowsExecutableIsNotInstalled|TestCompactEffectMarkerStrictValidation|TestCompactEffectMarkerIsPrivateSeparateAndStable|TestCompactRepositoryContextIntentAndReconcilerContract|TestCompactStartReturnsCommittedRecordWhenRepositoryContextReconciliationFails|TestRARAuthorityExactReplayConflictAndConcurrentPublication|TestCompactRoleResultSlotAcceptsCompatibleRelativeStoreRoot)$' -count=1 -timeout=8m
 
       - name: Stress repository-context sharing retry
@@ -343,13 +343,13 @@ jobs:
 
       - name: Install Claude Code runtime
         # This suite drives the real install pipeline end to end, so it needs
-        # the real binary the same way it needs OpenCode above — gentle-ai
+        # the real binary the same way it needs OpenCode above — shevanio-ai
         # itself no longer installs this (agentInstallStep in
         # internal/cli/run.go refuses instead), so CI installs what it needs
         # to test, same as any other test dependency. No exact-pin test
         # applies here the way TestOrganicRuntimeE2EUsesInstalledOpenCodePin
         # asserts for OpenCode: there is no versions.go constant backing this
-        # one, since gentle-ai's own display-only refusal for Claude Code
+        # one, since shevanio-ai's own display-only refusal for Claude Code
         # advises "latest" too (see internal/installcmd/resolver.go).
         run: npm install --global @anthropic-ai/claude-code@latest
 
@@ -392,18 +392,18 @@ jobs:
         # TestOrganicConfiguredAgentReceivesRoutingGuidanceRealAgents, which
         # `go test ./...` never does — see that file's build-tag comment.
         env:
-          GENTLE_AI_REAL_AGENT_E2E: "1"
+          SHEVANIO_AI_REAL_AGENT_E2E: "1"
           # The Linux-only Codex journey invokes the registered adapter through
           # the product CLI under a process-scoped denying proxy and strace.
-          GENTLE_AI_CODEX_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+          SHEVANIO_AI_CODEX_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
           # The live OpenCode transport stays on Ubuntu because its process-scoped
           # loopback denying proxy and strace proof require Linux.
-          GENTLE_AI_OPENCODE_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+          SHEVANIO_AI_OPENCODE_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
           # The large-workspace journey spawns one Git subprocess per intended
           # untracked path, so its cost is dominated by process creation. Linux
           # absorbs it; Windows does not, and gating it here keeps the real
           # coverage where it is affordable instead of deleting it outright.
-          GENTLE_AI_LARGE_WORKSPACE_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+          SHEVANIO_AI_LARGE_WORKSPACE_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
         run: go test -tags real_agent_e2e -v ./e2e/organicruntime -count=1 -timeout=25m
 
   e2e-tests:
@@ -441,7 +441,7 @@ jobs:
         with:
           context: .
           file: e2e/${{ matrix.platform.dockerfile }}
-          tags: gentle-ai-e2e-${{ matrix.platform.name }}:ci
+          tags: shevanio-ai-e2e-${{ matrix.platform.name }}:ci
           load: true
           cache-from: type=gha,scope=e2e-${{ matrix.platform.name }}
           cache-to: type=gha,mode=max,scope=e2e-${{ matrix.platform.name }}
@@ -463,4 +463,4 @@ jobs:
             -e RUN_FULL_E2E \
             -e RUN_BACKUP_TESTS \
             -e GITHUB_TOKEN \
-            gentle-ai-e2e-${{ matrix.platform.name }}:ci
+            shevanio-ai-e2e-${{ matrix.platform.name }}:ci

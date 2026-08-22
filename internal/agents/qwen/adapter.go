@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 var LookPathOverride = exec.LookPath
@@ -70,7 +70,7 @@ func (a *Adapter) CapabilityManifest() capabilitymanifest.AgentCapabilityManifes
 }
 
 // InstallCommand returns the display-only command shown when Qwen Code is
-// not detected — gentle-ai never executes this (see agentInstallStep in
+// not detected — shevanio-ai never executes this (see agentInstallStep in
 // internal/cli/run.go). Qwen Code installs via npm on all platforms;
 // postinstall scripts are blocked to mitigate supply-chain risk. The version
 // advises "latest" rather than a pin: a human reads and runs this, and a

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // review_reverify_test.go is Wave 4 S6 (design.md's "Amendment
@@ -240,7 +240,7 @@ func TestBlockArchiveForUnsatisfiedReVerify_FrozenAnchorDoesNotRelabel(t *testin
 
 // TestBlockArchiveForUnsatisfiedReVerify_NamedContinuationIsRunnable asserts
 // the blocked-reason text names a complete, literally-runnable
-// `gentle-ai sdd-attempt finish` invocation carrying all 8 base flags
+// `shevanio-ai sdd-attempt finish` invocation carrying all 8 base flags
 // (missingSDDAttemptFlags's "finish" case, internal/cli/sdd_attempt.go).
 // It deliberately does NOT name the 3-flag remediation trio
 // (--expected-binding-revision, --successor-lineage,
@@ -254,7 +254,7 @@ func TestBlockArchiveForUnsatisfiedReVerify_NamedContinuationIsRunnable(t *testi
 	runtimeStatus := RuntimeStatus{Revision: "sha256:ledgerrevision"}
 	text := archiveReVerifyContinuation("/repo", "wave5", runtimeStatus)
 
-	if !strings.Contains(text, "gentle-ai sdd-attempt finish") {
+	if !strings.Contains(text, "shevanio-ai sdd-attempt finish") {
 		t.Fatalf("archiveReVerifyContinuation() = %q, does not name a runnable sdd-attempt finish invocation", text)
 	}
 	for _, flag := range []string{
@@ -271,7 +271,7 @@ func TestBlockArchiveForUnsatisfiedReVerify_NamedContinuationIsRunnable(t *testi
 
 	t.Run("names begin first when no attempt is active", func(t *testing.T) {
 		text := archiveReVerifyContinuation("/repo", "wave5", RuntimeStatus{Revision: "sha256:ledgerrevision"})
-		if !strings.Contains(text, "gentle-ai sdd-attempt begin") {
+		if !strings.Contains(text, "shevanio-ai sdd-attempt begin") {
 			t.Fatalf("archiveReVerifyContinuation() = %q, must name begin first when no attempt is active", text)
 		}
 	})
@@ -281,7 +281,7 @@ func TestBlockArchiveForUnsatisfiedReVerify_NamedContinuationIsRunnable(t *testi
 			Revision:      "sha256:ledgerrevision",
 			ActiveAttempt: &RuntimeAttempt{Ordinal: 1},
 		})
-		if strings.Contains(text, "gentle-ai sdd-attempt begin") {
+		if strings.Contains(text, "shevanio-ai sdd-attempt begin") {
 			t.Fatalf("archiveReVerifyContinuation() = %q, must not name begin while an attempt is already active (it would refuse)", text)
 		}
 	})

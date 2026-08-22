@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // reviewAbandonAuthorizationLines is the number of lines the abandon
@@ -68,14 +68,14 @@ func TestReviewAbandonRefusalTerminatesInASuccessfulAbandon(t *testing.T) {
 }
 
 // runReviewCommandNamedBy requires the message to name exactly one runnable
-// gentle-ai command, then runs that exact argv through the real router and
+// shevanio-ai command, then runs that exact argv through the real router and
 // returns its decoded JSON object. A message that names no command, or names
 // more than one so the reader must guess, fails here.
 func runReviewCommandNamedBy(t *testing.T, message string) map[string]any {
 	t.Helper()
 	named := []string{}
 	for _, line := range strings.Split(message, "\n") {
-		if strings.HasPrefix(strings.TrimSpace(line), "gentle-ai review ") {
+		if strings.HasPrefix(strings.TrimSpace(line), "shevanio-ai review ") {
 			named = append(named, strings.TrimSpace(line))
 		}
 	}

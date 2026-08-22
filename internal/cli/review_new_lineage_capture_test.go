@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // Wave 5 fix cycle 2, CRITICAL-A (verify-report #10186, coordinator's
 // "minimal capture primitive" decision, NOT a rebuilt v2-shaped admission
 // pipeline): the exact verify repro is the RED shape below --
-// `GENTLE_AI_RDD_NEW_LINEAGE=1 gentle-ai review start --lineage med1`
-// (medium tier, consent granted) then `gentle-ai review finalize --lineage
+// `SHEVANIO_AI_RDD_NEW_LINEAGE=1 shevanio-ai review start --lineage med1`
+// (medium tier, consent granted) then `shevanio-ai review finalize --lineage
 // med1` fails with "new-lineage finalize requires captured results for
 // every frozen selected lens before approving" because no production code
 // ever set FinalizeAdvanceRequest.CapturedLensResults and `review
@@ -35,7 +35,7 @@ import (
 // verify repro's own plain `review start` shape).
 func startMediumTierNewLineage(t *testing.T, repo, lineage string) ReviewFacadeStartNewLineageResult {
 	t.Helper()
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	writeReviewStartCandidate(t, repo, "lib/"+lineage+".go", "package lib\n\nfunc Example() int { return 1 }\n", 0o644)
 	var out bytes.Buffer
 	if err := RunReviewFacadeStart([]string{"--cwd", repo, "--lineage", lineage}, &out); err != nil {
@@ -52,7 +52,7 @@ func startMediumTierNewLineage(t *testing.T, repo, lineage string) ReviewFacadeS
 	if len(started.SelectedLenses) == 0 {
 		t.Fatalf("fixture sanity check failed: medium tier selected zero lenses, nothing to capture")
 	}
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "")
 	return started
 }
 
@@ -396,7 +396,7 @@ func TestReviewFacadeFinalizeNewLineage_PartialCaptureIsOrdinaryNotAFault(t *tes
 			t.Fatalf("refusal = %q, must name the missing lens %q", err.Error(), lens)
 		}
 	}
-	if !strings.Contains(err.Error(), "gentle-ai review capture-result") {
+	if !strings.Contains(err.Error(), "shevanio-ai review capture-result") {
 		t.Fatalf("refusal = %q, must name the runnable capture-result continuation", err.Error())
 	}
 }

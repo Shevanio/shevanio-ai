@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // runtime_receipt.go is Wave 4 S5b (design.md decision 1, task 6.5):
@@ -128,7 +128,7 @@ func (store RuntimeStore) recordPreparedReceipt(
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	requestDigest := runtimeValueHash("gentle-ai.sdd-runtime-receipt-request/v1", request)
+	requestDigest := runtimeValueHash("shevanio-ai.sdd-runtime-receipt-request/v1", request)
 	if err := ctx.Err(); err != nil {
 		return RuntimeStatus{}, err
 	}

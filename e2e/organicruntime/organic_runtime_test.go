@@ -1,8 +1,8 @@
 // Package organicruntime_test proves the journeys a configured agent actually
-// performs once Gentle AI stopped owning implementation: the agent implements
-// organically, and Gentle AI's authority begins only after a candidate exists.
+// performs once Shevanio AI stopped owning implementation: the agent implements
+// organically, and Shevanio AI's authority begins only after a candidate exists.
 //
-// Every assertion here is driven through the real gentle-ai binary and the real
+// Every assertion here is driven through the real shevanio-ai binary and the real
 // `review` command surface against real Git repositories and a real bare remote.
 // There is no runtime fixture, no TLS control plane, and no bearer session: the
 // retired control plane cannot be proven, only the shipped product can.
@@ -32,18 +32,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/sdd"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 const (
 	// realAgentE2EEnvironment gates the pinned real-agent journeys, which need a
 	// pinned OpenCode plus network access to the pinned plugin package.
-	realAgentE2EEnvironment = "GENTLE_AI_REAL_AGENT_E2E"
+	realAgentE2EEnvironment = "SHEVANIO_AI_REAL_AGENT_E2E"
 	pinnedOpenCodeVersion   = versions.OpenCode
 
 	organicLocalTimeout     = 90 * time.Second
@@ -65,17 +65,17 @@ const (
 // never escalates its own route. Re-executing the compiled test binary keeps
 // that real without adding a language runtime dependency to the suite.
 const (
-	organicActorRoleEnvironment                     = "GENTLE_AI_ORGANIC_ACTOR_ROLE"
-	organicActorRepoEnvironment                     = "GENTLE_AI_ORGANIC_ACTOR_REPO"
-	organicActorPathEnvironment                     = "GENTLE_AI_ORGANIC_ACTOR_PATH"
-	organicActorBodyEnvironment                     = "GENTLE_AI_ORGANIC_ACTOR_BODY"
-	organicActorMessageEnvironment                  = "GENTLE_AI_ORGANIC_ACTOR_MESSAGE"
-	organicActorBinaryEnvironment                   = "GENTLE_AI_ORGANIC_ACTOR_BINARY"
-	organicTestBinaryEnvironment                    = "GENTLE_AI_ORGANIC_TEST_BINARY"
-	organicProviderCaptureFakeAgentEnvironment      = "GENTLE_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_AGENT"
-	organicProviderCaptureFakePayloadEnvironment    = "GENTLE_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_PAYLOAD"
-	organicProviderCaptureFakeFailureEnvironment    = "GENTLE_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_FAILURE"
-	organicProviderCaptureFakeInvocationEnvironment = "GENTLE_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_INVOCATION"
+	organicActorRoleEnvironment                     = "SHEVANIO_AI_ORGANIC_ACTOR_ROLE"
+	organicActorRepoEnvironment                     = "SHEVANIO_AI_ORGANIC_ACTOR_REPO"
+	organicActorPathEnvironment                     = "SHEVANIO_AI_ORGANIC_ACTOR_PATH"
+	organicActorBodyEnvironment                     = "SHEVANIO_AI_ORGANIC_ACTOR_BODY"
+	organicActorMessageEnvironment                  = "SHEVANIO_AI_ORGANIC_ACTOR_MESSAGE"
+	organicActorBinaryEnvironment                   = "SHEVANIO_AI_ORGANIC_ACTOR_BINARY"
+	organicTestBinaryEnvironment                    = "SHEVANIO_AI_ORGANIC_TEST_BINARY"
+	organicProviderCaptureFakeAgentEnvironment      = "SHEVANIO_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_AGENT"
+	organicProviderCaptureFakePayloadEnvironment    = "SHEVANIO_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_PAYLOAD"
+	organicProviderCaptureFakeFailureEnvironment    = "SHEVANIO_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_FAILURE"
+	organicProviderCaptureFakeInvocationEnvironment = "SHEVANIO_AI_ORGANIC_PROVIDER_CAPTURE_FAKE_INVOCATION"
 
 	organicActorRoleDirect    = "direct"
 	organicActorRoleDelegated = "delegated"
@@ -96,8 +96,8 @@ const (
 	organicStateValidating         = "validating"
 	organicStateCorrectionRequired = "correction_required"
 
-	organicGateSchema = "gentle-ai.review-gate-result/v1"
-	organicModeSchema = "gentle-ai.review-mode/v1"
+	organicGateSchema = "shevanio-ai.review-gate-result/v1"
+	organicModeSchema = "shevanio-ai.review-mode/v1"
 
 	organicGateAllow = "allow"
 	organicModeOff   = "off"
@@ -189,7 +189,7 @@ func runOrganicActor(role string) int {
 func assertOrganicDelegatedWorkerStaysInRoute(repo string) error {
 	binary := os.Getenv(organicActorBinaryEnvironment)
 	if binary == "" {
-		return errors.New("delegated actor has no gentle-ai binary to observe authority with")
+		return errors.New("delegated actor has no shevanio-ai binary to observe authority with")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), organicLocalTimeout)
 	defer cancel()
@@ -261,10 +261,10 @@ func TestOrganicDirectoryIdentityAcceptsCanonicalAliases(t *testing.T) {
 }
 
 func TestClaudeProviderAdapterUsesPinnedNetworkNoneRuntime(t *testing.T) {
-	if testing.Short() || os.Getenv("GENTLE_AI_CLAUDE_RUNTIME_E2E") != "1" {
+	if testing.Short() || os.Getenv("SHEVANIO_AI_CLAUDE_RUNTIME_E2E") != "1" {
 		t.Skip("claude_network_none_skipped: requires the pinned Docker proof image")
 	}
-	binary := os.Getenv("GENTLE_AI_CLAUDE_RUNTIME_BINARY")
+	binary := os.Getenv("SHEVANIO_AI_CLAUDE_RUNTIME_BINARY")
 	if binary == "" {
 		t.Fatal("claude_network_none_unavailable: pinned binary path is empty")
 	}
@@ -325,8 +325,8 @@ func TestClaudeProviderAdapterUsesPinnedNetworkNoneRuntime(t *testing.T) {
 }
 
 func TestCodexProviderAdapterUsesPinnedLocalRuntime(t *testing.T) {
-	if testing.Short() || strings.TrimSpace(os.Getenv("GENTLE_AI_CODEX_RUNTIME_E2E")) != "1" {
-		t.Skip("set GENTLE_AI_CODEX_RUNTIME_E2E=1 to run the pinned local Codex transport proof")
+	if testing.Short() || strings.TrimSpace(os.Getenv("SHEVANIO_AI_CODEX_RUNTIME_E2E")) != "1" {
+		t.Skip("set SHEVANIO_AI_CODEX_RUNTIME_E2E=1 to run the pinned local Codex transport proof")
 	}
 	if runtime.GOOS != "linux" {
 		t.Skip("the Codex egress proof requires Linux strace")
@@ -372,7 +372,7 @@ func TestCodexProviderAdapterUsesPinnedLocalRuntime(t *testing.T) {
 		if request.Method == http.MethodGet && request.URL.Path == "/v1/models" {
 			modelRequests++
 			writer.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprint(writer, `{"object":"list","data":[{"id":"gpt-5.6-terra","object":"model","created":0,"owned_by":"gentle-ai-loopback"}]}`)
+			_, _ = fmt.Fprint(writer, `{"object":"list","data":[{"id":"gpt-5.6-terra","object":"model","created":0,"owned_by":"shevanio-ai-loopback"}]}`)
 			return
 		}
 		if request.Method != http.MethodPost || request.URL.Path != "/v1/responses" {
@@ -399,16 +399,16 @@ func TestCodexProviderAdapterUsesPinnedLocalRuntime(t *testing.T) {
 	wrapper := filepath.Join(bin, "codex")
 	if err := os.WriteFile(wrapper, []byte(`#!/bin/sh
 set -eu
-exec "$GENTLE_AI_RUNTIME_TRACE_BINARY" -ff -o "$GENTLE_AI_RUNTIME_TRACE_LOG" -e trace=connect "$GENTLE_AI_RUNTIME_TRACE_TARGET" "$@"
+exec "$SHEVANIO_AI_RUNTIME_TRACE_BINARY" -ff -o "$SHEVANIO_AI_RUNTIME_TRACE_LOG" -e trace=connect "$SHEVANIO_AI_RUNTIME_TRACE_TARGET" "$@"
 `), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	environment := append(harness.environment(),
 		"PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"),
-		"GENTLE_AI_CODEX_REVIEWER_LOOPBACK_BASE_URL="+server.URL+"/v1",
-		"GENTLE_AI_RUNTIME_TRACE_BINARY="+strace,
-		"GENTLE_AI_RUNTIME_TRACE_LOG="+traceBase,
-		"GENTLE_AI_RUNTIME_TRACE_TARGET="+binary,
+		"SHEVANIO_AI_CODEX_REVIEWER_LOOPBACK_BASE_URL="+server.URL+"/v1",
+		"SHEVANIO_AI_RUNTIME_TRACE_BINARY="+strace,
+		"SHEVANIO_AI_RUNTIME_TRACE_LOG="+traceBase,
+		"SHEVANIO_AI_RUNTIME_TRACE_TARGET="+binary,
 		"HTTP_PROXY="+proxy.URL,
 		"HTTPS_PROXY="+proxy.URL,
 		"ALL_PROXY="+proxy.URL,
@@ -637,8 +637,8 @@ func writeCodexResponsesLoopback(t *testing.T, writer http.ResponseWriter, respo
 }
 
 func TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport(t *testing.T) {
-	if testing.Short() || strings.TrimSpace(os.Getenv("GENTLE_AI_OPENCODE_RUNTIME_E2E")) != "1" {
-		t.Skip("set GENTLE_AI_OPENCODE_RUNTIME_E2E=1 to verify the pinned ordinary OpenCode runtime")
+	if testing.Short() || strings.TrimSpace(os.Getenv("SHEVANIO_AI_OPENCODE_RUNTIME_E2E")) != "1" {
+		t.Skip("set SHEVANIO_AI_OPENCODE_RUNTIME_E2E=1 to verify the pinned ordinary OpenCode runtime")
 	}
 	if runtime.GOOS != "linux" {
 		t.Fatal("OpenCode egress isolation requires Linux")
@@ -673,8 +673,8 @@ func TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 	const poison = "OPENCODE_CURRENT_SESSION_POISON_MUST_NOT_REACH_REVIEWER"
-	const reviewerSystemMarker = "GENTLE_AI_OPENCODE_REVIEWER_SYSTEM_MARKER"
-	hostPrompt := "GENTLE_AI_REVIEW_BINDING " + string(boundTask) + "\n" + poison
+	const reviewerSystemMarker = "SHEVANIO_AI_OPENCODE_REVIEWER_SYSTEM_MARKER"
+	hostPrompt := "SHEVANIO_AI_REVIEW_BINDING " + string(boundTask) + "\n" + poison
 	reviewerRaw, err := json.Marshal(map[string]any{
 		"subject_hash": binding["subject-hash"], "inspection": map[string]any{"status": "completed", "paths": []string{"internal/provider/candidate.go"}},
 		"lens": binding["lens"], "findings": []any{}, "evidence": []string{"loopback inspected the frozen candidate"},
@@ -716,7 +716,7 @@ func TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport(t *testing.T) {
 			return
 		}
 		if bytes.Contains(payload, []byte(reviewerSystemMarker)) {
-			if !bytes.Contains(payload, []byte("GENTLE_AI_REVIEW_CONTEXT_END")) {
+			if !bytes.Contains(payload, []byte("SHEVANIO_AI_REVIEW_CONTEXT_END")) {
 				handlerFailure = "OpenCode reviewer request omitted the Go-materialized canonical prompt"
 				writer.WriteHeader(http.StatusBadRequest)
 				return
@@ -780,7 +780,7 @@ func TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport(t *testing.T) {
 		"model":       "loopback/loopback",
 		"small_model": "loopback/loopback",
 		"provider": map[string]any{"loopback": map[string]any{
-			"npm": "@ai-sdk/openai-compatible", "name": "Gentle AI loopback",
+			"npm": "@ai-sdk/openai-compatible", "name": "Shevanio AI loopback",
 			"options": map[string]any{"baseURL": server.URL + "/v1", "apiKey": "loopback-key"},
 			"models":  map[string]any{"loopback": map[string]any{"name": "Loopback", "limit": map[string]int{"context": 32000, "output": 2048}}},
 		}},
@@ -799,7 +799,7 @@ func TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport(t *testing.T) {
 	wrapper := filepath.Join(bin, "opencode")
 	if err := os.WriteFile(wrapper, []byte(`#!/bin/sh
 set -eu
-exec "$GENTLE_AI_RUNTIME_TRACE_BINARY" -ff -o "$GENTLE_AI_RUNTIME_TRACE_LOG" -e trace=connect "$GENTLE_AI_RUNTIME_TRACE_TARGET" "$@"
+exec "$SHEVANIO_AI_RUNTIME_TRACE_BINARY" -ff -o "$SHEVANIO_AI_RUNTIME_TRACE_LOG" -e trace=connect "$SHEVANIO_AI_RUNTIME_TRACE_TARGET" "$@"
 `), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -809,9 +809,9 @@ exec "$GENTLE_AI_RUNTIME_TRACE_BINARY" -ff -o "$GENTLE_AI_RUNTIME_TRACE_LOG" -e 
 		"OPENCODE_CONFIG_DIR="+configDirectory,
 		"OPENCODE_CONFIG_CONTENT="+string(config),
 		"PATH="+bin+string(os.PathListSeparator)+filepath.Dir(organicBinary)+string(os.PathListSeparator)+os.Getenv("PATH"),
-		"GENTLE_AI_RUNTIME_TRACE_BINARY="+strace,
-		"GENTLE_AI_RUNTIME_TRACE_LOG="+traceBase,
-		"GENTLE_AI_RUNTIME_TRACE_TARGET="+binary,
+		"SHEVANIO_AI_RUNTIME_TRACE_BINARY="+strace,
+		"SHEVANIO_AI_RUNTIME_TRACE_LOG="+traceBase,
+		"SHEVANIO_AI_RUNTIME_TRACE_TARGET="+binary,
 		"HTTP_PROXY="+proxy.URL,
 		"HTTPS_PROXY="+proxy.URL,
 		"ALL_PROXY="+proxy.URL,
@@ -951,7 +951,7 @@ func organicProviderStart(t *testing.T, harness *organicHarness, lineage, agent 
 	}
 	transition := status.NextTransition.Execute
 	stdout, stderr, err := harness.gentleAllowFailure("review", "start", "--cwd", harness.repo.worktree,
-		"--contract", "gentle-ai.review-integration/v2", "--target", transition.argument("target"), "--projection", transition.argument("projection"),
+		"--contract", "shevanio-ai.review-integration/v2", "--target", transition.argument("target"), "--projection", transition.argument("projection"),
 		"--lineage", lineage, "--agent", agent, "--consent", "granted", "--focus", "reliability")
 	if err != nil {
 		t.Fatalf("provider START: %v\nstdout:\n%s\nstderr:\n%s", err, stdout, stderr)
@@ -1001,7 +1001,7 @@ func (execute organicProviderExecute) argument(name string) string {
 
 func organicProviderStatus(t *testing.T, harness *organicHarness, lineage, agent string) organicProviderStatusResult {
 	t.Helper()
-	payload := harness.gentle("review", "status", "--cwd", harness.repo.worktree, "--contract", "gentle-ai.review-integration/v2", "--agent", agent, "--lineage", lineage, "--next-transition", "--projection", "workspace")
+	payload := harness.gentle("review", "status", "--cwd", harness.repo.worktree, "--contract", "shevanio-ai.review-integration/v2", "--agent", agent, "--lineage", lineage, "--next-transition", "--projection", "workspace")
 	var status organicProviderStatusResult
 	if err := json.Unmarshal(payload, &status); err != nil {
 		t.Fatalf("decode provider status: %v\n%s", err, payload)
@@ -1227,7 +1227,7 @@ var organicRoutingGuidanceRequiredFragments = []string{
 	"Optional SDD",
 	"never selects SDD",
 	"never create SDD artifacts",
-	"gentle-ai review mode enable|disable|status",
+	"shevanio-ai review mode enable|disable|status",
 	"disabled/unmanaged",
 }
 
@@ -1255,13 +1255,13 @@ func TestOrganicConfiguredAgentReceivesRoutingGuidanceCursor(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Cursor's Detect looks for ~/.cursor, which this fake isolated HOME
-	// never has. Simulate Cursor as already installed so gentle-ai does not
+	// never has. Simulate Cursor as already installed so shevanio-ai does not
 	// correctly refuse an undetected agent here — this test targets
 	// routing-guidance delivery, not agent install behavior.
 	if err := os.MkdirAll(filepath.Join(home, ".cursor"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	const path = ".cursor/rules/gentle-ai.mdc"
+	const path = ".cursor/rules/shevanio-ai.mdc"
 	output, stderr, err := runOrganicCommand(
 		t, organicBinary, workspace, organicEnvironment(home),
 		"install", "--agent", "cursor", "--scope", "workspace", "--components", "permissions",
@@ -1629,7 +1629,7 @@ func TestOrganicFlexibleDeliveryReusesOneReceipt(t *testing.T) {
 
 	// Routes 3 and 4: a pull request with and without an issue reference. The two
 	// branches carry the same tree under different commits, which is the point:
-	// Gentle AI binds content, so neither the delivery route nor the commit
+	// Shevanio AI binds content, so neither the delivery route nor the commit
 	// identity reopens review, and the issue reference is repository policy that
 	// the receipt neither requires nor records. Both run before publication,
 	// because the pull-request boundary is the unpublished remote base.
@@ -1724,7 +1724,7 @@ func TestOrganicKillSwitchStopsAtTheDeliveryBoundary(t *testing.T) {
 
 	// Zero effects: no review authority, no additional compare-and-swap
 	// generation, and a remote that never moved.
-	if _, err := os.Stat(filepath.Join(harness.commonDir(), "gentle-ai", "review-transactions", "v2")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(harness.commonDir(), "shevanio-ai", "review-transactions", "v2")); !os.IsNotExist(err) {
 		t.Fatalf("a disabled start still created review authority: %v", err)
 	}
 	if after := harness.reviewModeGenerations(); !equalOrganicStrings(after, generationsAfterDisable) {
@@ -1933,7 +1933,7 @@ func TestOrganicKillSwitchReEnableLandsOnTheFreshFullReview(t *testing.T) {
 	// route: the not-coverage defense moved from the archive stop to the
 	// start itself.
 	if len(tokens) < 2 || tokens[0] != "review" || tokens[1] != "start" {
-		t.Fatalf("named continuation is %v, want gentle-ai review start", tokens)
+		t.Fatalf("named continuation is %v, want shevanio-ai review start", tokens)
 	}
 	_, emptyStderr, emptyErr := harness.gentleAllowFailure(tokens...)
 	if emptyErr == nil {
@@ -2174,7 +2174,7 @@ func (harness *organicHarness) gentle(arguments ...string) []byte {
 	harness.t.Helper()
 	stdout, stderr, err := runOrganicCommand(harness.t, organicBinary, harness.repo.worktree, harness.environment(), arguments...)
 	if err != nil {
-		harness.t.Fatalf("gentle-ai %v: %v\nstdout:\n%s\nstderr:\n%s", arguments, err, stdout, stderr)
+		harness.t.Fatalf("shevanio-ai %v: %v\nstdout:\n%s\nstderr:\n%s", arguments, err, stdout, stderr)
 	}
 	return []byte(stdout)
 }
@@ -2402,15 +2402,15 @@ func (harness *organicHarness) sddStatus(change string) organicSDDStatus {
 }
 
 // organicNamedContinuation returns the argument tokens of the first
-// `gentle-ai ...` command a product message names, read exactly as an operator
+// `shevanio-ai ...` command a product message names, read exactly as an operator
 // would: to the end of the line, stopping at the first `<placeholder>` whose
 // value the operator supplies.
 func organicNamedContinuation(t *testing.T, message string) []string {
 	t.Helper()
-	const product = "gentle-ai "
+	const product = "shevanio-ai "
 	index := strings.Index(message, product)
 	if index < 0 {
-		t.Fatalf("message names no runnable gentle-ai command: %q", message)
+		t.Fatalf("message names no runnable shevanio-ai command: %q", message)
 	}
 	tail := message[index+len(product):]
 	if cut := strings.IndexAny(tail, "\n"); cut >= 0 {
@@ -2425,19 +2425,19 @@ func organicNamedContinuation(t *testing.T, message string) []string {
 		tokens = append(tokens, token)
 	}
 	if len(tokens) == 0 {
-		t.Fatalf("message names no runnable gentle-ai command: %q", message)
+		t.Fatalf("message names no runnable shevanio-ai command: %q", message)
 	}
 	return tokens
 }
 
-// runNamedReviewStart dispatches a `gentle-ai review start ...` continuation
+// runNamedReviewStart dispatches a `shevanio-ai review start ...` continuation
 // read out of a product message, with the working directory already at the
 // repository so the invocation runs exactly as printed. extra carries only an
 // operator-supplied placeholder value the message asked for.
 func (harness *organicHarness) runNamedReviewStart(tokens []string, extra ...string) organicStartResult {
 	harness.t.Helper()
 	if len(tokens) < 2 || tokens[0] != "review" || tokens[1] != "start" {
-		harness.t.Fatalf("named continuation is %v, want gentle-ai review start", tokens)
+		harness.t.Fatalf("named continuation is %v, want shevanio-ai review start", tokens)
 	}
 	payload := harness.gentle(append(append([]string{}, tokens...), extra...)...)
 	var started organicStartResult
@@ -2451,7 +2451,7 @@ func (harness *organicHarness) runNamedReviewStart(tokens []string, extra ...str
 // verification writes. Its exact shape matters: a report the product cannot
 // parse routes as "verification is missing", which is a different journey.
 const organicSDDVerifyReport = "```yaml\n" +
-	"schema: gentle-ai.verify-result/v1\n" +
+	"schema: shevanio-ai.verify-result/v1\n" +
 	"evidence_revision: sha256:1111111111111111111111111111111111111111111111111111111111111111\n" +
 	"verdict: pass\n" +
 	"blockers: 0\n" +
@@ -2461,7 +2461,7 @@ const organicSDDVerifyReport = "```yaml\n" +
 	"test_command: go test ./internal/example\n" +
 	"test_exit_code: 0\n" +
 	"test_output_hash: sha256:2222222222222222222222222222222222222222222222222222222222222222\n" +
-	"build_command: go test ./cmd/gentle-ai\n" +
+	"build_command: go test ./cmd/shevanio-ai\n" +
 	"build_exit_code: 0\n" +
 	"build_output_hash: sha256:3333333333333333333333333333333333333333333333333333333333333333\n" +
 	"```\n"
@@ -2488,7 +2488,7 @@ func (harness *organicHarness) seedOrganicSDDChange(change string) {
 // records. Their count is how a rejected operation proves it wrote nothing.
 func (harness *organicHarness) reviewModeGenerations() []string {
 	harness.t.Helper()
-	root := filepath.Join(harness.commonDir(), "gentle-ai", "review-mode", "rar-authority", "v1", "rdd-mode")
+	root := filepath.Join(harness.commonDir(), "shevanio-ai", "review-mode", "rar-authority", "v1", "rdd-mode")
 	entries, err := os.ReadDir(root)
 	if os.IsNotExist(err) {
 		return nil
@@ -2510,7 +2510,7 @@ func (harness *organicHarness) reviewModeGenerations() []string {
 // prove it changed nothing at all, not merely that it reported the same state.
 func (harness *organicHarness) lineageDigest(lineage string) string {
 	harness.t.Helper()
-	root := filepath.Join(harness.commonDir(), "gentle-ai", "review-transactions", "v2", lineage)
+	root := filepath.Join(harness.commonDir(), "shevanio-ai", "review-transactions", "v2", lineage)
 	var builder strings.Builder
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
@@ -2538,7 +2538,7 @@ func (harness *organicHarness) lineageDigest(lineage string) string {
 
 func (harness *organicHarness) assertSingleReviewLineage(expected string) {
 	harness.t.Helper()
-	root := filepath.Join(harness.commonDir(), "gentle-ai", "review-transactions", "v2")
+	root := filepath.Join(harness.commonDir(), "shevanio-ai", "review-transactions", "v2")
 	entries, err := os.ReadDir(root)
 	if err != nil {
 		harness.t.Fatalf("read review authority: %v", err)
@@ -2571,7 +2571,7 @@ func (harness *organicHarness) hasSDDArtifacts() bool {
 
 func (harness *organicHarness) sddArtifact() (string, bool) {
 	harness.t.Helper()
-	root := filepath.Join(harness.commonDir(), "gentle-ai")
+	root := filepath.Join(harness.commonDir(), "shevanio-ai")
 	entries, err := os.ReadDir(root)
 	if os.IsNotExist(err) {
 		return "", false
@@ -2908,7 +2908,7 @@ func harnessCorrectionStatus(t *testing.T, harness *organicHarness, lineage stri
 	t.Helper()
 	payload := harness.gentle(
 		"review", "status", "--cwd", harness.repo.worktree, "--lineage", lineage,
-		"--contract", "gentle-ai.review-integration/v1", "--next-transition",
+		"--contract", "shevanio-ai.review-integration/v1", "--next-transition",
 	)
 	var status organicCorrectionStatus
 	if err := json.Unmarshal(payload, &status); err != nil {
@@ -3029,22 +3029,22 @@ func buildOrganicBinary(workspace string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name := "gentle-ai"
+	name := "shevanio-ai"
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
 	path := filepath.Join(workspace, name)
 	ctx, cancel := context.WithTimeout(context.Background(), organicSetupTimeout)
 	defer cancel()
-	command := organicCommandContext(ctx, "go", "build", "-trimpath", "-o", path, "./cmd/gentle-ai")
+	command := organicCommandContext(ctx, "go", "build", "-trimpath", "-o", path, "./cmd/shevanio-ai")
 	command.Dir = moduleRoot
 	command.Env = os.Environ()
 	if output, err := command.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("build the gentle-ai test binary: %w\n%s", err, output)
+		return "", fmt.Errorf("build the shevanio-ai test binary: %w\n%s", err, output)
 	}
 	info, err := os.Stat(path)
 	if err != nil || !info.Mode().IsRegular() {
-		return "", fmt.Errorf("built gentle-ai binary %q is unusable: %v", path, err)
+		return "", fmt.Errorf("built shevanio-ai binary %q is unusable: %v", path, err)
 	}
 	return path, nil
 }
@@ -3103,11 +3103,11 @@ func equalOrganicStrings(left, right []string) bool {
 
 // TestRealAgentOrganicJourneys runs the same organic journeys through a real
 // configured agent. The agent runtime, its sub-agent mechanism, its tool calls,
-// the gentle-ai binary, and the repository are all real; only the model is a
+// the shevanio-ai binary, and the repository are all real; only the model is a
 // fixture, because a scripted model is what makes an agent journey repeatable.
 func TestRealAgentOrganicJourneys(t *testing.T) {
 	if os.Getenv(realAgentE2EEnvironment) != "1" {
-		t.Skip("set GENTLE_AI_REAL_AGENT_E2E=1 to run the pinned real-agent journeys")
+		t.Skip("set SHEVANIO_AI_REAL_AGENT_E2E=1 to run the pinned real-agent journeys")
 	}
 	requireOrganicExecutableVersion(t, "opencode", pinnedOpenCodeVersion)
 	sharedConfig := prepareOpenCodeConfig(t)
@@ -3199,8 +3199,8 @@ func TestRealAgentOrganicJourneys(t *testing.T) {
 				organicActorBodyEnvironment+"="+body,
 				organicActorMessageEnvironment+"=docs: implement the real-agent outcome",
 				organicActorBinaryEnvironment+"="+organicBinary,
-				"GENTLE_AI_ORGANIC_ACTOR_EXECUTABLE="+os.Args[0],
-				"GENTLE_AI_ORGANIC_BINARY="+organicBinary,
+				"SHEVANIO_AI_ORGANIC_ACTOR_EXECUTABLE="+os.Args[0],
+				"SHEVANIO_AI_ORGANIC_BINARY="+organicBinary,
 			)
 
 			ctx, cancel := context.WithTimeout(context.Background(), organicAgentTimeout)
@@ -3239,7 +3239,7 @@ func TestRealAgentOrganicJourneys(t *testing.T) {
 
 func TestRealAgentInstalledSDDApplyExecutorDoesNotDelegate(t *testing.T) {
 	if os.Getenv(realAgentE2EEnvironment) != "1" {
-		t.Skip("set GENTLE_AI_REAL_AGENT_E2E=1 to run the pinned real-agent journeys")
+		t.Skip("set SHEVANIO_AI_REAL_AGENT_E2E=1 to run the pinned real-agent journeys")
 	}
 	requireOrganicExecutableVersion(t, "opencode", pinnedOpenCodeVersion)
 
@@ -3404,12 +3404,12 @@ func TestInstalledSDDApplyExecutorRoundTripRejectsUnrelatedBashOutput(t *testing
 // bash tool, so the implementation step is a real child process of a real agent.
 func organicActorToolCommand(t *testing.T) string {
 	t.Helper()
-	return organicToolCommand(t, "GENTLE_AI_ORGANIC_ACTOR_EXECUTABLE")
+	return organicToolCommand(t, "SHEVANIO_AI_ORGANIC_ACTOR_EXECUTABLE")
 }
 
 func organicReviewToolCommand(t *testing.T, arguments ...string) string {
 	t.Helper()
-	return organicToolCommand(t, "GENTLE_AI_ORGANIC_BINARY", arguments...)
+	return organicToolCommand(t, "SHEVANIO_AI_ORGANIC_BINARY", arguments...)
 }
 
 // organicToolCommand turns one fixture-authored argv into the string the

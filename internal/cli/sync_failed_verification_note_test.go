@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/verify"
+	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
 
 // TestWithFailedSyncVerificationNoteNamesSyncCommand closes finding 1 of the
 // install/sync surface audit for the sync path: the generic
 // "Run repair on failed checks" text named a command that does not exist.
-// The honest retry command for sync is simply `gentle-ai sync`.
+// The honest retry command for sync is simply `shevanio-ai sync`.
 func TestWithFailedSyncVerificationNoteNamesSyncCommand(t *testing.T) {
 	report := verify.Report{Ready: false, FinalNote: verify.VerificationIssuesMessage}
 
@@ -19,8 +19,8 @@ func TestWithFailedSyncVerificationNoteNamesSyncCommand(t *testing.T) {
 	if strings.Contains(updated.FinalNote, "repair") {
 		t.Fatalf("FinalNote still names the nonexistent repair command: %q", updated.FinalNote)
 	}
-	if !strings.Contains(updated.FinalNote, "gentle-ai sync") {
-		t.Fatalf("FinalNote = %q, want it to name `gentle-ai sync`", updated.FinalNote)
+	if !strings.Contains(updated.FinalNote, "shevanio-ai sync") {
+		t.Fatalf("FinalNote = %q, want it to name `shevanio-ai sync`", updated.FinalNote)
 	}
 }
 

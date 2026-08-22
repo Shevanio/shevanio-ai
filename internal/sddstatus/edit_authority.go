@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // Issue #2547 (S1 of #2540): work units carry no structured target field, so

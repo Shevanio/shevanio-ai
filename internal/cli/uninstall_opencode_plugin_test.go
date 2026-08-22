@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/opencodeplugin"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodeplugin"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // ─── ParseUninstallOpenCodePluginFlags ──────────────────────────────────────
@@ -116,7 +116,7 @@ func TestRenderUninstallOpenCodePluginReportSurfacesLayers(t *testing.T) {
 		ChangedNodeModules: true,
 		CacheEntryRemoved:  "/home/me/.cache/opencode/packages/opencode-subagent-statusline@latest",
 		NodeModulesPath:    "/home/me/.config/opencode/node_modules/opencode-subagent-statusline",
-		CleanupPending:     []string{"/home/me/.cache/opencode/packages/.gentle-ai-uninstall-pending"},
+		CleanupPending:     []string{"/home/me/.cache/opencode/packages/.shevanio-ai-uninstall-pending"},
 	})
 	for _, want := range []string{
 		"Sub-agent Statusline",

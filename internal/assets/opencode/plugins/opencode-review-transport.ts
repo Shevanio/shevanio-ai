@@ -3,8 +3,8 @@ import { spawn } from "node:child_process"
 
 const REVIEW_AGENTS = new Set(["review-risk", "review-resilience", "review-readability", "review-reliability", "review-refuter", "review-validator"])
 const TRANSPORT = {
-  Command: "gentle-ai",
-  Schema: "gentle-ai.provider-transport/v1",
+  Command: "shevanio-ai",
+  Schema: "shevanio-ai.provider-transport/v1",
   Start: "start",
   Prompt: "prompt",
   Complete: "complete",
@@ -44,7 +44,7 @@ interface RelayRegistration {
 // passes the task through untouched at after time. A completion for a key an
 // instance neither owns nor deferred is a protocol violation and refuses
 // loudly instead of silently dropping the completion.
-const RELAY_REGISTRY_KEY = "__gentleAiOpenCodeReviewTransportRelays" as const
+const RELAY_REGISTRY_KEY = "__shevanioAiOpenCodeReviewTransportRelays" as const
 
 function reviewRelayRegistry(): Map<string, RelayRegistration> {
   const runtime = globalThis as typeof globalThis & { [RELAY_REGISTRY_KEY]?: Map<string, RelayRegistration> }
@@ -159,7 +159,7 @@ function startRelay(cwd: string, prompt: string): Relay {
 }
 
 const OpenCodeReviewTransportPlugin: Plugin = async ({ directory, worktree }) => {
-  const owner = Symbol("gentle-ai-opencode-review-transport")
+  const owner = Symbol("shevanio-ai-opencode-review-transport")
   const relays = reviewRelayRegistry()
   // Keys this instance observed at before time whose registration another
   // instance owns. The owning instance's after hook delivers the completion,

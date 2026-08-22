@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestNewerAuthorityIsNotReportedAsARefreshableContextFailure is #2461's
@@ -36,7 +36,7 @@ func TestNewerAuthorityIsNotReportedAsARefreshableContextFailure(t *testing.T) {
 	}
 	// The action has to name what actually resolves it, and the PATH shape
 	// because that is how the stale binary got invoked in the first place.
-	for _, want := range []string{"upgrade", "which -a gentle-ai"} {
+	for _, want := range []string{"upgrade", "which -a shevanio-ai"} {
 		if !strings.Contains(message, want) {
 			t.Fatalf("refusal does not name %q: %q", want, message)
 		}

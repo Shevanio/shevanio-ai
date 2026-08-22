@@ -10,18 +10,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/antigravity"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/codex"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/gemini"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/hermes"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/openclaw"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/pi"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/qwen"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/vscode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/antigravity"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/gemini"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/hermes"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/openclaw"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/pi"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/qwen"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/vscode"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 func claudeAdapter() agents.Adapter   { return claude.NewAdapter() }
@@ -124,10 +124,10 @@ func TestInjectClaudeWritesProtocolSection(t *testing.T) {
 	}
 
 	text := string(content)
-	if !strings.Contains(text, "<!-- gentle-ai:engram-protocol -->") {
+	if !strings.Contains(text, "<!-- shevanio-ai:engram-protocol -->") {
 		t.Fatal("CLAUDE.md missing open marker for engram-protocol")
 	}
-	if !strings.Contains(text, "<!-- /gentle-ai:engram-protocol -->") {
+	if !strings.Contains(text, "<!-- /shevanio-ai:engram-protocol -->") {
 		t.Fatal("CLAUDE.md missing close marker for engram-protocol")
 	}
 	// Real content check.
@@ -229,7 +229,7 @@ func TestInjectOpenCodeMergesEngramToSettings(t *testing.T) {
 		t.Fatalf("ReadFile(AGENTS.md) error = %v", err)
 	}
 	agentsText := string(agentsContent)
-	if !strings.Contains(agentsText, "<!-- gentle-ai:engram-protocol -->") {
+	if !strings.Contains(agentsText, "<!-- shevanio-ai:engram-protocol -->") {
 		t.Fatal("AGENTS.md missing engram protocol section marker")
 	}
 	if !strings.Contains(agentsText, "mem_save") {
@@ -612,12 +612,12 @@ func TestInjectAntigravityWritesMCPToCLIConfig(t *testing.T) {
 		t.Fatalf("Antigravity should use Engram's default MCP invocation without tool-profile flags; got:\n%s", text)
 	}
 
-	pluginPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "gentle-ai-engram", "plugin.json")
+	pluginPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "shevanio-ai-engram", "plugin.json")
 	if _, err := os.Stat(pluginPath); err != nil {
 		t.Fatalf("Antigravity Engram plugin manifest missing: %v", err)
 	}
 
-	pluginMCPPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "gentle-ai-engram", "mcp_config.json")
+	pluginMCPPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "shevanio-ai-engram", "mcp_config.json")
 	pluginMCPContent, err := os.ReadFile(pluginMCPPath)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v", pluginMCPPath, err)
@@ -627,7 +627,7 @@ func TestInjectAntigravityWritesMCPToCLIConfig(t *testing.T) {
 		t.Fatalf("Antigravity Engram plugin MCP config should expose default Engram MCP tools; got:\n%s", pluginMCPText)
 	}
 
-	hooksPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "gentle-ai-engram", "hooks.json")
+	hooksPath := filepath.Join(home, ".gemini", "antigravity-cli", "plugins", "shevanio-ai-engram", "hooks.json")
 	hooksContent, err := os.ReadFile(hooksPath)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v", hooksPath, err)
@@ -1048,7 +1048,7 @@ func TestInjectCodexIsIdempotent(t *testing.T) {
 // ─── Codex profile injection tests ───────────────────────────────────────────
 
 // TestInjectCodexWritesProfiles asserts that Inject for the Codex adapter
-// writes the three gentle-ai SDD profile files into ~/.codex/.
+// writes the three shevanio-ai SDD profile files into ~/.codex/.
 func TestInjectCodexWritesProfiles(t *testing.T) {
 	validCodexRuntime(t)
 	home := t.TempDir()
@@ -1853,8 +1853,8 @@ func TestInjectOpenClawWritesEngramProtocolToWorkspaceAgentsOnly(t *testing.T) {
 	}
 	agentsText := string(agentsContent)
 	for _, want := range []string{
-		"<!-- gentle-ai:engram-protocol -->",
-		"<!-- /gentle-ai:engram-protocol -->",
+		"<!-- shevanio-ai:engram-protocol -->",
+		"<!-- /shevanio-ai:engram-protocol -->",
 		"mem_save",
 	} {
 		if !strings.Contains(agentsText, want) {
@@ -1870,7 +1870,7 @@ func TestInjectOpenClawWritesEngramProtocolToWorkspaceAgentsOnly(t *testing.T) {
 		t.Fatalf("ReadFile(TOOLS.md) error = %v", err)
 	}
 	toolsText := string(toolsContent)
-	if strings.Contains(toolsText, "gentle-ai:engram-protocol") || strings.Contains(toolsText, "mem_save") {
+	if strings.Contains(toolsText, "shevanio-ai:engram-protocol") || strings.Contains(toolsText, "mem_save") {
 		t.Fatalf("TOOLS.md must not receive Engram protocol sections; got:\n%s", toolsText)
 	}
 	if !strings.Contains(toolsText, "User-owned tool notes.") {
@@ -1888,7 +1888,7 @@ func TestInjectOpenClawWritesEngramProtocolToWorkspaceAgentsOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile(AGENTS.md) second error = %v", err)
 	}
-	if count := strings.Count(string(updated), "<!-- gentle-ai:engram-protocol -->"); count != 1 {
+	if count := strings.Count(string(updated), "<!-- shevanio-ai:engram-protocol -->"); count != 1 {
 		t.Fatalf("AGENTS.md has %d Engram protocol markers, want exactly 1", count)
 	}
 }
@@ -2275,7 +2275,7 @@ func TestInjectWithOptionsReInjectConvergesFullToSlimAndBack(t *testing.T) {
 	if !strings.Contains(string(afterFull), "needs_review") {
 		t.Fatalf("expected FULL section after first inject; got:\n%s", afterFull)
 	}
-	if n := strings.Count(string(afterFull), "<!-- gentle-ai:engram-protocol -->"); n != 1 {
+	if n := strings.Count(string(afterFull), "<!-- shevanio-ai:engram-protocol -->"); n != 1 {
 		t.Fatalf("expected exactly 1 open marker after first inject, got %d", n)
 	}
 
@@ -2294,10 +2294,10 @@ func TestInjectWithOptionsReInjectConvergesFullToSlimAndBack(t *testing.T) {
 	if !strings.Contains(string(afterSlim), "SessionStart hook") {
 		t.Fatalf("expected SLIM pointer content after re-inject; got:\n%s", afterSlim)
 	}
-	if n := strings.Count(string(afterSlim), "<!-- gentle-ai:engram-protocol -->"); n != 1 {
+	if n := strings.Count(string(afterSlim), "<!-- shevanio-ai:engram-protocol -->"); n != 1 {
 		t.Fatalf("expected exactly 1 open marker after re-inject to slim (no duplication), got %d", n)
 	}
-	if n := strings.Count(string(afterSlim), "<!-- /gentle-ai:engram-protocol -->"); n != 1 {
+	if n := strings.Count(string(afterSlim), "<!-- /shevanio-ai:engram-protocol -->"); n != 1 {
 		t.Fatalf("expected exactly 1 close marker after re-inject to slim (no duplication), got %d", n)
 	}
 
@@ -2312,7 +2312,7 @@ func TestInjectWithOptionsReInjectConvergesFullToSlimAndBack(t *testing.T) {
 	if !strings.Contains(string(afterBackToFull), "needs_review") {
 		t.Fatalf("expected FULL section after re-inject back to full; got:\n%s", afterBackToFull)
 	}
-	if n := strings.Count(string(afterBackToFull), "<!-- gentle-ai:engram-protocol -->"); n != 1 {
+	if n := strings.Count(string(afterBackToFull), "<!-- shevanio-ai:engram-protocol -->"); n != 1 {
 		t.Fatalf("expected exactly 1 open marker after re-inject back to full (no duplication), got %d", n)
 	}
 }

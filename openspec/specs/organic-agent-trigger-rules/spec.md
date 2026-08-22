@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the managed, provider-neutral instructions that project Gentle AI's
+Define the managed, provider-neutral instructions that project Shevanio AI's
 canonical implementation-routing facts into each supported adapter. The
 projection helps an orchestrator choose the smallest useful implementation
 topology; it does not own runtime route admission, verification, review,

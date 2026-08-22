@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 const maxErrorLines = 15
@@ -171,7 +171,7 @@ func renderCompleteFailed(data CompletePayload) string {
 	b.WriteString("\n")
 	b.WriteString(styles.UnselectedStyle.Render("  2. Fix the underlying issue (missing deps, permissions, etc.)"))
 	b.WriteString("\n")
-	b.WriteString(styles.UnselectedStyle.Render("  3. Run gentle-ai again to retry"))
+	b.WriteString(styles.UnselectedStyle.Render("  3. Run shevanio-ai again to retry"))
 	b.WriteString("\n\n")
 
 	b.WriteString(styles.HelpStyle.Render("Press Enter to exit."))

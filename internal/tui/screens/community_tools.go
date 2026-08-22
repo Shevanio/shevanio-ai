@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/communitytool"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 func RenderCommunityTools(selected []model.CommunityToolID, cursor int, statuses []communitytool.Status, loading bool, statusErr error) string {
 	var b strings.Builder
 	b.WriteString(styles.TitleStyle.Render("Community Tools/Plugins"))
 	b.WriteString("\n\n")
-	b.WriteString(styles.SubtextStyle.Render("Optional cross-agent tools Gentle AI can install and wire for you."))
+	b.WriteString(styles.SubtextStyle.Render("Optional cross-agent tools Shevanio AI can install and wire for you."))
 	b.WriteString("\n\n")
 
 	if loading {

@@ -139,7 +139,7 @@ func TestChargedCandidateRefusalDisclosesBothTrees(t *testing.T) {
 			t.Fatalf("the refusal does not disclose %q:\n%s", want, message)
 		}
 	}
-	if !strings.Contains(message, "gentle-ai ") {
+	if !strings.Contains(message, "shevanio-ai ") {
 		t.Fatalf("the refusal names no runnable continuation:\n%s", message)
 	}
 }
@@ -161,7 +161,7 @@ func TestStalePredecessorRefusalSaysWhichConditionFailed(t *testing.T) {
 		t.Fatalf("the unapproved refusal still reports both conditions at once:\n%s", unapproved)
 	}
 	for _, message := range []string{stale, unapproved} {
-		if !strings.Contains(message, "gentle-ai ") {
+		if !strings.Contains(message, "shevanio-ai ") {
 			t.Fatalf("the refusal names no runnable continuation:\n%s", message)
 		}
 	}

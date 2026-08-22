@@ -11,9 +11,9 @@ const (
 	captureEvidenceDescriptorNormalLineage     = "capture-evidence-v5-normal"
 	captureEvidenceDescriptorCorrectionLineage = "capture-evidence-v5-correction"
 	targetedInspectionLineage                  = "targeted-validator-inspection"
-	statusSchemaV5                             = "gentle-ai.review-integration.status/v5"
-	verificationEvidenceSchemaV1               = "https://gentle-ai.dev/schema/review/verification-evidence/v1"
-	verificationEvidenceRecordSchemaV2         = "gentle-ai.review-verification-evidence/v2"
+	statusSchemaV5                             = "shevanio-ai.review-integration.status/v5"
+	verificationEvidenceSchemaV1               = "https://shevanio-ai.dev/schema/review/verification-evidence/v1"
+	verificationEvidenceRecordSchemaV2         = "shevanio-ai.review-verification-evidence/v2"
 )
 
 var captureEvidenceDescriptorCapability = &Capability{Verb: []string{"review", "capture-evidence"},

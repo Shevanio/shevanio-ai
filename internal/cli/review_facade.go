@@ -17,10 +17,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // reviewContractRequiredForActionEligibilityReason is the single wording
@@ -48,12 +48,12 @@ const reviewStartTargetRequiresContractReason = "review start --target requires 
 // strictly negotiated-form surface: the typed question exists for callers
 // that relay envelopes, and the unnegotiated form keeps today's console
 // behavior byte for byte. The refusal names the exact runnable rerun.
-const reviewStartConsentRequiresContractReason = "review start --consent requires the negotiated form; rerun as gentle-ai review start --contract " +
+const reviewStartConsentRequiresContractReason = "review start --consent requires the negotiated form; rerun as shevanio-ai review start --contract " +
 	ReviewIntegrationContractV1 + " with the bound --target and --projection"
 
 // reviewStartConsentValueReason names the exact allowed-answer domain for the
 // consent declaration, mirroring the choice tokens the typed question emits.
-const reviewStartConsentValueReason = "review start --consent accepts exactly relay, granted, or declined; rerun gentle-ai review start with one of those values"
+const reviewStartConsentValueReason = "review start --consent accepts exactly relay, granted, or declined; rerun shevanio-ai review start with one of those values"
 
 // reviewFacadeReceiptNotAvailableReason is the single wording source for the
 // refusal when a compact (or legacy) facade lineage was discovered but has
@@ -63,7 +63,7 @@ const reviewStartConsentValueReason = "review start --consent accepts exactly re
 // (the validate gate path and both terminal-discovery helpers) share it so
 // they cannot drift.
 func reviewFacadeReceiptNotAvailableReason(lineageID string) string {
-	return fmt.Sprintf("facade review receipt is not available; run gentle-ai review finalize --lineage %s to produce one", lineageID)
+	return fmt.Sprintf("facade review receipt is not available; run shevanio-ai review finalize --lineage %s to produce one", lineageID)
 }
 
 // reviewFacadeApprovedReceiptCorruptReason (W-7, Wave 5 fix cycle 2,
@@ -81,7 +81,7 @@ func reviewFacadeApprovedReceiptCorruptReason(lineageID string) string {
 	return fmt.Sprintf(
 		"approved new-lineage authority %s has a receipt that cannot be trusted (missing valid content, or its recorded identity does not match the frozen authority); "+
 			"a corrupted receipt cannot be repaired -- v3 has no reopen path for it, and re-running finalize would itself refuse (its own immutable-publication check never overwrites differing existing bytes) -- "+
-			"start a fresh review instead: gentle-ai review start --cwd <repo> --lineage <new-lineage-id>",
+			"start a fresh review instead: shevanio-ai review start --cwd <repo> --lineage <new-lineage-id>",
 		lineageID,
 	)
 }
@@ -93,9 +93,9 @@ func reviewFacadeApprovedReceiptCorruptReason(lineageID string) string {
 // count as discoverable either), so the message must stay honest for both a
 // lineage that was never started here and one started under a different
 // --cwd; it never claims nothing was ever attempted.
-const reviewCompactFacadeLineageNotDiscoverableReason = "no discoverable compact facade review lineage found; run gentle-ai review start to begin one, or pass --cwd if it was started from a different repository path"
+const reviewCompactFacadeLineageNotDiscoverableReason = "no discoverable compact facade review lineage found; run shevanio-ai review start to begin one, or pass --cwd if it was started from a different repository path"
 
-const facadeReviewPolicy = `Gentle AI native bounded review policy.
+const facadeReviewPolicy = `Shevanio AI native bounded review policy.
 
 Only candidate-caused BLOCKER or CRITICAL findings may require correction. Pre-existing and base-only findings are follow-ups. One correction is bounded by the frozen original scope, and delivery gates validate the terminal receipt against live Git evidence.
 `
@@ -164,7 +164,7 @@ const reviewUndeclaredRuntimeIdentitySlot = "<your-runtime-identity>"
 // correct outcome for this build.
 func reviewNegotiatedStartCommand(snapshot reviewtransaction.Snapshot, runtimeAgent string) string {
 	identity := strings.TrimSpace(runtimeAgent)
-	command := fmt.Sprintf("gentle-ai review start --contract %s", ReviewIntegrationContractV2)
+	command := fmt.Sprintf("shevanio-ai review start --contract %s", ReviewIntegrationContractV2)
 	if identity != "" {
 		command += " --agent " + identity
 	}
@@ -330,7 +330,7 @@ func (err *ReviewReceiptDiscoveryError) Error() string {
 		// opposite: every terminal receipt on file was assessed against this
 		// candidate and none of them governs it. That is the candidate's own
 		// situation, and it has one route, so the denial states both.
-		message = "no approved review receipt covers this candidate; review it with gentle-ai review start"
+		message = "no approved review receipt covers this candidate; review it with shevanio-ai review start"
 	case ReviewReceiptScopeChanged:
 		message = "terminal review receipts do not exactly match the live gate target"
 	case ReviewReceiptAmbiguous:
@@ -345,7 +345,7 @@ func (err *ReviewReceiptDiscoveryError) Error() string {
 			// required.
 			message = "no terminal review receipt governs this candidate"
 			if len(err.Candidates) > 0 {
-				message += "; review it directly with gentle-ai review start, or optionally recover a prior lineage instead: " + strings.Join(err.Candidates, ", ")
+				message += "; review it directly with shevanio-ai review start, or optionally recover a prior lineage instead: " + strings.Join(err.Candidates, ", ")
 			}
 		} else {
 			// More than one receipt genuinely governs, so the gate must not
@@ -357,7 +357,7 @@ func (err *ReviewReceiptDiscoveryError) Error() string {
 			// error already carries.
 			message = "multiple terminal review receipts require explicit target selection"
 			if len(err.Candidates) > 0 {
-				message += "; select one with gentle-ai review validate --lineage <id>, from: " + strings.Join(err.Candidates, ", ")
+				message += "; select one with shevanio-ai review validate --lineage <id>, from: " + strings.Join(err.Candidates, ", ")
 			}
 		}
 	case ReviewAuthorityCorrupted:
@@ -383,7 +383,7 @@ func (err *ReviewReceiptDiscoveryError) Error() string {
 // candidate"): this is the untyped twin of the community-reported
 // plural-stale-receipt blocker (3c.1-3c.5 above) -- it too fails
 // unconditionally, in every mode, hitting the same upgrader cohort (anyone
-// who reviewed with gentle-ai before compact v2 shipped and has since
+// who reviewed with shevanio-ai before compact v2 shipped and has since
 // reviewed the same target again post-upgrade).
 //
 // It is typed here (so a caller can match it with errors.Is) and stays OUTSIDE
@@ -688,7 +688,7 @@ func (err *reviewStartContextError) Unwrap() error { return err.Cause }
 
 func RunReview(args []string, stdout io.Writer) error {
 	if len(args) == 0 || args[0] == "help" || args[0] == "-h" || args[0] == "--help" {
-		_, _ = fmt.Fprintln(stdout, "Usage: gentle-ai review <capture-result|capture-refuter|capture-validation|lens-context|capture-evidence|preserve-result|capabilities|start|finalize|validate|status|repair|invalidate|abandon|recover|retry-final-verification|reclaim|store-reset|inspect-authority|inspect-candidate|dispose-result|reopen-results|schema|opencode-transport|bind-sdd> [flags]\n\nOrdinary review facade; repository scope, authority, canonical artifacts, and lifecycle transitions are derived by Go. Provider transports relay opaque bytes only; Go materializes, admits, captures, and decides delivery. Use review retry-final-verification only for a provider-proven completed failed final-verification tooling incident. Generic review recover remains unchanged. Use review repair --preflight for provider-owned classified authority repair.")
+		_, _ = fmt.Fprintln(stdout, "Usage: shevanio-ai review <capture-result|capture-refuter|capture-validation|lens-context|capture-evidence|preserve-result|capabilities|start|finalize|validate|status|repair|invalidate|abandon|recover|retry-final-verification|reclaim|store-reset|inspect-authority|inspect-candidate|dispose-result|reopen-results|schema|opencode-transport|bind-sdd> [flags]\n\nOrdinary review facade; repository scope, authority, canonical artifacts, and lifecycle transitions are derived by Go. Provider transports relay opaque bytes only; Go materializes, admits, captures, and decides delivery. Use review retry-final-verification only for a provider-proven completed failed final-verification tooling incident. Generic review recover remains unchanged. Use review repair --preflight for provider-owned classified authority repair.")
 		return nil
 	}
 	operation, negotiated, preflightFailure := reviewIntegrationFailureRoute(args)
@@ -941,10 +941,10 @@ func runReviewStatus(ctx context.Context, args []string, stdout io.Writer) error
 		selectedBaseRef := strings.TrimSpace(*baseRef)
 		selectedBaseTree := strings.TrimSpace(*baseTree)
 		if *committedOnly && (selectedBaseRef == "" || *workspaceOverlay) {
-			return errors.New("review status --committed-only requires --base-ref without --workspace-overlay; rerun `gentle-ai review status --base-ref <ref> --committed-only`")
+			return errors.New("review status --committed-only requires --base-ref without --workspace-overlay; rerun `shevanio-ai review status --base-ref <ref> --committed-only`")
 		}
 		if selectedBaseRef != "" && committedOnlyProvided && !*committedOnly && !*workspaceOverlay {
-			return errors.New("review status --base-ref requires --committed-only; rerun `gentle-ai review status --base-ref <ref> --committed-only`")
+			return errors.New("review status --base-ref requires --committed-only; rerun `shevanio-ai review status --base-ref <ref> --committed-only`")
 		}
 		stagedRecoveryOverlay := *workspaceOverlay && selectedProjection == reviewtransaction.ProjectionStaged
 		if *workspaceOverlay && stagedRecoveryOverlay && (selectedBaseRef == "" || selectedBaseTree != "") {
@@ -968,7 +968,7 @@ func runReviewStatus(ctx context.Context, args []string, stdout io.Writer) error
 		intendedScope := reviewIntendedUntrackedScope{Intended: []string{}}
 		if selectedProjection == reviewtransaction.ProjectionStaged {
 			if reviewIntendedUntrackedDeclared(untrackedScope, intendedUntracked, expectedUntrackedInventory) {
-				return reviewPreflightError(errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `gentle-ai review status --projection staged`"))
+				return reviewPreflightError(errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `shevanio-ai review status --projection staged`"))
 			}
 		} else {
 			intendedScope, err = reviewIntendedUntrackedScopeForTarget(ctx, reviewtransaction.SnapshotBuilder{Repo: root}, untrackedScope, intendedUntracked, expectedUntrackedInventory)
@@ -1353,7 +1353,7 @@ func RunReviewRecover(args []string, stdout io.Writer) error {
 	reason := flags.String("reason", "", "recovery reason")
 	actor := flags.String("actor", "", "recovery actor")
 	projectionFlag := flags.String("projection", "", "successor projection: workspace or staged (default: predecessor projection)")
-	authorization := flags.String("maintainer-authorization", "", "exact LF-only gentle-ai.review-recovery-authorization/v1 binding: predecessor_lineage, predecessor_revision, target_identity, optional native successor_lineage, actor, reason")
+	authorization := flags.String("maintainer-authorization", "", "exact LF-only shevanio-ai.review-recovery-authorization/v1 binding: predecessor_lineage, predecessor_revision, target_identity, optional native successor_lineage, actor, reason")
 	policySource := flags.String("policy", "", "optional review policy file")
 	focus := flags.String("focus", "reliability", "dominant standard-risk focus; large pure documentation always uses readability")
 	baseRef := flags.String("base-ref", "", "optional base revision for immutable base-to-HEAD review")
@@ -1442,10 +1442,10 @@ func RunReviewRecover(args []string, stdout io.Writer) error {
 	declaredSelection := reviewIntendedUntrackedDeclared(untrackedScope, intendedUntracked, expectedUntrackedInventory)
 	currentChangesSuccessor := !*releaseScope && !*committedOnly && !stagedScopeOverlay && !overlay
 	if declaredSelection && !currentChangesSuccessor {
-		return errors.New("intended-untracked selection requires a current-changes recovery; rerun `gentle-ai review recover` without --untracked-scope, --intended-untracked, and --expected-untracked-inventory")
+		return errors.New("intended-untracked selection requires a current-changes recovery; rerun `shevanio-ai review recover` without --untracked-scope, --intended-untracked, and --expected-untracked-inventory")
 	}
 	if declaredSelection && projection == reviewtransaction.ProjectionStaged {
-		return errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `gentle-ai review recover --projection staged`")
+		return errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `shevanio-ai review recover --projection staged`")
 	}
 	intended := []string{}
 	switch {
@@ -1576,7 +1576,7 @@ func reviewUnchangedRecoveryRefusal(cause error, cwd, predecessor, expected, suc
 		cause, reviewRecoverCommand(cwd, predecessor, expected, successor, disposition))
 }
 
-// reviewRecoverCommand renders one literal `gentle-ai review recover`
+// reviewRecoverCommand renders one literal `shevanio-ai review recover`
 // invocation. Every value is one the caller already holds, so nothing here is
 // ever a guess printed at the operator.
 func reviewRecoverCommand(cwd, predecessor, expected, successor, disposition string) string {
@@ -1730,7 +1730,7 @@ func RunReviewInvalidate(args []string, stdout io.Writer) error {
 			if gateName == "" {
 				gateName = "<gate>"
 			}
-			return fmt.Errorf("review invalidate no longer performs gate-derived invalidation for lineage %q; invalidated is now a derived verdict, never a write; see it instead: gentle-ai review validate --cwd %s --lineage %s --gate %s", *lineage, strings.TrimSpace(*cwd), *lineage, gateName)
+			return fmt.Errorf("review invalidate no longer performs gate-derived invalidation for lineage %q; invalidated is now a derived verdict, never a write; see it instead: shevanio-ai review validate --cwd %s --lineage %s --gate %s", *lineage, strings.TrimSpace(*cwd), *lineage, gateName)
 		}
 		if strings.TrimSpace(*reason) == "" {
 			return errors.New("pristine review invalidation requires --reason")
@@ -1860,7 +1860,7 @@ func runReviewFacadeStart(ctx context.Context, args []string, stdout io.Writer) 
 	intendedScope := reviewIntendedUntrackedScope{Intended: []string{}}
 	if selectedProjection == reviewtransaction.ProjectionStaged {
 		if reviewIntendedUntrackedDeclared(untrackedScope, intendedUntracked, expectedUntrackedInventory) {
-			return reviewPreflightError(errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `gentle-ai review start --projection staged`"))
+			return reviewPreflightError(errors.New("staged projection does not accept intended-untracked selection; remove those flags and rerun `shevanio-ai review start --projection staged`"))
 		}
 	} else {
 		intendedScope, err = reviewIntendedUntrackedScopeForTarget(ctx, reviewtransaction.SnapshotBuilder{Repo: root}, untrackedScope, intendedUntracked, expectedUntrackedInventory)
@@ -1936,8 +1936,8 @@ func runReviewFacadeStart(ctx context.Context, args []string, stdout io.Writer) 
 	// annotation.
 	if !negotiated && target.Kind != reviewtransaction.TargetCurrentChanges && len(lenses) > 0 {
 		return reviewPreflightRefusal(reviewPreflightDirectRouteUncompletableReason,
-			fmt.Errorf("review start without --contract cannot produce a completable review because its %d selected lens(es) require repository_context, which only the negotiated contract form publishes; rerun with `gentle-ai review start %s` instead",
-				len(lenses), strings.TrimPrefix(reviewNegotiatedStartCommand(snapshot, *runtimeAgent), "gentle-ai review start ")))
+			fmt.Errorf("review start without --contract cannot produce a completable review because its %d selected lens(es) require repository_context, which only the negotiated contract form publishes; rerun with `shevanio-ai review start %s` instead",
+				len(lenses), strings.TrimPrefix(reviewNegotiatedStartCommand(snapshot, *runtimeAgent), "shevanio-ai review start ")))
 	}
 	// The candidate is frozen and the tier is classified, so this is the one
 	// point where the kill switch can stop a start and consent can name the real
@@ -1981,7 +1981,7 @@ func runReviewFacadeStart(ctx context.Context, args []string, stdout io.Writer) 
 	// that authorizeReviewStart already returned nil (consent granted, or
 	// tier 0's carve-out) -- was already computed by the exact same reused
 	// code the legacy branch below still uses unchanged.
-	// GENTLE_AI_RDD_NEW_LINEAGE unset or empty (the default) never reaches
+	// SHEVANIO_AI_RDD_NEW_LINEAGE unset or empty (the default) never reaches
 	// this branch at all, so the legacy start path stays byte-identical.
 	//
 	// Wave 7 S7 (WU18) attempted removing this switch and reverted (see
@@ -2487,7 +2487,7 @@ func reviewConsentFollowUpBase(
 	locale string, intendedScope reviewIntendedUntrackedScope,
 ) string {
 	parts := []string{
-		"gentle-ai review start",
+		"shevanio-ai review start",
 		"--contract " + contract,
 		"--cwd " + reviewTransitionShellWord(cwd),
 		"--target " + target,
@@ -2586,7 +2586,7 @@ func reviewFacadeStartResultFor(action reviewtransaction.CompactStartAction, len
 var reviewUnadmittedResultRefusal = "review finalize no longer accepts --result: a reviewer result supplied this way carries no provider-owned admission, " +
 	"so it cannot prove the lens inspected the frozen candidate. " +
 	"Capture each selected lens with `" + reviewCaptureResultCommandName() + "` (see `" + reviewNextTransitionRefreshCommand + "` for the exact lineage/target/lens/order bindings), " +
-	"then run `gentle-ai review finalize --captured-results=true`"
+	"then run `shevanio-ai review finalize --captured-results=true`"
 
 func reviewFinalizeFlagProvided(args []string, name string) bool {
 	for _, argument := range args {
@@ -2659,7 +2659,7 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 	providerRuntime := model.AgentID("")
 	if reviewRuntimeAgentCount(args) != 0 {
 		if !negotiated || *contract != ReviewIntegrationContractV2 || reviewRuntimeAgentCount(args) != 1 {
-			return reviewPreflightError(errors.New("review finalize --agent requires exactly one negotiated v2 runtime identity; refresh with `gentle-ai review status --contract gentle-ai.review-integration/v2 --next-transition`"))
+			return reviewPreflightError(errors.New("review finalize --agent requires exactly one negotiated v2 runtime identity; refresh with `shevanio-ai review status --contract shevanio-ai.review-integration/v2 --next-transition`"))
 		}
 		resolved, runtimeErr := reviewRuntimeWithImmutableTransport(*runtimeAgent)
 		if runtimeErr != nil {
@@ -2674,10 +2674,10 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 		reviewFinalizeFlagProvided(args, "request-hash") || reviewFinalizeFlagProvided(args, "repository-context")
 	if submissionBindingProvided && (!negotiated || *contract != ReviewIntegrationContractV2 || strings.TrimSpace(*expectedSubmissionRevision) == "" ||
 		strings.TrimSpace(*targetIdentity) == "" || strings.TrimSpace(*requestHash) == "" || strings.TrimSpace(*repositoryContext) == "") {
-		return reviewPreflightError(errors.New("review finalize submission descriptors require the complete v2 revision, target, request hash, and repository context binding; refresh with gentle-ai review status --next-transition"))
+		return reviewPreflightError(errors.New("review finalize submission descriptors require the complete v2 revision, target, request hash, and repository context binding; refresh with shevanio-ai review status --next-transition"))
 	}
 	if reviewFinalizeFlagProvided(args, "repository-context") && reviewFinalizeFlagProvided(args, "cwd") {
-		return reviewPreflightError(errors.New("review finalize submission descriptors cannot combine --repository-context with --cwd; refresh with gentle-ai review status --next-transition"))
+		return reviewPreflightError(errors.New("review finalize submission descriptors cannot combine --repository-context with --cwd; refresh with shevanio-ai review status --next-transition"))
 	}
 	stdinPaths := append(append([]string{}, resultPaths...), resultArtifactFiles...)
 	if countFacadeStdin(stdinPaths, *validationPath, *refuterPath, *evidencePath) > 1 {
@@ -2743,7 +2743,7 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 			// pipeline these other flags name.
 			for _, unsupported := range []string{"result", "result-artifact", "result-artifact-file", "captured-evidence", "validation", "refuter", "evidence"} {
 				if reviewFinalizeFlagProvided(args, unsupported) {
-					return reviewPreflightError(fmt.Errorf("new-lineage finalize does not yet support --%s; retry with `gentle-ai review finalize --lineage %s` and, if needed, --failed or --admission-findings", unsupported, *lineage))
+					return reviewPreflightError(fmt.Errorf("new-lineage finalize does not yet support --%s; retry with `shevanio-ai review finalize --lineage %s` and, if needed, --failed or --admission-findings", unsupported, *lineage))
 				}
 			}
 			// C-E (Wave 5 fix cycle 3, verify-report #10186 cycle 2): the reviewer
@@ -3027,7 +3027,7 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 		if err := reviewFacadeSyncDirectory(filepath.Dir(store.FinalizeAttemptJournalPath())); err != nil {
 			return fmt.Errorf("sync completed finalize journal directory: %w", err)
 		}
-		return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with gentle-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
+		return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with shevanio-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
 	}
 	var attempt reviewtransaction.FinalizeAttempt
 	attemptLoaded := false
@@ -3157,7 +3157,7 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 		return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "continue the current review state", reviewFinalizeOutputContext{Context: ctx, Repo: root})
 	}
 	if terminalAtEntry && terminalReceiptExists {
-		return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with gentle-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
+		return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with shevanio-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
 	}
 	receipt := terminalReceipt
 	if !terminalAtEntry {
@@ -3179,7 +3179,7 @@ func runReviewFacadeFinalize(ctx context.Context, args []string, stdout io.Write
 	if err := store.MarkFinalizeAttemptReceiptPublished(requestDigest); err != nil {
 		return err
 	}
-	return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with gentle-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
+	return encodeCompactFacadeFinalize(stdout, negotiated, *contract, *actionEligibility, *nextTransition, state, record.Revision, store, "validate delivery with shevanio-ai review validate --gate <gate>", reviewFinalizeOutputContext{Context: ctx, Repo: root})
 }
 
 func facadeFinalizeTransitionIndex(attempt *reviewtransaction.FinalizeAttempt, revision string) int {
@@ -3199,7 +3199,7 @@ func validateReviewFinalizeSubmission(ctx context.Context, repo string, state re
 		return nil
 	}
 	if expectedRevision != revision {
-		return errors.New("review finalize submission expected revision is stale; refresh with gentle-ai review status --next-transition")
+		return errors.New("review finalize submission expected revision is stale; refresh with shevanio-ai review status --next-transition")
 	}
 	hasValidation := strings.TrimSpace(validationPath) != ""
 	if !correctionLinesProvided && !hasValidation && capturedEvidence {
@@ -3208,7 +3208,7 @@ func validateReviewFinalizeSubmission(ctx context.Context, repo string, state re
 			return err
 		}
 		if targetIdentity != request.CorrectionTargetIdentity || requestHash != request.RequestHash {
-			return errors.New("captured provider validator submission does not match the provider-owned targeted validation request; refresh with gentle-ai review status --next-transition")
+			return errors.New("captured provider validator submission does not match the provider-owned targeted validation request; refresh with shevanio-ai review status --next-transition")
 		}
 		expected := []string{
 			"--contract=" + ReviewIntegrationContractV2,
@@ -3220,12 +3220,12 @@ func validateReviewFinalizeSubmission(ctx context.Context, repo string, state re
 			"--captured-evidence=true",
 		}
 		if !reflect.DeepEqual(args, expected) {
-			return errors.New("captured provider validator submission differs from the provider-issued transition; refresh with gentle-ai review status --next-transition")
+			return errors.New("captured provider validator submission differs from the provider-issued transition; refresh with shevanio-ai review status --next-transition")
 		}
 		return nil
 	}
 	if correctionLinesProvided == hasValidation {
-		return errors.New("review finalize submission requires exactly one descriptor value; refresh with gentle-ai review status --next-transition")
+		return errors.New("review finalize submission requires exactly one descriptor value; refresh with shevanio-ai review status --next-transition")
 	}
 	binding := ReviewTransitionBinding{LineageID: state.LineageID, Revision: revision, TargetIdentity: targetIdentity, RepositoryContext: repositoryContext}
 	var submission *ReviewTransitionSubmission
@@ -3236,20 +3236,20 @@ func validateReviewFinalizeSubmission(ctx context.Context, repo string, state re
 			return err
 		}
 		if correctionLines < 1 || correctionLines > request.CorrectionBudget || targetIdentity != request.TargetIdentity || requestHash != request.RequestHash {
-			return errors.New("review finalize submission does not match the provider-owned correction request; refresh with gentle-ai review status --next-transition")
+			return errors.New("review finalize submission does not match the provider-owned correction request; refresh with shevanio-ai review status --next-transition")
 		}
 		submission = reviewCorrectionPlanSubmission(ReviewIntegrationContractV2, binding, request)
 		value = fmt.Sprint(correctionLines)
 	} else {
 		if !capturedEvidence {
-			return errors.New("review finalize validation submission requires captured evidence; refresh with gentle-ai review status --next-transition")
+			return errors.New("review finalize validation submission requires captured evidence; refresh with shevanio-ai review status --next-transition")
 		}
 		request, err := reviewtransaction.BuildTargetedValidationRequest(ctx, repo, state, revision)
 		if err != nil {
 			return err
 		}
 		if targetIdentity != request.CorrectionTargetIdentity || requestHash != request.RequestHash {
-			return errors.New("review finalize submission does not match the provider-owned targeted validation request; refresh with gentle-ai review status --next-transition")
+			return errors.New("review finalize submission does not match the provider-owned targeted validation request; refresh with shevanio-ai review status --next-transition")
 		}
 		binding.TargetIdentity = request.CorrectionTargetIdentity
 		submission = reviewTargetedValidationSubmission(ReviewIntegrationContractV2, binding, request)
@@ -3265,7 +3265,7 @@ func validateReviewFinalizeSubmission(ctx context.Context, repo string, state re
 	slot := submission.Value.SubstitutionLocation
 	expected[slot] = strings.Replace(expected[slot], reviewSubmissionValuePlaceholder, value, 1)
 	if !reflect.DeepEqual(args, expected) {
-		return errors.New("review finalize submission differs from the provider-issued descriptor; refresh with gentle-ai review status --next-transition")
+		return errors.New("review finalize submission differs from the provider-issued descriptor; refresh with shevanio-ai review status --next-transition")
 	}
 	return nil
 }
@@ -3428,7 +3428,7 @@ type ErrReviewFinalizeNoTransition struct {
 
 func (err *ErrReviewFinalizeNoTransition) Error() string {
 	return fmt.Sprintf(
-		"finalize for lineage %q had no verification evidence to consume and made no transition; capture it first with `gentle-ai review capture-evidence`, then run `gentle-ai review finalize --lineage %s --captured-evidence`",
+		"finalize for lineage %q had no verification evidence to consume and made no transition; capture it first with `shevanio-ai review capture-evidence`, then run `shevanio-ai review finalize --lineage %s --captured-evidence`",
 		err.LineageID, err.LineageID,
 	)
 }
@@ -3527,7 +3527,7 @@ func facadeFinalizeReplayRequestDigest(lineage, revision string, receipt reviewt
 		StoreRevision string                           `json:"store_revision"`
 		Receipt       reviewtransaction.CompactReceipt `json:"receipt"`
 	}{
-		Schema: "gentle-ai.review-finalize-replay-request/v1", Operation: "review/finalize",
+		Schema: "shevanio-ai.review-finalize-replay-request/v1", Operation: "review/finalize",
 		LineageID: lineage, StoreRevision: revision, Receipt: receipt,
 	})
 }
@@ -5030,7 +5030,7 @@ func countFacadeStdin(resultPaths []string, paths ...string) int {
 
 func facadeValueHash(domain string, value any) string {
 	payload, _ := json.Marshal(value)
-	sum := sha256.Sum256(append([]byte("gentle-ai.facade-"+domain+"/v1\x00"), payload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.facade-"+domain+"/v1\x00"), payload...))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 

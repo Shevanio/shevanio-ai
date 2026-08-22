@@ -18,7 +18,7 @@ import (
 	"syscall"
 )
 
-const RecordSchema = "gentle-ai.review-record/v1"
+const RecordSchema = "shevanio-ai.review-record/v1"
 
 var ErrConcurrentUpdate = errors.New("review transaction changed concurrently")
 var ErrInvalidSuccessor = errors.New("review transaction successor is invalid")
@@ -110,6 +110,17 @@ func AuthoritativeStore(ctx context.Context, repo, lineageID string) (Store, err
 		return Store{}, errors.New("lineage_id escapes the repository review store")
 	}
 	_, statErr := os.Stat(filepath.Join(dir, "HEAD"))
+	if os.IsNotExist(statErr) {
+		legacyRoot, _, legacyErr := legacyAuthoritativeStoreRoot(ctx, repo)
+		if legacyErr == nil {
+			legacyDir := filepath.Join(legacyRoot, lineageID)
+			if _, legacyStatErr := os.Stat(filepath.Join(legacyDir, "HEAD")); legacyStatErr == nil {
+				authorityRoot, dir, statErr = legacyRoot, legacyDir, nil
+			}
+		}
+	}
+	// Every published v1 store belongs to the retired lifecycle. A fresh handle
+	// may replay it, but only the unpublished handle that created it may append.
 	return Store{Dir: dir, lineageID: lineageID, repo: root, maintenanceLockPath: filepath.Join(filepath.Dir(filepath.Dir(authorityRoot)), "REVIEW-MAINTENANCE.lock"), readOnly: statErr == nil}, nil
 }
 
@@ -121,20 +132,31 @@ func DiscoverAuthoritativeStores(ctx context.Context, repo string) ([]Store, err
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(authorityRoot)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Store{}, nil
-		}
-		return nil, err
+	legacyRoot, _, legacyErr := legacyAuthoritativeStoreRoot(ctx, repo)
+	if legacyErr != nil {
+		return nil, legacyErr
 	}
-	stores := make([]Store, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() || validateLineageID(entry.Name()) != nil {
+	stores := []Store{}
+	seen := map[string]struct{}{}
+	for _, candidateRoot := range []string{authorityRoot, legacyRoot} {
+		entries, readErr := os.ReadDir(candidateRoot)
+		if os.IsNotExist(readErr) {
 			continue
 		}
-		stores = append(stores, Store{Dir: filepath.Join(authorityRoot, entry.Name()), lineageID: entry.Name(), repo: root,
-			maintenanceLockPath: filepath.Join(filepath.Dir(filepath.Dir(authorityRoot)), "REVIEW-MAINTENANCE.lock"), readOnly: true})
+		if readErr != nil {
+			return nil, readErr
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() || validateLineageID(entry.Name()) != nil {
+				continue
+			}
+			if _, exists := seen[entry.Name()]; exists {
+				continue
+			}
+			seen[entry.Name()] = struct{}{}
+			stores = append(stores, Store{Dir: filepath.Join(candidateRoot, entry.Name()), lineageID: entry.Name(), repo: root,
+				maintenanceLockPath: filepath.Join(filepath.Dir(filepath.Dir(candidateRoot)), "REVIEW-MAINTENANCE.lock"), readOnly: true})
+		}
 	}
 	return stores, nil
 }
@@ -147,7 +169,23 @@ func authoritativeStoreRoot(ctx context.Context, repo string) (string, string, e
 	return filepath.Join(base, "v1"), root, nil
 }
 
+func legacyAuthoritativeStoreRoot(ctx context.Context, repo string) (string, string, error) {
+	base, root, err := legacyReviewAuthorityRoot(ctx, repo)
+	if err != nil {
+		return "", "", err
+	}
+	return filepath.Join(base, "v1"), root, nil
+}
+
 func reviewAuthorityRoot(ctx context.Context, repo string) (string, string, error) {
+	return reviewAuthorityRootForNamespace(ctx, repo, "shevanio-ai")
+}
+
+func legacyReviewAuthorityRoot(ctx context.Context, repo string) (string, string, error) {
+	return reviewAuthorityRootForNamespace(ctx, repo, "gentle-ai")
+}
+
+func reviewAuthorityRootForNamespace(ctx context.Context, repo, namespace string) (string, string, error) {
 	root, err := (SnapshotBuilder{Repo: repo}).repositoryRoot(ctx)
 	if err != nil {
 		return "", "", fmt.Errorf("resolve authoritative review repository: %w", err)
@@ -156,7 +194,7 @@ func reviewAuthorityRoot(ctx context.Context, repo string) (string, string, erro
 	if err != nil {
 		return "", "", fmt.Errorf("resolve repository Git identity: %w", err)
 	}
-	authorityRoot := filepath.Join(identity.GitCommonDir, "gentle-ai", "review-transactions")
+	authorityRoot := filepath.Join(identity.GitCommonDir, namespace, "review-transactions")
 	return authorityRoot, identity.RepositoryRoot, nil
 }
 
@@ -437,12 +475,14 @@ func (store Store) loadRevision(revision string) (Record, string, error) {
 	if got := "sha256:" + hex.EncodeToString(sum[:]); got != revision {
 		return Record{}, "", errors.New("review record hash mismatch")
 	}
-	decoder := json.NewDecoder(strings.NewReader(string(payload)))
+	normalized, legacyIdentity := normalizeLegacyProductIdentity(payload)
+	decoder := json.NewDecoder(bytes.NewReader(normalized))
 	decoder.DisallowUnknownFields()
 	var record Record
 	if err := decoder.Decode(&record); err != nil {
 		return Record{}, "", err
 	}
+	record.Transaction.legacyProductIdentity = legacyIdentity
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
 		return Record{}, "", errors.New("multiple JSON values in review record")
@@ -454,6 +494,18 @@ func (store Store) loadRevision(revision string) (Record, string, error) {
 		return Record{}, "", err
 	}
 	return record, revision, nil
+}
+
+func normalizeLegacyProductIdentity(payload []byte) ([]byte, bool) {
+	var identity struct {
+		Schema string `json:"schema"`
+	}
+	if err := json.Unmarshal(payload, &identity); err != nil || !strings.HasPrefix(identity.Schema, "gentle-ai.") {
+		return payload, false
+	}
+	normalized := bytes.ReplaceAll(payload, []byte(`"gentle-ai.`), []byte(`"shevanio-ai.`))
+	normalized = bytes.ReplaceAll(normalized, []byte("https://gentle-ai.dev/"), []byte("https://shevanio-ai.dev/"))
+	return normalized, true
 }
 
 func validateSuccessor(previous, next Transaction, operation string) error {
@@ -668,6 +720,9 @@ func historicalFreezeFindingsExpected(previous, next Transaction) Transaction {
 	}
 	expected.LedgerHash = next.LedgerHash
 	expected.LedgerFindingsHash = findingsHash(expected.Findings)
+	if next.legacyProductIdentity {
+		expected.LedgerFindingsHash = legacyFindingsHash(expected.Findings)
+	}
 	expected.State = StateFindingsFrozen
 	return expected
 }
@@ -807,7 +862,7 @@ func validInitialStoreRecord(record Record) bool {
 
 func chainIdentity(revisions []string) string {
 	hash := sha256.New()
-	_, _ = hash.Write([]byte("gentle-ai.review-chain/v1\x00"))
+	_, _ = hash.Write([]byte("shevanio-ai.review-chain/v1\x00"))
 	for _, revision := range revisions {
 		writeLengthPrefixed(hash, []byte(revision))
 	}

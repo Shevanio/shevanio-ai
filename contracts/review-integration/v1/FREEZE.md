@@ -16,13 +16,23 @@ recorded in:
 
 ## What "frozen" means
 
-- Every file under this directory MUST stay byte-unchanged for the
-  remainder of this wave (S1 through S9b/WU20).
+- After the Shevanio fork baseline, every file under this directory MUST stay
+  byte-unchanged unless a separate, dated compatibility change explicitly
+  replaces this freeze.
 - No new-lineage (v3) behavior consumes this contract; v3 uses
   `contracts/review-integration/v2/**` exclusively.
 - This directory is NOT deleted by any Wave 7 work unit. Deletion requires a
   SEPARATE, later, dated change once the support horizon below is proven
   satisfied — never bundled into this deletion wave.
+
+## Shevanio fork baseline
+
+The fork from Gentle AI v2.4.0 is the one deliberate exception to the upstream
+byte freeze. It changed product namespaces, schema IDs, command examples,
+derived identity hashes, and fixture checksum pins together so this runtime
+publishes a coherent `shevanio-ai.review-integration/v1` contract. Historical
+Gentle authority remains read-only input and is not rewritten into these
+fixtures. This file freezes the resulting Shevanio bytes going forward.
 
 ## Why frozen rather than deleted now (D3's rejected alternative)
 
@@ -45,7 +55,8 @@ as it is.
 
 ## Exit evidence this freeze must show at Wave 7 close-out (WU20)
 
-- [ ] Every file's content hash unchanged from this freeze commit forward
+- [ ] Every file's content hash unchanged from the Shevanio fork baseline
+      forward
       through the wave's last work unit (verifiable via `git diff
       --stat` against this commit for the `contracts/review-integration/v1/`
       path across every subsequent Wave 7 commit).

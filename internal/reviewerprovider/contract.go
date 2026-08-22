@@ -15,13 +15,13 @@ const (
 	RoleTargetedValidator Role = "targeted-validator"
 )
 
-const TransportCapability = "gentle-ai.provider-transport/v1"
+const TransportCapability = "shevanio-ai.provider-transport/v1"
 
 const (
 	LensResultSchema = `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gentle-ai.dev/schema/review/reviewer/v1",
-  "title": "Gentle AI reviewer result",
+  "$id": "https://shevanio-ai.dev/schema/review/reviewer/v1",
+  "title": "Shevanio AI reviewer result",
   "type": "object",
   "additionalProperties": false,
   "required": ["subject_hash", "inspection", "findings", "evidence"],
@@ -34,8 +34,8 @@ const (
   },
   "examples": [{"subject_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "inspection": {"status": "completed", "paths": ["internal/example.go"]}, "findings": [], "evidence": ["reviewed the complete candidate scope"]}]
 }`
-	RefuterResultSchema           = `{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://gentle-ai.dev/schema/review/refuter/v1","title":"Gentle AI refuter result","type":"object","additionalProperties":false,"required":["refuter_request_hash","results"],"properties":{"refuter_request_hash":{"$ref":"#/$defs/sha256"},"results":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["finding_id","outcome","proof_refs"],"properties":{"finding_id":{"type":"string"},"outcome":{"type":"string","enum":["corroborated","refuted","inconclusive"]},"proof_refs":{"type":"array","minItems":1,"items":{"type":"string","pattern":"\\S"}}}}}},"$defs":{"sha256":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},"examples":[{"refuter_request_hash":"sha256:0000000000000000000000000000000000000000000000000000000000000000","results":[]}]}`
-	TargetedValidatorResultSchema = `{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://gentle-ai.dev/schema/review/validator/v1","title":"Gentle AI targeted validator result","type":"object","additionalProperties":false,"required":["targeted_validation_request_hash","correction_target_identity","original_criteria","correction_regression","follow_ups"],"properties":{"targeted_validation_request_hash":{"$ref":"#/$defs/sha256"},"correction_target_identity":{"$ref":"#/$defs/sha256"},"original_criteria":{"$ref":"#/$defs/check"},"correction_regression":{"$ref":"#/$defs/check"},"follow_ups":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["observation","proof_refs"],"properties":{"observation":{"type":"string"},"proof_refs":{"type":"array","minItems":1,"items":{"type":"string","pattern":"\\S"}}}}}},"$defs":{"sha256":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},"check":{"type":"object","additionalProperties":false,"required":["passed","evidence"],"properties":{"passed":{"type":"boolean"},"evidence":{"type":"array","minItems":1,"items":{"type":"string"}}}}},"examples":[{"targeted_validation_request_hash":"sha256:0000000000000000000000000000000000000000000000000000000000000000","correction_target_identity":"sha256:1111111111111111111111111111111111111111111111111111111111111111","original_criteria":{"passed":true,"evidence":["acceptance test passed"]},"correction_regression":{"passed":true,"evidence":["regression test passed"]},"follow_ups":[]}]}`
+	RefuterResultSchema           = `{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://shevanio-ai.dev/schema/review/refuter/v1","title":"Shevanio AI refuter result","type":"object","additionalProperties":false,"required":["refuter_request_hash","results"],"properties":{"refuter_request_hash":{"$ref":"#/$defs/sha256"},"results":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["finding_id","outcome","proof_refs"],"properties":{"finding_id":{"type":"string"},"outcome":{"type":"string","enum":["corroborated","refuted","inconclusive"]},"proof_refs":{"type":"array","minItems":1,"items":{"type":"string","pattern":"\\S"}}}}}},"$defs":{"sha256":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},"examples":[{"refuter_request_hash":"sha256:0000000000000000000000000000000000000000000000000000000000000000","results":[]}]}`
+	TargetedValidatorResultSchema = `{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://shevanio-ai.dev/schema/review/validator/v1","title":"Shevanio AI targeted validator result","type":"object","additionalProperties":false,"required":["targeted_validation_request_hash","correction_target_identity","original_criteria","correction_regression","follow_ups"],"properties":{"targeted_validation_request_hash":{"$ref":"#/$defs/sha256"},"correction_target_identity":{"$ref":"#/$defs/sha256"},"original_criteria":{"$ref":"#/$defs/check"},"correction_regression":{"$ref":"#/$defs/check"},"follow_ups":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["observation","proof_refs"],"properties":{"observation":{"type":"string"},"proof_refs":{"type":"array","minItems":1,"items":{"type":"string","pattern":"\\S"}}}}}},"$defs":{"sha256":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},"check":{"type":"object","additionalProperties":false,"required":["passed","evidence"],"properties":{"passed":{"type":"boolean"},"evidence":{"type":"array","minItems":1,"items":{"type":"string"}}}}},"examples":[{"targeted_validation_request_hash":"sha256:0000000000000000000000000000000000000000000000000000000000000000","correction_target_identity":"sha256:1111111111111111111111111111111111111111111111111111111111111111","original_criteria":{"passed":true,"evidence":["acceptance test passed"]},"correction_regression":{"passed":true,"evidence":["regression test passed"]},"follow_ups":[]}]}`
 )
 
 // targetedValidatorPromptInstruction is the targeted validator's complete
@@ -51,7 +51,7 @@ const targetedValidatorPromptInstruction = "You are the read-only targeted fix v
 	"for every path in `validation_request.correction_paths`. It is authoritative corrected-candidate content read " +
 	"from the immutable trees, not a summary of them, so a verdict reached from it is a verified verdict. " +
 	"When you can run commands, read those same immutable trees yourself with " +
-	"`gentle-ai review inspect-candidate --purpose targeted-validation " +
+	"`shevanio-ai review inspect-candidate --purpose targeted-validation " +
 	"--lineage <validation_request.lineage_id> " +
 	"--expected-revision <validation_request.expected_revision> " +
 	"--target <validation_request.correction_target_identity> " +
@@ -86,19 +86,19 @@ type Contract struct {
 
 var contracts = []Contract{
 	{
-		ID: string(RoleLens), Role: RoleLens, RequestSchemaID: "gentle-ai.review-lens-context/v1",
-		ResultSchemaID: "https://gentle-ai.dev/schema/review/reviewer/v1", ResultSchema: []byte(LensResultSchema), StorageSlot: "selected-lens",
+		ID: string(RoleLens), Role: RoleLens, RequestSchemaID: "shevanio-ai.review-lens-context/v1",
+		ResultSchemaID: "https://shevanio-ai.dev/schema/review/reviewer/v1", ResultSchema: []byte(LensResultSchema), StorageSlot: "selected-lens",
 		RequiredCapabilities: []string{TransportCapability}, ResultLimit: 4 << 20,
 	},
 	{
-		ID: string(RoleRefuter), Role: RoleRefuter, RequestSchemaID: "gentle-ai.review-provider-refuter-request/v1",
-		ResultSchemaID: "https://gentle-ai.dev/schema/review/refuter/v1", ResultSchema: []byte(RefuterResultSchema), StorageSlot: "transaction-refuter-batch",
+		ID: string(RoleRefuter), Role: RoleRefuter, RequestSchemaID: "shevanio-ai.review-provider-refuter-request/v1",
+		ResultSchemaID: "https://shevanio-ai.dev/schema/review/refuter/v1", ResultSchema: []byte(RefuterResultSchema), StorageSlot: "transaction-refuter-batch",
 		RequiredCapabilities: []string{TransportCapability}, ResultLimit: 4 << 20,
 		PromptInstruction: "You are the detached read-only refuter for exactly ONE transaction-wide inferential batch. Return exactly one corroborated, refuted, or inconclusive outcome for every supplied claim. Add no findings, modify nothing, and return exactly one JSON object with no prose. Native Go alone applies the result to RDD authority.",
 	},
 	{
-		ID: string(RoleTargetedValidator), Role: RoleTargetedValidator, RequestSchemaID: "gentle-ai.review-targeted-validation-request/v1",
-		ResultSchemaID: "https://gentle-ai.dev/schema/review/validator/v1", ResultSchema: []byte(TargetedValidatorResultSchema), StorageSlot: "correction-targeted-validator",
+		ID: string(RoleTargetedValidator), Role: RoleTargetedValidator, RequestSchemaID: "shevanio-ai.review-targeted-validation-request/v1",
+		ResultSchemaID: "https://shevanio-ai.dev/schema/review/validator/v1", ResultSchema: []byte(TargetedValidatorResultSchema), StorageSlot: "correction-targeted-validator",
 		RequiredCapabilities: []string{TransportCapability}, ResultLimit: 4 << 20,
 		PromptInstruction: targetedValidatorPromptInstruction,
 	},

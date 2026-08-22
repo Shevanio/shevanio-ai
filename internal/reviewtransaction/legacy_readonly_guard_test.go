@@ -21,7 +21,7 @@ package reviewtransaction
 // be classified as either dead (delete) or a residual D5 forensic-READ path
 // (retain read-only). WU18 was DEFERRED (coordinator scope decision,
 // specs/rdd-single-lifecycle/spec.md's amendment), so this assumption does
-// not hold: GENTLE_AI_RDD_NEW_LINEAGE and the legacy start branch are still
+// not hold: SHEVANIO_AI_RDD_NEW_LINEAGE and the legacy start branch are still
 // live, so compact-v2 REMAINS the default, actively-mutated lifecycle for
 // every candidate started without the switch. WU19's classification of all
 // six verbs, evidence-based (each one's own handler constructs/mutates a
@@ -41,7 +41,7 @@ package reviewtransaction
 // table, honestly, rather than forced green by deleting live surface.
 //
 // Re-classification is a live task for the wave that lands switch removal:
-// once GENTLE_AI_RDD_NEW_LINEAGE and the legacy branch are actually gone,
+// once SHEVANIO_AI_RDD_NEW_LINEAGE and the legacy branch are actually gone,
 // re-run this exact classification (does the verb's own handler still
 // mutate reachable compact-v2 state, or is that state now permanently
 // frozen) and move each verb to delete or D5-retained-read accordingly.
@@ -90,7 +90,7 @@ var legacyRetiredMutationVerbs = []string{
 // authority" framing, and equivalently for reclaim/dispose-result/
 // reopen-results) -- live, active mutation surface for the current default
 // (switch-gated) compact-v2 lifecycle, confirmed reachable and expected to
-// STAY reachable while GENTLE_AI_RDD_NEW_LINEAGE and the legacy start
+// STAY reachable while SHEVANIO_AI_RDD_NEW_LINEAGE and the legacy start
 // branch remain (WU18 deferred, specs/rdd-single-lifecycle/spec.md's
 // amendment). This is a positive assertion, not a RED-until-something
 // placeholder: TestLegacyReadOnlyGuardLiveCompactV2VerbsRemainReachable

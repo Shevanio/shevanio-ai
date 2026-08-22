@@ -59,9 +59,9 @@ func TestPortableSDDFailClosedAuthorityJourneysAreRegistered(t *testing.T) {
 }
 
 func TestPortableSDDFailClosedAuthorityJourneys(t *testing.T) {
-	binary := os.Getenv("GENTLE_AI_BENCH_BINARY")
+	binary := os.Getenv("SHEVANIO_AI_BENCH_BINARY")
 	if binary == "" {
-		t.Skip("set GENTLE_AI_BENCH_BINARY to run the native SDD authority journeys")
+		t.Skip("set SHEVANIO_AI_BENCH_BINARY to run the native SDD authority journeys")
 	}
 	want := portableSDDFailClosedAuthorityJourneySet(true)
 	for _, journey := range Journeys() {

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestStatusValidateTransitionPreservesCustomPublicationBase(t *testing.T) {
@@ -197,7 +197,7 @@ func TestStatusRecoverTransitionExecutesExactBaseDiffSelectors(t *testing.T) {
 	runReviewCLIGit(t, repo, "commit", "-qm", "expand candidate scope")
 	probe := selectorTransitionStatus(t, repo, "--lineage", started.LineageID, "--base-ref", base)
 	reason, actor := "approved scope expansion", "maintainer"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + started.LineageID + "\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity + "\nsuccessor_lineage=selector-recovered\nactor=" + actor + "\nreason=" + reason
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + started.LineageID + "\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity + "\nsuccessor_lineage=selector-recovered\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, "--lineage", started.LineageID, "--base-ref", "  "+base+"  ",
 		"--recovery-successor-lineage", "selector-recovered", "--recovery-reason", reason,
 		"--recovery-actor", actor, "--recovery-authorization", authorization)
@@ -321,7 +321,7 @@ func TestStatusRecoverTransitionExecutesAccountingOnlyRecoveryWithoutSelectors(t
 		t.Fatal(err)
 	}
 	persisted, err := json.MarshalIndent(reviewtransaction.CompactRecord{
-		Schema: "gentle-ai.review-state-record/v2", Revision: revision, State: predecessor.State,
+		Schema: "shevanio-ai.review-state-record/v2", Revision: revision, State: predecessor.State,
 	}, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -351,7 +351,7 @@ func TestStatusRecoverTransitionExecutesAccountingOnlyRecoveryWithoutSelectors(t
 		t.Fatalf("accounting-only status = %#v", probe)
 	}
 	const successor, actor, reason = "selector-accounting-successor", "maintainer", "recover accounting-only escalation"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + started.LineageID +
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + started.LineageID +
 		"\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity +
 		"\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, "--lineage", started.LineageID,
@@ -425,7 +425,7 @@ func TestStatusRecoverTransitionExecutesApprovedStagedScopeExpansion(t *testing.
 		t.Fatalf("staged scope probe = %#v", probe)
 	}
 	reason, actor, successor := "include staged release notes", "maintainer", "staged-scope-successor"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + predecessor.State.LineageID +
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + predecessor.State.LineageID +
 		"\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity +
 		"\nsuccessor_lineage=" + successor + "\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, append(selectors,
@@ -485,7 +485,7 @@ func TestStatusRecoverTransitionExecutesApprovedStagedScopeExpansion(t *testing.
 	laterSelectors := []string{"--lineage", successor, "--base-ref", base, "--projection", "staged", "--workspace-overlay"}
 	laterProbe := selectorTransitionStatus(t, repo, laterSelectors...)
 	laterLineage, laterReason := "staged-scope-later", "replace invalidated staged review"
-	laterAuthorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + successor +
+	laterAuthorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + successor +
 		"\npredecessor_revision=" + laterProbe.Authority.Revision + "\ntarget_identity=" + laterProbe.TargetIdentity +
 		"\nsuccessor_lineage=" + laterLineage + "\nactor=" + actor + "\nreason=" + laterReason
 	later := selectorTransitionStatus(t, repo, append(laterSelectors,
@@ -597,7 +597,7 @@ func TestStatusRecoverTransitionExecutesCorrectionRequiredStagedScopeExpansion(t
 		t.Fatalf("correction-required staged scope probe = %#v", probe)
 	}
 	const successor, actor, reason = "correction-staged-successor", "maintainer", "authorize staged correction scope expansion"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + predecessorLineage +
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + predecessorLineage +
 		"\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity +
 		"\nsuccessor_lineage=" + successor + "\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, append(selectors,
@@ -666,7 +666,7 @@ func TestCurrentChangesRecoverSelectorPresenceSurvivesJSONRoundTrip(t *testing.T
 		t.Fatalf("current-changes recovery probe action = %q, target=%s authority=%s projection=%#v", probe.Action, probe.TargetIdentity, probe.AuthorityTargetIdentity, probe.Projection)
 	}
 	reason, actor, successor := "approved current scope", "maintainer", "selector-current-successor"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + record.State.LineageID +
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + record.State.LineageID +
 		"\npredecessor_revision=" + probe.Authority.Revision + "\ntarget_identity=" + probe.TargetIdentity +
 		"\nsuccessor_lineage=" + successor + "\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo,
@@ -812,7 +812,7 @@ func TestStatusStopsUnchangedBaseDiffRecoveryWithoutSuccessor(t *testing.T) {
 	before, _ := os.ReadFile(store.StatePath())
 	probe := selectorTransitionStatus(t, repo, "--lineage", record.State.LineageID, "--base-ref", base)
 	reason, actor := "unchanged recovery", "maintainer"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + record.State.LineageID + "\npredecessor_revision=" + record.Revision + "\ntarget_identity=" + probe.TargetIdentity + "\nactor=" + actor + "\nreason=" + reason
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + record.State.LineageID + "\npredecessor_revision=" + record.Revision + "\ntarget_identity=" + probe.TargetIdentity + "\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, "--lineage", record.State.LineageID, "--base-ref", base,
 		"--recovery-successor-lineage", "selector-unchanged-successor", "--recovery-reason", reason,
 		"--recovery-actor", actor, "--recovery-authorization", authorization)

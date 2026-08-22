@@ -68,7 +68,7 @@ func InspectCompactSharedStoreLock(ctx context.Context, repo string) (CompactSha
 		return CompactSharedStoreLockEvidence{}, err
 	}
 	evidence := CompactSharedStoreLockEvidence{
-		DisplayPath: path.Join("gentle-ai", "review-transactions", "v2", "LOCK"),
+		DisplayPath: path.Join("shevanio-ai", "review-transactions", "v2", "LOCK"),
 	}
 	file, err := os.OpenFile(filepath.Join(root, "v2", "LOCK"), os.O_RDWR, 0)
 	if err != nil {

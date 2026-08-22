@@ -12,18 +12,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
-const ReviewIntegrationOperationSchema = "gentle-ai.review-integration.operation/v1"
-const ReviewIntegrationOperationSchemaID = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/operation.schema.json"
-const ReviewIntegrationOperationSchemaV2 = "gentle-ai.review-integration.operation/v2"
-const ReviewIntegrationOperationSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/operation.schema.json"
-const ReviewIntegrationFailureSchema = "gentle-ai.review-integration.failure/v1"
-const ReviewIntegrationFailureSchemaID = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/failure.schema.json"
-const ReviewIntegrationFailureSchemaV2 = "gentle-ai.review-integration.failure/v2"
-const ReviewIntegrationFailureSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/failure.schema.json"
+const ReviewIntegrationOperationSchema = "shevanio-ai.review-integration.operation/v1"
+const ReviewIntegrationOperationSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/operation.schema.json"
+const ReviewIntegrationOperationSchemaV2 = "shevanio-ai.review-integration.operation/v2"
+const ReviewIntegrationOperationSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/operation.schema.json"
+const ReviewIntegrationFailureSchema = "shevanio-ai.review-integration.failure/v1"
+const ReviewIntegrationFailureSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/failure.schema.json"
+const ReviewIntegrationFailureSchemaV2 = "shevanio-ai.review-integration.failure/v2"
+const ReviewIntegrationFailureSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/failure.schema.json"
 
 const (
 	ReviewIntegrationOperationFinalize               = "review.finalize"
@@ -1029,7 +1029,7 @@ func newReviewIntegrationFailure(operation string, args []string, runErr error) 
 			// that re-derives this discovery and returns the exact
 			// transition, which for a candidate nothing governs is the
 			// review.start the message names.
-			failure.Message = "No approved review receipt covers this candidate; review it with gentle-ai review start."
+			failure.Message = "No approved review receipt covers this candidate; review it with shevanio-ai review start."
 			failure.NextAction = "review.status"
 		case ReviewReceiptScopeChanged:
 			if discovery.Context != nil {
@@ -1660,7 +1660,7 @@ func (result ReviewIntegrationOperationResult) Validate() error {
 		if err := decodeStrictReviewIntegrationResult(result.Result, &binding); err != nil {
 			return err
 		}
-		if binding.Schema != "gentle-ai.sdd-review-binding/v1" || strings.TrimSpace(binding.Change) == "" || strings.TrimSpace(binding.Lineage) == "" ||
+		if binding.Schema != "shevanio-ai.sdd-review-binding/v1" || strings.TrimSpace(binding.Change) == "" || strings.TrimSpace(binding.Lineage) == "" ||
 			!validReviewCapabilitySHA256(binding.Revision) || !validReviewCapabilitySHA256(binding.AuthorityRevision) ||
 			!validReviewCapabilitySHA256(binding.ReceiptHash) || binding.GateContext.Gate != reviewtransaction.GatePostApply {
 			return errors.New("negotiated bind-sdd result is incomplete")

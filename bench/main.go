@@ -1,10 +1,10 @@
-// Command gentle-ai-bench measures the FRICTION of driving gentle-ai's review
-// lifecycle, so a "before" binary and an "after" binary can be compared.
+// Command shevanio-ai-bench measures the FRICTION of driving Shevanio AI's
+// review lifecycle. It can also compare results captured by the legacy Gentle
+// AI v2.4.0 harness against current Shevanio AI results.
 //
-// Its core corpus is a black box: it drives a gentle-ai binary as a subprocess
-// and never instruments the product, so it works against any build including
-// old releases. It is deterministic and offline: no real model call is ever
-// made.
+// Its core corpus is a black box: it drives a shevanio-ai binary as a subprocess
+// and never instruments the product. It is deterministic and offline: no real
+// model call is ever made.
 //
 // A run may additionally select an opt-in AXIS with --axis. An axis measures
 // states the CLI cannot construct, so it is not black-box and not portable
@@ -54,19 +54,19 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `gentle-ai-bench — friction benchmark for the gentle-ai review lifecycle
+	fmt.Fprint(os.Stderr, `shevanio-ai-bench — friction benchmark for the shevanio-ai review lifecycle
 
-  run      gentle-ai-bench run --binary <path> --out results.json
+  run      shevanio-ai-bench run --binary <path> --out results.json
            Drive the built-in journey corpus against a binary (driven mode).
            --axis <name>[,<name>] adds an opt-in axis to the black-box core.
 
-  record   gentle-ai-bench record --binary <path> --out session.jsonl
+  record   shevanio-ai-bench record --binary <path> --out session.jsonl
            Print the PATH line that records a real agent session (observed mode).
 
-  analyze  gentle-ai-bench analyze --session session.jsonl --out results.json
+  analyze  shevanio-ai-bench analyze --session session.jsonl --out results.json
            Compute the same dimensions from a recorded session.
 
-  compare  gentle-ai-bench compare --before a.json --after b.json
+  compare  shevanio-ai-bench compare --before a.json --after b.json
            Per-dimension table. Refuses to compare driven against observed.
 
 It does not measure wall-clock time, real model tokens, or a composite score.
@@ -79,7 +79,7 @@ func commandRun(args []string) int {
 
 func commandRunWith(args []string, isExecutable func(string) bool, journeys func() []Journey) int {
 	flags := flag.NewFlagSet("run", flag.ExitOnError)
-	binary := flags.String("binary", "", "path to the gentle-ai binary to drive")
+	binary := flags.String("binary", "", "path to the shevanio-ai binary to drive")
 	out := flags.String("out", "results.json", "where to write the machine-readable results")
 	only := flags.String("only", "", "comma-separated journey ids to run (default: all)")
 	axisFlag := flags.String("axis", "",
@@ -185,7 +185,7 @@ func commandRunWith(args []string, isExecutable func(string) bool, journeys func
 	results.Totals, results.JourneysCounted, results.JourneysUnsupported, results.JourneysFailed = aggregate(results.Journeys)
 	results.Notes = []string{
 		"Driven mode: every journey ran in a fresh temp dir with its own HOME, XDG_*, throwaway git repo and local bare remote.",
-		"That HOME is a fresh install, so receipt-driven development starts off. Every journey declares its own precondition: one that reviews opted in first through `gentle-ai review mode enable --scope global`, uncounted; one whose subject is the switch touched it not at all.",
+		"That HOME is a fresh install, so receipt-driven development starts off. Every journey declares its own precondition: one that reviews opted in first through `shevanio-ai review mode enable --scope global`, uncounted; one whose subject is the switch touched it not at all.",
 		"Reviewer results were synthesized from the binary's own collect envelope. No model was called.",
 		"No wall-clock timing is measured or reported.",
 		"by_design is a carve-out from out_of_band, not a subtraction from it: those blocks are still blocks and still in the total. Every one is listed with its declared shape and the verified quote of the product's own next-action text.",
@@ -241,7 +241,7 @@ func runExitCode(results Results) int {
 
 func commandRecord(args []string) int {
 	flags := flag.NewFlagSet("record", flag.ExitOnError)
-	binary := flags.String("binary", "", "path to the real gentle-ai binary the shim delegates to")
+	binary := flags.String("binary", "", "path to the real shevanio-ai binary the shim delegates to")
 	out := flags.String("out", "session.jsonl", "where the shim appends recorded invocations")
 	_ = flags.Parse(args)
 
@@ -277,7 +277,7 @@ func commandShim(args []string) int {
 		}
 	}
 	if real == "" || logPath == "" {
-		fmt.Fprintln(os.Stderr, "gentle-ai-bench shim: missing --real or --log")
+		fmt.Fprintln(os.Stderr, "shevanio-ai-bench shim: missing --real or --log")
 		return 126
 	}
 	return runShim(real, logPath, forwarded)
@@ -373,6 +373,13 @@ func readResults(path string) (Results, error) {
 	var results Results
 	if err := json.Unmarshal(content, &results); err != nil {
 		return Results{}, fmt.Errorf("%s: %w", path, err)
+	}
+	switch results.Schema {
+	case ResultsSchema:
+	case LegacyGentleResultsSchema:
+		results.Schema = ResultsSchema
+	default:
+		return Results{}, fmt.Errorf("%s: unsupported results schema %q", path, results.Schema)
 	}
 	if results.Mode == "" {
 		return Results{}, fmt.Errorf("%s: results carry no mode", path)

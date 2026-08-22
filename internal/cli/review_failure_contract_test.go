@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 func TestNegotiatedReviewFailuresUseOneEnvelopeAcrossRoutes(t *testing.T) {
@@ -111,7 +111,7 @@ func TestNegotiatedReviewContractFailuresArePreMutationAndLegacyErrorsStayCompat
 		args []string
 		code string
 	}{
-		{name: "capabilities unsupported", args: []string{"capabilities", "--contract", "gentle-ai.review-integration/v3"}, code: "unsupported_contract"},
+		{name: "capabilities unsupported", args: []string{"capabilities", "--contract", "shevanio-ai.review-integration/v3"}, code: "unsupported_contract"},
 		{name: "start empty", args: []string{"start", "--contract="}, code: "empty_contract"},
 		{name: "finalize malformed", args: []string{"finalize", "--contract"}, code: "invalid_request"},
 	}
@@ -914,9 +914,9 @@ func TestNegotiatedFinalizePostTransitionGitTimeoutRequiresStatus(t *testing.T) 
 }
 
 const (
-	reviewGitHelperModeEnv      = "GENTLE_AI_REVIEW_GIT_HELPER"
-	reviewGitHelperRealGitEnv   = "GENTLE_AI_REVIEW_GIT_HELPER_REAL"
-	reviewGitHelperStatePathEnv = "GENTLE_AI_REVIEW_GIT_HELPER_STATE"
+	reviewGitHelperModeEnv      = "SHEVANIO_AI_REVIEW_GIT_HELPER"
+	reviewGitHelperRealGitEnv   = "SHEVANIO_AI_REVIEW_GIT_HELPER_REAL"
+	reviewGitHelperStatePathEnv = "SHEVANIO_AI_REVIEW_GIT_HELPER_STATE"
 )
 
 func reviewGitProcessHelperExitCode() (int, bool) {

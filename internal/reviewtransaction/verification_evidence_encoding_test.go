@@ -19,7 +19,7 @@ func newLedgerFreeEvidenceSnapshot(t *testing.T) Snapshot {
 		CandidateTree:          strings.Repeat("2", 40),
 		Paths:                  []string{"docs/guide.md"},
 		IntendedUntracked:      []string{},
-		IntendedUntrackedProof: hashCanonical("gentle-ai.intended-untracked/v1"),
+		IntendedUntrackedProof: hashCanonical("shevanio-ai.intended-untracked/v1"),
 	}
 	snapshot.PathsDigest = digestPaths(snapshot.Paths)
 	snapshot.Identity = snapshotIdentityForProjection(snapshot.Kind, snapshot.Projection, snapshot.BaseTree,
@@ -29,7 +29,7 @@ func newLedgerFreeEvidenceSnapshot(t *testing.T) Snapshot {
 
 // TestVerificationEvidenceRecordEncodesLedgerFreeCleanPathAsEmptyArray is the
 // RED-first proof for the cross-lane battery's verification-evidence finding:
-// the published gentle-ai.review-verification-evidence/v2 schema requires
+// the published shevanio-ai.review-verification-evidence/v2 schema requires
 // ledger_ids to be an array, but the clean-path emitter (no correction, so no
 // ledger) marshaled the nil slice as `"ledger_ids":null`.
 func TestVerificationEvidenceRecordEncodesLedgerFreeCleanPathAsEmptyArray(t *testing.T) {

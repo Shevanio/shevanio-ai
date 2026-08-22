@@ -25,9 +25,9 @@
 | Pi              | `pi`             | Yes          | Yes | Full (package-managed subagents) | No            | Yes            | `~/.pi`                             |
 | Hermes          | `hermes`         | Yes          | Yes | Full (delegate_task ephemeral)   | No            | No             | `~/.hermes`                         |
 
-Most agents receive the **full SDD orchestrator** policy, plus skill files written to their skills directory. Most receive it through their system prompt; OpenCode and Kilo Code receive it through the OpenCode-compatible `opencode.json` agent overlay. Pi is the exception: Gentle AI installs Pi packages, and `gentle-pi` owns Pi skills, prompts, SDD agents, and chains at runtime. The agent handles SDD automatically when the task is large enough, or when the user explicitly asks for it — no manual setup required.
+Most agents receive the **full SDD orchestrator** policy, plus skill files written to their skills directory. Most receive it through their system prompt; OpenCode and Kilo Code receive it through the OpenCode-compatible `opencode.json` agent overlay. Pi is the exception: Shevanio AI installs Pi packages, and `gentle-pi` owns Pi skills, prompts, SDD agents, and chains at runtime. The agent handles SDD automatically when the task is large enough, or when the user explicitly asks for it — no manual setup required.
 
-`gentle-ai install --scope=workspace` is supported across selected agents for agent-scoped files, not only Claude Code. In workspace scope, Gentle AI writes system prompts, skills, SDD agents, and persona files into the current project root when the agent supports project-local configuration. Global-only integrations, such as package installs or settings that the agent only reads from its global config, remain global by design.
+`shevanio-ai install --scope=workspace` is supported across selected agents for agent-scoped files, not only Claude Code. In workspace scope, Shevanio AI writes system prompts, skills, SDD agents, and persona files into the current project root when the agent supports project-local configuration. Global-only integrations, such as package installs or settings that the agent only reads from its global config, remain global by design.
 
 [^kimi-output-style]: Kimi has no `settings.json` `outputStyle` mechanism like Claude Code. Instead, `KIMI.md` unconditionally includes `output-style.md` as a Jinja module — the canonical tone/language/philosophy channel for Kimi's persona (`persona.md` carries only tooling/action directives plus a pointer to this module).
 
@@ -44,7 +44,7 @@ Most agents receive the **full SDD orchestrator** policy, plus skill files writt
 
 ### Cursor Native Subagents
 
-Cursor uses its built-in `.cursor/agents/` system. `gentle-ai` writes 10 agent files to `~/.cursor/agents/sdd-{phase}.md` — one per SDD phase. Cursor's Agent auto-delegates to the correct subagent based on the `description` field in each file's YAML frontmatter.
+Cursor uses its built-in `.cursor/agents/` system. `shevanio-ai` writes 10 agent files to `~/.cursor/agents/sdd-{phase}.md` — one per SDD phase. Cursor's Agent auto-delegates to the correct subagent based on the `description` field in each file's YAML frontmatter.
 
 - `sdd-explore` and `sdd-verify` run with `readonly: false` so they can inspect the codebase and execute verification commands
 - Each subagent gets its own context window (fresh context, no pollution)
@@ -65,11 +65,11 @@ Antigravity is an agent-first platform with built-in sub-agents (Browser, Termin
 
 ### Kiro Native Subagents
 
-Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase agents (`sdd-init` through `sdd-onboard` plus Judgment Day agents) and resolves the `model:` field during injection from Kiro model assignments (`auto|opus|sonnet|haiku|minimax|glm|deepseek|qwen`) to Kiro-native model IDs.
+Kiro uses native custom agents in `~/.kiro/agents/`. `shevanio-ai` writes phase agents (`sdd-init` through `sdd-onboard` plus Judgment Day agents) and resolves the `model:` field during injection from Kiro model assignments (`auto|opus|sonnet|haiku|minimax|glm|deepseek|qwen`) to Kiro-native model IDs.
 
 - Frontmatter includes `includeMcpJson: true` for all phase agents
 - Phase-specific tools are preserved (`sdd-explore` and `sdd-verify` use read/shell/context7 as required)
-- Orchestrator remains in steering (`~/.kiro/steering/gentle-ai.md`) and delegates execution to native subagents
+- Orchestrator remains in steering (`~/.kiro/steering/shevanio-ai.md`) and delegates execution to native subagents
 
 ---
 
@@ -102,21 +102,21 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 - Full multi-agent overlay with 11 named agents in `opencode.json` (`gentle-orchestrator` plus 10 SDD phase agents)
 - Slash commands for SDD phases (`/sdd-new`, `/sdd-explore`, etc.)
-- Native OpenCode `task` subagents; managed background execution is configured through `gentle-ai install` / `gentle-ai sync` with `--opencode-background-subagents=auto|on|off` or `GENTLE_AI_OPENCODE_BACKGROUND_SUBAGENTS`
+- Native OpenCode `task` subagents; managed background execution is configured through `shevanio-ai install` / `shevanio-ai sync` with `--opencode-background-subagents=auto|on|off` or `SHEVANIO_AI_OPENCODE_BACKGROUND_SUBAGENTS`
 - CLI precedence is flag, non-empty environment, prior managed state, then `auto`; the interactive OpenCode + SDD installer prompts only when that preference is unresolved
-- Managed launchers live under `~/.gentle-ai/bin/` and preserve an explicit `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=false`; restart OpenCode after enabling them
+- Managed launchers live under `~/.shevanio-ai/bin/` and preserve an explicit `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=false`; restart OpenCode after enabling them
 - `serve`, `attach`, Desktop, and sessions not launched through the managed launcher use the safe foreground fallback
 - Background jobs are process-local and non-durable, have no filesystem isolation, and must not be used for dependent phases or parallel writers in one worktree
 - The TUI model picker includes providers and models discovered from the local `opencode.json`, including custom providers
 - Custom models from `opencode.json` must set `tool_call: true` explicitly to appear as selectable SDD-capable options in the model picker
 - Multi-mode prerequisite: connect your AI providers first, then run `opencode models --refresh`
-- Gentle AI sets OpenCode SDD agent sharing to `disabled` by default for privacy; existing user-managed `share` values such as `manual` or `auto` are preserved.
+- Shevanio AI sets OpenCode SDD agent sharing to `disabled` by default for privacy; existing user-managed `share` values such as `manual` or `auto` are preserved.
 - OpenCode Desktop SDD commands resolve the project with `git rev-parse --show-toplevel || pwd` before acting, avoiding Electron current-working-directory drift.
 - Review launch runs from an ordinary already-running OpenCode session: no restart, child process, special user-visible session, or `OPENCODE_DISABLE_PROJECT_CONFIG` / `OPENCODE_DISABLE_EXTERNAL_SKILLS` variable is required (rdd-advisory-transport SKILL.md).
 
 ### Kilo Code
 
-- **Detection**: gentle-ai detects Kilo Code from `~/.config/kilo` and checks for the `kilo` binary on `PATH`
+- **Detection**: shevanio-ai detects Kilo Code from `~/.config/kilo` and checks for the `kilo` binary on `PATH`
 - Uses the OpenCode-compatible adapter: `AGENTS.md`, `skills/`, `commands/`, and `opencode.json` live under `~/.config/kilo`
 - Full SDD delegation is provided by the merged multi-agent overlay in `~/.config/kilo/opencode.json`, not by a separate native sub-agent directory
 - MCP servers are merged into `opencode.json`; Engram uses the OpenCode-style local MCP entry with `command` as an array
@@ -129,16 +129,16 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 ### Cursor
 
-- Native subagents via `~/.cursor/agents/sdd-{phase}.md` (10 files installed by gentle-ai)
+- Native subagents via `~/.cursor/agents/sdd-{phase}.md` (10 files installed by shevanio-ai)
 - Skills at `~/.cursor/skills/`
-- System prompt in `~/.cursor/rules/gentle-ai.mdc`
+- System prompt in `~/.cursor/rules/shevanio-ai.mdc`
 - MCP config in `~/.cursor/mcp.json`
 
 ### VS Code Copilot
 
 - Uses the `runSubagent` tool with support for parallel execution
 - Skills at `~/.copilot/skills/`
-- System prompt at `Code/User/prompts/gentle-ai.instructions.md`
+- System prompt at `Code/User/prompts/shevanio-ai.instructions.md`
 - MCP config at `Code/User/mcp.json`
 
 ### Codex
@@ -150,7 +150,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 - MCP servers (Engram and Context7) are upserted as `[mcp_servers.<name>]` blocks in `~/.codex/config.toml`
 - SDD model-selection profiles written as separate files at `~/.codex/<name>.config.toml`. GPT-5.6 defaults require Codex >= 0.144.0 (the separate-file mechanism itself is available since 0.134.0). Select a profile at runtime via `codex --profile <name>`:
 
-  Model and effort defaults vary together by preset. These effort levels are Gentle AI workload policy, not Codex defaults. The carriles split by what the phase actually does: `sdd-strong` phases reason over context delivered to them, `sdd-mid` phases write code in an agentic loop where effort matters more than raw model strength, and `sdd-cheap` phases do structured transcription with short context and verifiable output, so they buy effort instead of a bigger model.
+  Model and effort defaults vary together by preset. These effort levels are Shevanio AI workload policy, not Codex defaults. The carriles split by what the phase actually does: `sdd-strong` phases reason over context delivered to them, `sdd-mid` phases write code in an agentic loop where effort matters more than raw model strength, and `sdd-cheap` phases do structured transcription with short context and verifiable output, so they buy effort instead of a bigger model.
 
   Every curated preset runs the main orchestrator/session at `medium` effort — it plans, routes and adjudicates rather than doing the delegated work. The orchestrator *model* varies: Low-cost runs it on `gpt-5.6-terra` so a Plus plan can still afford `gpt-5.6-sol` in the strong carril, where the reasoning pays. Custom and legacy state preserve existing top-level settings:
 
@@ -163,7 +163,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 - Explicit saved Codex model assignments are preserved on sync, including older pinned IDs such as `gpt-5.5` or `gpt-5.4-mini`. The narrow exception is the exact former implicit-default tuple (`sdd-strong=gpt-5.5`, `sdd-mid=gpt-5.5`, `sdd-cheap=gpt-5.4-mini`), which sync treats as Recommended and upgrades to the current GPT-5.6 tuple; partial, extended, or otherwise different maps remain custom and unchanged.
 - GPT-5.6 `max` reasoning effort and `ultra` mode are intentionally not enabled by this default update. `max` requires confirmed Codex support; `ultra` changes orchestration semantics and needs separate design.
-- Multi-agent SDD delegation is enabled by default. gentle-ai writes `features.multi_agent = true` and `agents.max_threads = 4` / `agents.max_depth = 2` into `~/.codex/config.toml`; set `multi_agent = false` in the `[features]` section to opt out. The delegated route requires both the enabled setting and Codex's native `spawn_agent`, `wait_agent`, and `list_agents` tools. If the configuration or tools are unavailable, orchestration gracefully falls back to solo-agent inline execution.
+- Multi-agent SDD delegation is enabled by default. shevanio-ai writes `features.multi_agent = true` and `agents.max_threads = 4` / `agents.max_depth = 2` into `~/.codex/config.toml`; set `multi_agent = false` in the `[features]` section to opt out. The delegated route requires both the enabled setting and Codex's native `spawn_agent`, `wait_agent`, and `list_agents` tools. If the configuration or tools are unavailable, orchestration gracefully falls back to solo-agent inline execution.
 - **Delegation**: Native multi-agent by default, with graceful solo-agent fallback
 
 ### Windsurf
@@ -191,8 +191,8 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 ### Kiro IDE
 
-- **Detection**: gentle-ai detects Kiro from the `kiro` binary on `PATH`; when the binary is present, it also reports whether `~/.kiro` already exists. A config directory alone does not mark Kiro as installed.
-- **Steering file** (all platforms): `~/.kiro/steering/gentle-ai.md` with frontmatter `inclusion: always`
+- **Detection**: shevanio-ai detects Kiro from the `kiro` binary on `PATH`; when the binary is present, it also reports whether `~/.kiro` already exists. A config directory alone does not mark Kiro as installed.
+- **Steering file** (all platforms): `~/.kiro/steering/shevanio-ai.md` with frontmatter `inclusion: always`
 - Native subagents at `~/.kiro/agents/sdd-{phase}.md` (10 files)
 - Skills (all platforms) at `~/.kiro/skills/`
 - **MCP config at a separate root** — always `~/.kiro/settings/mcp.json` (macOS/Linux) or `%USERPROFILE%\.kiro\settings\mcp.json` (Windows), regardless of GlobalConfigDir
@@ -202,7 +202,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 ### Qwen Code
 
-- **Detection**: gentle-ai detects Qwen Code from its config root (`~/.qwen`) and checks for `qwen` binary on `PATH`
+- **Detection**: shevanio-ai detects Qwen Code from its config root (`~/.qwen`) and checks for `qwen` binary on `PATH`
 - **Config root**: `~/.qwen/` (cross-platform)
 - **System prompt**: `~/.qwen/QWEN.md` (managed via `StrategyFileReplace`)
 - **Skills**: `~/.qwen/skills/`
@@ -215,16 +215,16 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 ### OpenClaw
 
-- **Detection**: gentle-ai detects OpenClaw from the `openclaw` binary on `PATH` and its config root at `~/.openclaw`.
-- **Install**: manual only — install OpenClaw first, then run `gentle-ai install --agent openclaw`.
-- **Active workspace**: gentle-ai reads `agents.defaults.workspace` from `~/.openclaw/openclaw.json` and writes instruction files there.
+- **Detection**: shevanio-ai detects OpenClaw from the `openclaw` binary on `PATH` and its config root at `~/.openclaw`.
+- **Install**: manual only — install OpenClaw first, then run `shevanio-ai install --agent openclaw`.
+- **Active workspace**: shevanio-ai reads `agents.defaults.workspace` from `~/.openclaw/openclaw.json` and writes instruction files there.
 - **Instructions**: Engram and SDD protocols are injected into workspace `AGENTS.md`; persona is injected into workspace `SOUL.md`.
 - **MCP config**: Engram and Context7 are merged into global `~/.openclaw/openclaw.json` under `mcp.servers`; legacy root `mcpServers` entries are migrated.
 - **Skills**: selected portable skills and SDD phase skills are workspace-scoped at `<workspace>/.openclaw/skills/`.
 
 ### Trae
 
-- **Detection**: gentle-ai detects Trae from `~/.trae` (desktop app — no binary on PATH)
+- **Detection**: shevanio-ai detects Trae from `~/.trae` (desktop app — no binary on PATH)
 - **Global config root**: `~/.trae/` (cross-platform)
 - **Skills**: `~/.trae/skills/`
 - **System prompt / rules**: injected via `StrategyMarkdownSections` into the OS-specific `user_rules.md`
@@ -238,8 +238,8 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `gentle-ai` writes phase ag
 
 For the full Pi command and package reference, see [Pi Agent](pi.md).
 
-- **Detection**: gentle-ai detects Pi from the `pi` binary on `PATH` and its config root at `~/.pi`.
-- **Install**: Pi must already be installed. gentle-ai then installs the full Pi support stack with:
+- **Detection**: shevanio-ai detects Pi from the `pi` binary on `PATH` and its config root at `~/.pi`.
+- **Install**: Pi must already be installed. shevanio-ai then installs the full Pi support stack with:
   - `pi install npm:gentle-pi`
   - `pi install npm:gentle-engram`
   - `pi install npm:pi-mcp-adapter`
@@ -249,19 +249,19 @@ For the full Pi command and package reference, see [Pi Agent](pi.md).
   - `pi install npm:pi-web-access`
   - `pi install npm:@juicesharp/rpiv-todo`
   - `pi install npm:pi-btw`
-- **`gentle-pi` package**: adds the Gentleman harness for Pi: SDD/OpenSpec workflow, strict TDD guidance, safety defaults, `/gentle-ai:*` commands, skill assets, prompts, SDD agents, and SDD chains. On normal `session_start`, it copies project assets into `.pi/agents/`, `.pi/chains/`, and `.pi/gentle-ai/support/` without overwriting local files unless the Pi recovery command uses `--force`. Starting Pi with `pi -ns` skips startup skill loading/hooks, so that automatic refresh does not run in that mode.
+- **`gentle-pi` package**: adds the Gentleman harness for Pi: SDD/OpenSpec workflow, strict TDD guidance, safety defaults, `/shevanio-ai:*` commands, skill assets, prompts, SDD agents, and SDD chains. On normal `session_start`, it copies project assets into `.pi/agents/`, `.pi/chains/`, and `.pi/shevanio-ai/support/` without overwriting local files unless the Pi recovery command uses `--force`. Starting Pi with `pi -ns` skips startup skill loading/hooks, so that automatic refresh does not run in that mode.
 - **Package metadata**: latest verified `gentle-pi` version is `0.2.6`; npm lists `alan_buscaglia` as maintainer, with source at [Gentleman-Programming/gentle-pi](https://github.com/Gentleman-Programming/gentle-pi) and package docs at [npm: gentle-pi](https://www.npmjs.com/package/gentle-pi).
-- **Persona command**: `gentle-pi` owns Pi persona switching through `/gentleman:persona` (`/gentle-ai:persona` remains a compatibility alias). It switches between `gentleman` and `neutral`, saves `.pi/gentle-ai/persona.json`, and may require `/reload` or a new Pi session for the active prompt to refresh.
-- **Model assignment command**: `gentle-pi` owns Pi model selection through `/gentleman:models` (`/gentle-ai:models` remains a compatibility alias). It opens a Pi-native modal for project, user, and built-in agents, prioritizes SDD agents, saves `.pi/gentle-ai/models.json`, and applies overrides into `.pi/agents/*.md` or `.pi/settings.json`.
+- **Persona command**: `gentle-pi` owns Pi persona switching through `/gentleman:persona` (`/shevanio-ai:persona` remains a compatibility alias). It switches between `gentleman` and `neutral`, saves `.pi/shevanio-ai/persona.json`, and may require `/reload` or a new Pi session for the active prompt to refresh.
+- **Model assignment command**: `gentle-pi` owns Pi model selection through `/gentleman:models` (`/shevanio-ai:models` remains a compatibility alias). It opens a Pi-native modal for project, user, and built-in agents, prioritizes SDD agents, saves `.pi/shevanio-ai/models.json`, and applies overrides into `.pi/agents/*.md` or `.pi/settings.json`.
 - **`gentle-engram` package**: adds persistent Engram memory for Pi. It captures sessions, exposes Engram MCP tools through `pi-mcp-adapter`, and degrades safely when the local `engram` binary is missing.
 - **MCP adapter wiring**: ComponentEngram declares `npm:pi-mcp-adapter` in `.pi/agent/settings.json` packages and adds `pi-mcp-adapter` `^2.6.0` to `.pi/npm/package.json` without removing unrelated user entries. `pi-engram init` owns the Pi Engram MCP config schema and is run during installation.
-- **`pi-subagents-j0k3r` package**: discovers and runs SDD agents from `.pi/agents/`; Gentle AI installs it directly with `pi install npm:pi-subagents-j0k3r`.
-- **Background subagents**: managed background execution is configured through `gentle-ai install` / `gentle-ai sync` with `--pi-background-subagents=auto|on|off` or `GENTLE_AI_PI_BACKGROUND_SUBAGENTS`; there is no launcher or activation plumbing, because the primitive is the already-installed `pi-subagents-j0k3r` extension.
+- **`pi-subagents-j0k3r` package**: discovers and runs SDD agents from `.pi/agents/`; Shevanio AI installs it directly with `pi install npm:pi-subagents-j0k3r`.
+- **Background subagents**: managed background execution is configured through `shevanio-ai install` / `shevanio-ai sync` with `--pi-background-subagents=auto|on|off` or `SHEVANIO_AI_PI_BACKGROUND_SUBAGENTS`; there is no launcher or activation plumbing, because the primitive is the already-installed `pi-subagents-j0k3r` extension.
 - CLI precedence is flag, non-empty environment, prior managed state, then `auto`; `auto` never enables by itself, unresolved non-interactive `auto` stays foreground, and the interactive Pi installer prompts only when that preference is unresolved.
-- The resolved on/off policy is projected to `~/.pi/gentle-ai/background-subagents.json` as `{"schema":"gentle-pi.background-subagents/v1","policy":"on"|"off"}` (the base directory honors `GENTLE_PI_CONFIG_HOME`); `off` rewrites the policy instead of deleting files, and a file at that path without the managed schema marker is never overwritten.
+- The resolved on/off policy is projected to `~/.pi/shevanio-ai/background-subagents.json` as `{"schema":"gentle-pi.background-subagents/v1","policy":"on"|"off"}` (the base directory honors `GENTLE_PI_CONFIG_HOME`); `off` rewrites the policy instead of deleting files, and a file at that path without the managed schema marker is never overwritten.
 - **`@juicesharp/rpiv-ask-user-question` package**: lets Pi child agents ask the active user session for clarification when they need human input.
 - **Pi companion packages**: `pi-web-access`, `@juicesharp/rpiv-todo`, and `pi-btw` add web access, todo tracking, and companion workflow support.
-- **Pi-only flow**: when Pi is the only selected agent, gentle-ai skips persona, ecosystem component selection, and Strict TDD prompts because those behaviors are provided by `gentle-pi`.
+- **Pi-only flow**: when Pi is the only selected agent, shevanio-ai skips persona, ecosystem component selection, and Strict TDD prompts because those behaviors are provided by `gentle-pi`.
 
 ### Hermes Ephemeral Delegation
 
@@ -286,17 +286,17 @@ Hermes uses `delegate_task` to spawn ephemeral sub-agents. Each worker starts in
 | `inherit_mcp_toolsets` | false | When true, workers inherit parent MCP toolsets automatically |
 | `subagent_auto_approve` | false | When true, workers auto-approve tool calls |
 
-The full delegation decision table lives in `~/.hermes/skills/hermes-ephemeral-delegation/SKILL.md` (installed by gentle-ai). The SDD orchestrator in `~/.hermes/SOUL.md` references this skill.
+The full delegation decision table lives in `~/.hermes/skills/hermes-ephemeral-delegation/SKILL.md` (installed by shevanio-ai). The SDD orchestrator in `~/.hermes/SOUL.md` references this skill.
 
 ### Hermes
 
-- **Detection**: gentle-ai reports the `hermes` binary on `PATH` and the config root at `~/.hermes` independently; the config directory drives install detection (the binary can be absent and Hermes is still detected as configured).
-- **Install**: detect-only — gentle-ai cannot install Hermes. Install Hermes manually first, then run `gentle-ai install --agent hermes`.
+- **Detection**: shevanio-ai reports the `hermes` binary on `PATH` and the config root at `~/.hermes` independently; the config directory drives install detection (the binary can be absent and Hermes is still detected as configured).
+- **Install**: detect-only — shevanio-ai cannot install Hermes. Install Hermes manually first, then run `shevanio-ai install --agent hermes`.
 - **Config path**: `~/.hermes/` (config.yaml, SOUL.md, skills/)
 - **MCP config**: Engram and Context7 are injected as YAML blocks under `mcp_servers:` in `~/.hermes/config.yaml` (`StrategyMergeIntoYAML`). Pre-existing top-level keys (e.g. `model:`) are preserved verbatim.
-- **System prompt**: SDD orchestrator and persona are written to `~/.hermes/SOUL.md` via markdown section markers (`<!-- gentle-ai:sdd-orchestrator -->`, `<!-- gentle-ai:persona -->`).
-- **Skills**: `~/.hermes/skills/` — gentle-ai writes SDD phase skills; the skill registry also scans this path.
-- **Permissions**: Hermes uses an undocumented permission format. gentle-ai skips permission injection for Hermes.
+- **System prompt**: SDD orchestrator and persona are written to `~/.hermes/SOUL.md` via markdown section markers (`<!-- shevanio-ai:sdd-orchestrator -->`, `<!-- shevanio-ai:persona -->`).
+- **Skills**: `~/.hermes/skills/` — shevanio-ai writes SDD phase skills; the skill registry also scans this path.
+- **Permissions**: Hermes uses an undocumented permission format. shevanio-ai skips permission injection for Hermes.
 - **Profiles**: Hermes does not support multi-mode SDD (no per-phase model routing). Single-mode only.
 - **Memory**: Hermes has a native memory and skill-learning loop. Engram complements it — Engram provides cross-agent, cross-session memory protocol so knowledge is portable across all agents, not just Hermes.
-- **Persona markers and identity behavior**: The `<!-- gentle-ai:persona -->` / `<!-- /gentle-ai:persona -->` markers in `SOUL.md` tell gentle-ai which section it manages — they delimit where the persona content is written and updated on sync. The markers alone do NOT guarantee that Hermes answers identity questions ("who are you?", "quién eres?") as Gentle AI. That guarantee comes from the explicit `## Identity` section inside the managed persona content, which instructs Hermes to identify itself as **Gentle AI running on Hermes Agent** in any language. If the user has written a manual `## Identity` section OUTSIDE the managed markers, it is preserved by gentle-ai but may conflict with the managed identity instruction — the managed block is what gentle-ai guarantees, and any manual identity section outside the markers may need cleanup to avoid contradiction.
+- **Persona markers and identity behavior**: The `<!-- shevanio-ai:persona -->` / `<!-- /shevanio-ai:persona -->` markers in `SOUL.md` tell shevanio-ai which section it manages — they delimit where the persona content is written and updated on sync. The markers alone do NOT guarantee that Hermes answers identity questions ("who are you?", "quién eres?") as Shevanio AI. That guarantee comes from the explicit `## Identity` section inside the managed persona content, which instructs Hermes to identify itself as **Shevanio AI running on Hermes Agent** in any language. If the user has written a manual `## Identity` section OUTSIDE the managed markers, it is preserved by shevanio-ai but may conflict with the managed identity instruction — the managed block is what shevanio-ai guarantees, and any manual identity section outside the markers may need cleanup to avoid contradiction.

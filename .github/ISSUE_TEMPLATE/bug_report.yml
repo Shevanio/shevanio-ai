@@ -1,5 +1,5 @@
 name: Bug Report
-description: File a bug report for Gentle AI
+description: File a bug report for Shevanio AI
 labels: ["bug", "status:needs-review"]
 
 body:
@@ -19,7 +19,7 @@ body:
     attributes:
       label: Pre-flight Checklist
       options:
-        - label: I have searched [existing issues](https://github.com/Gentleman-Programming/gentle-ai/issues) and this is not a duplicate
+        - label: I have searched [existing issues](https://github.com/Shevanio/shevanio-ai/issues) and this is not a duplicate
           required: true
         - label: I understand that PRs will be rejected if the linked issue does not have `status:approved`
           required: true
@@ -70,7 +70,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Gentle AI Version
+      label: Shevanio AI Version
       description: Run `gga version` to get this
       placeholder: "e.g. v0.1.0"
     validations:

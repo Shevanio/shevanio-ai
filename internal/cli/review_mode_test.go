@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 func TestReviewModeStatusReportsBothSourcesWithoutMutating(t *testing.T) {
@@ -52,7 +52,7 @@ func TestReviewModeStatusReportsBothSourcesWithoutMutating(t *testing.T) {
 	if err != nil || !bytes.Equal(after, before) {
 		t.Fatalf("status changed global user state: err=%v before=%q after=%q", err, before, after)
 	}
-	if _, err := os.Lstat(filepath.Join(repo, ".git", "gentle-ai")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Lstat(filepath.Join(repo, ".git", "shevanio-ai")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("status created repository state: %v", err)
 	}
 }
@@ -183,7 +183,7 @@ func TestReviewModeCloneScopeEnableIsIdempotentWhenGlobalOn(t *testing.T) {
 		result.Status.Source != reviewtransaction.RDDModeSourceGlobal || result.Status.Revision != "" {
 		t.Fatalf("clone enable result = %#v", result.Status)
 	}
-	if _, err := os.Lstat(filepath.Join(repo, ".git", "gentle-ai")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Lstat(filepath.Join(repo, ".git", "shevanio-ai")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("idempotent clone enable created repository state: %v", err)
 	}
 }
@@ -208,7 +208,7 @@ func TestReviewModeCloneScopeEnableMigratesLegacyRevision(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read current record: %v", err)
 	}
-	legacyRoot := filepath.Join(repo, ".git", "gentle-ai", "review-transactions")
+	legacyRoot := filepath.Join(repo, ".git", "shevanio-ai", "review-transactions")
 	// The seeding write publishes into both locations, because the switch is
 	// machine state rather than build state (#3284). This fixture is the clone
 	// that only ever had the pre-relocation one, so its mirror is dropped
@@ -216,10 +216,10 @@ func TestReviewModeCloneScopeEnableMigratesLegacyRevision(t *testing.T) {
 	if err := os.RemoveAll(legacyRoot); err != nil {
 		t.Fatalf("drop the mirrored fixture copy: %v", err)
 	}
-	if err := os.Rename(filepath.Join(repo, ".git", "gentle-ai", "review-mode"), legacyRoot); err != nil {
+	if err := os.Rename(filepath.Join(repo, ".git", "shevanio-ai", "review-mode"), legacyRoot); err != nil {
 		t.Fatalf("relocate secure legacy fixture: %v", err)
 	}
-	if _, err := os.Lstat(filepath.Join(repo, ".git", "gentle-ai", "review-mode")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Lstat(filepath.Join(repo, ".git", "shevanio-ai", "review-mode")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("legacy fixture left a separately created private directory: %v", err)
 	}
 	legacy := filepath.Join(legacyRoot, "rar-authority", "v1", "rdd-mode", filepath.Base(current))
@@ -259,14 +259,14 @@ func TestReviewModeCloneScopeEnableRejectsGlobalOffWithoutLocalOverride(t *testi
 		disabled.Source != reviewtransaction.RDDModeSourceGlobal {
 		t.Fatalf("clone enable error = %v, want global typed disabled error", err)
 	}
-	if !strings.Contains(err.Error(), "gentle-ai review mode enable --scope=global") {
+	if !strings.Contains(err.Error(), "shevanio-ai review mode enable --scope=global") {
 		t.Fatalf("clone enable error does not name the global continuation: %v", err)
 	}
 	if result := decodeReviewModeResult(t, output.Bytes()); result.Status.Effective != reviewtransaction.RDDModeOff ||
 		result.Status.Source != reviewtransaction.RDDModeSourceGlobal || result.Status.Revision != "" {
 		t.Fatalf("clone enable result = %#v", result.Status)
 	}
-	if _, err := os.Lstat(filepath.Join(repo, ".git", "gentle-ai")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Lstat(filepath.Join(repo, ".git", "shevanio-ai")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("rejected clone enable created repository state: %v", err)
 	}
 }
@@ -345,7 +345,7 @@ func TestReviewModeCloneScopeEnableRejectsExplicitOffWhileGlobalOff(t *testing.T
 		blocked.Source != reviewtransaction.RDDModeSourceGlobal {
 		t.Fatalf("explicit-off clone enable error = %v, want global typed disabled error", err)
 	}
-	if !strings.Contains(err.Error(), "gentle-ai review mode enable --scope=global") {
+	if !strings.Contains(err.Error(), "shevanio-ai review mode enable --scope=global") {
 		t.Fatalf("explicit-off clone enable error does not name the global continuation: %v", err)
 	}
 	result := decodeReviewModeResult(t, output.Bytes())
@@ -789,7 +789,7 @@ func assertReviewConsentPrompt(t *testing.T, prompt, reason string) string {
 		"substantially safer",
 		"1) Run the review now",
 		"2) Not now, just this once",
-		"gentle-ai review mode disable",
+		"shevanio-ai review mode disable",
 	} {
 		if !strings.Contains(prompt, want) {
 			t.Fatalf("consent prompt missing %q:\n%s", want, prompt)
@@ -803,7 +803,7 @@ func assertReviewConsentPrompt(t *testing.T, prompt, reason string) string {
 			t.Fatalf("consent prompt still offers a permanent disable %q:\n%s", forbidden, prompt)
 		}
 	}
-	for _, forbidden := range []string{"gentle-ai.", "sha256:", "lineage", "schema", "contract", "lens"} {
+	for _, forbidden := range []string{"shevanio-ai.", "sha256:", "lineage", "schema", "contract", "lens"} {
 		if strings.Contains(prompt, forbidden) {
 			t.Fatalf("consent prompt leaked internal vocabulary %q:\n%s", forbidden, prompt)
 		}
@@ -836,7 +836,7 @@ func reviewModeHome(t *testing.T) string {
 // development is off until someone explicitly enables it, so a test whose
 // subject is the review lifecycle -- rather than the switch itself -- has to
 // opt in the way a real user does before a review will start at all. It writes
-// the same explicit global "on" that `gentle-ai review mode enable` persists,
+// the same explicit global "on" that `shevanio-ai review mode enable` persists,
 // rather than reaching past the switch, so these fixtures keep exercising the
 // resolution path they are meant to run through.
 //

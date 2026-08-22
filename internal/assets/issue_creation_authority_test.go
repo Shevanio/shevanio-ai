@@ -26,7 +26,7 @@ func TestIssueCreationAuthorityBoundary(t *testing.T) {
 	if !strings.Contains(string(agents), canonicalRegistryRow) {
 		t.Fatalf("AGENTS.md must route the canonical issue-creation identity directly to the embedded authority; missing row %q", canonicalRegistryRow)
 	}
-	for _, stale := range []string{"gentle-ai-issue-creation", "[`skills/issue-creation/SKILL.md`](skills/issue-creation/SKILL.md)"} {
+	for _, stale := range []string{"shevanio-ai-issue-creation", "[`skills/issue-creation/SKILL.md`](skills/issue-creation/SKILL.md)"} {
 		if strings.Contains(string(agents), stale) {
 			t.Fatalf("AGENTS.md still references stale issue-creation authority %q", stale)
 		}
@@ -37,7 +37,7 @@ func TestIssueCreationAuthorityBoundary(t *testing.T) {
 		t.Fatal("embedded issue-creation authority must retain canonical frontmatter identity name: issue-creation")
 	}
 
-	collaborationPath := filepath.Join(repositoryRoot, "skills", "gentle-ai-collab-perfect", "SKILL.md")
+	collaborationPath := filepath.Join(repositoryRoot, "skills", "shevanio-ai-collab-perfect", "SKILL.md")
 	collaboration, err := os.ReadFile(collaborationPath)
 	if err != nil {
 		t.Fatalf("read collaboration skill: %v", err)

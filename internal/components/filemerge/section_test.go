@@ -8,7 +8,7 @@ import (
 func TestInjectMarkdownSection_EmptyFile(t *testing.T) {
 	result := InjectMarkdownSection("", "sdd", "## SDD Config\nSome content here.\n")
 
-	want := "<!-- gentle-ai:sdd -->\n## SDD Config\nSome content here.\n<!-- /gentle-ai:sdd -->\n"
+	want := "<!-- shevanio-ai:sdd -->\n## SDD Config\nSome content here.\n<!-- /shevanio-ai:sdd -->\n"
 	if result != want {
 		t.Fatalf("empty file inject:\ngot:  %q\nwant: %q", result, want)
 	}
@@ -71,33 +71,45 @@ func TestInjectMarkdownSection_AppendToExistingContent(t *testing.T) {
 	existing := "# My Config\n\nSome existing content.\n"
 	result := InjectMarkdownSection(existing, "persona", "You are a senior architect.\n")
 
-	want := "# My Config\n\nSome existing content.\n\n<!-- gentle-ai:persona -->\nYou are a senior architect.\n<!-- /gentle-ai:persona -->\n"
+	want := "# My Config\n\nSome existing content.\n\n<!-- shevanio-ai:persona -->\nYou are a senior architect.\n<!-- /shevanio-ai:persona -->\n"
 	if result != want {
 		t.Fatalf("append to existing:\ngot:  %q\nwant: %q", result, want)
 	}
 }
 
 func TestInjectMarkdownSection_UpdateExistingSection(t *testing.T) {
-	existing := "# Config\n\n<!-- gentle-ai:sdd -->\nOld SDD content.\n<!-- /gentle-ai:sdd -->\n\nOther stuff.\n"
+	existing := "# Config\n\n<!-- shevanio-ai:sdd -->\nOld SDD content.\n<!-- /shevanio-ai:sdd -->\n\nOther stuff.\n"
 	result := InjectMarkdownSection(existing, "sdd", "New SDD content.\n")
 
-	want := "# Config\n\n<!-- gentle-ai:sdd -->\nNew SDD content.\n<!-- /gentle-ai:sdd -->\n\nOther stuff.\n"
+	want := "# Config\n\n<!-- shevanio-ai:sdd -->\nNew SDD content.\n<!-- /shevanio-ai:sdd -->\n\nOther stuff.\n"
 	if result != want {
 		t.Fatalf("update existing section:\ngot:  %q\nwant: %q", result, want)
 	}
 }
 
+func TestInjectMarkdownSection_MigratesLegacyMarkerWithoutDuplication(t *testing.T) {
+	existing := "# Config\n\n<!-- gentle-ai:sdd -->\nLegacy content.\n<!-- /gentle-ai:sdd -->\n"
+	got := InjectMarkdownSection(existing, "sdd", "Current content.\n")
+	want := "# Config\n\n<!-- shevanio-ai:sdd -->\nCurrent content.\n<!-- /shevanio-ai:sdd -->\n"
+	if got != want {
+		t.Fatalf("legacy marker migration:\ngot:  %q\nwant: %q", got, want)
+	}
+	if strings.Contains(got, "gentle-ai:") || strings.Count(got, "<!-- shevanio-ai:sdd -->") != 1 {
+		t.Fatalf("legacy marker was not canonicalized exactly once: %q", got)
+	}
+}
+
 func TestInjectMarkdownSection_CollapsesDuplicateTargetSections(t *testing.T) {
 	const (
-		open  = "<!-- gentle-ai:persona -->"
-		close = "<!-- /gentle-ai:persona -->"
+		open  = "<!-- shevanio-ai:persona -->"
+		close = "<!-- /shevanio-ai:persona -->"
 	)
 
 	first := open + "\nfirst\n" + close
 	second := open + "\nsecond\n" + close
 	third := open + "\nthird\n" + close
 	canonical := open + "\ncurrent\n" + close
-	sdd := "<!-- gentle-ai:sdd -->\nkeep sdd\n<!-- /gentle-ai:sdd -->"
+	sdd := "<!-- shevanio-ai:sdd -->\nkeep sdd\n<!-- /shevanio-ai:sdd -->"
 
 	tests := []struct {
 		name        string
@@ -153,23 +165,23 @@ func TestInjectMarkdownSection_CollapsesDuplicateTargetSections(t *testing.T) {
 }
 
 func TestInjectMarkdownSection_MultipleSectionsOnlyTargetedOneUpdated(t *testing.T) {
-	existing := "# Config\n\n<!-- gentle-ai:persona -->\nPersona content.\n<!-- /gentle-ai:persona -->\n\n<!-- gentle-ai:sdd -->\nOld SDD.\n<!-- /gentle-ai:sdd -->\n\n<!-- gentle-ai:skills -->\nSkills content.\n<!-- /gentle-ai:skills -->\n"
+	existing := "# Config\n\n<!-- shevanio-ai:persona -->\nPersona content.\n<!-- /shevanio-ai:persona -->\n\n<!-- shevanio-ai:sdd -->\nOld SDD.\n<!-- /shevanio-ai:sdd -->\n\n<!-- shevanio-ai:skills -->\nSkills content.\n<!-- /shevanio-ai:skills -->\n"
 
 	result := InjectMarkdownSection(existing, "sdd", "Updated SDD.\n")
 
 	// persona and skills should be unchanged
-	want := "# Config\n\n<!-- gentle-ai:persona -->\nPersona content.\n<!-- /gentle-ai:persona -->\n\n<!-- gentle-ai:sdd -->\nUpdated SDD.\n<!-- /gentle-ai:sdd -->\n\n<!-- gentle-ai:skills -->\nSkills content.\n<!-- /gentle-ai:skills -->\n"
+	want := "# Config\n\n<!-- shevanio-ai:persona -->\nPersona content.\n<!-- /shevanio-ai:persona -->\n\n<!-- shevanio-ai:sdd -->\nUpdated SDD.\n<!-- /shevanio-ai:sdd -->\n\n<!-- shevanio-ai:skills -->\nSkills content.\n<!-- /shevanio-ai:skills -->\n"
 	if result != want {
 		t.Fatalf("multiple sections:\ngot:  %q\nwant: %q", result, want)
 	}
 }
 
 func TestInjectMarkdownSection_PreserveUserContentBeforeAndAfter(t *testing.T) {
-	existing := "# User's custom intro\n\nHand-written notes.\n\n<!-- gentle-ai:persona -->\nAuto persona.\n<!-- /gentle-ai:persona -->\n\n# User's custom footer\n\nMore hand-written content.\n"
+	existing := "# User's custom intro\n\nHand-written notes.\n\n<!-- shevanio-ai:persona -->\nAuto persona.\n<!-- /shevanio-ai:persona -->\n\n# User's custom footer\n\nMore hand-written content.\n"
 
 	result := InjectMarkdownSection(existing, "persona", "Updated persona.\n")
 
-	want := "# User's custom intro\n\nHand-written notes.\n\n<!-- gentle-ai:persona -->\nUpdated persona.\n<!-- /gentle-ai:persona -->\n\n# User's custom footer\n\nMore hand-written content.\n"
+	want := "# User's custom intro\n\nHand-written notes.\n\n<!-- shevanio-ai:persona -->\nUpdated persona.\n<!-- /shevanio-ai:persona -->\n\n# User's custom footer\n\nMore hand-written content.\n"
 	if result != want {
 		t.Fatalf("preserve user content:\ngot:  %q\nwant: %q", result, want)
 	}
@@ -177,7 +189,7 @@ func TestInjectMarkdownSection_PreserveUserContentBeforeAndAfter(t *testing.T) {
 
 func TestInjectMarkdownSection_MalformedMarkersTreatedAsNotFound(t *testing.T) {
 	// Only opening marker, no closing marker — treat as not found, append.
-	existing := "# Config\n\n<!-- gentle-ai:sdd -->\nOrphaned content.\n"
+	existing := "# Config\n\n<!-- shevanio-ai:sdd -->\nOrphaned content.\n"
 	result := InjectMarkdownSection(existing, "sdd", "New SDD content.\n")
 
 	// Should append since closing marker is missing.
@@ -186,7 +198,7 @@ func TestInjectMarkdownSection_MalformedMarkersTreatedAsNotFound(t *testing.T) {
 	}
 
 	// Result should contain the new properly-formed section.
-	wantOpen := "<!-- gentle-ai:sdd -->\nNew SDD content.\n<!-- /gentle-ai:sdd -->\n"
+	wantOpen := "<!-- shevanio-ai:sdd -->\nNew SDD content.\n<!-- /shevanio-ai:sdd -->\n"
 	if !strings.Contains(result, wantOpen) {
 		t.Fatalf("malformed markers: result should contain proper section:\ngot: %q", result)
 	}
@@ -194,11 +206,11 @@ func TestInjectMarkdownSection_MalformedMarkersTreatedAsNotFound(t *testing.T) {
 
 func TestInjectMarkdownSection_CloseBeforeOpenTreatedAsNotFound(t *testing.T) {
 	// Closing marker appears before opening — treat as not found.
-	existing := "<!-- /gentle-ai:sdd -->\nSome content.\n<!-- gentle-ai:sdd -->\n"
+	existing := "<!-- /shevanio-ai:sdd -->\nSome content.\n<!-- shevanio-ai:sdd -->\n"
 	result := InjectMarkdownSection(existing, "sdd", "New content.\n")
 
 	// Should append the section, not replace.
-	wantSuffix := "<!-- gentle-ai:sdd -->\nNew content.\n<!-- /gentle-ai:sdd -->\n"
+	wantSuffix := "<!-- shevanio-ai:sdd -->\nNew content.\n<!-- /shevanio-ai:sdd -->\n"
 	if !strings.HasSuffix(result, wantSuffix) {
 		t.Fatalf("close-before-open: expected appended section:\ngot: %q\nwant suffix: %q", result, wantSuffix)
 	}
@@ -208,8 +220,8 @@ func TestInjectMarkdownSection_CloseBeforeOpenTreatedAsNotFound(t *testing.T) {
 // infinite block accumulation caused by orphan closing markers being mishandled.
 func TestInjectMarkdownSection_OrphanRepair(t *testing.T) {
 	const sid = "engram-protocol"
-	open := "<!-- gentle-ai:" + sid + " -->"
-	close := "<!-- /gentle-ai:" + sid + " -->"
+	open := "<!-- shevanio-ai:" + sid + " -->"
+	close := "<!-- /shevanio-ai:" + sid + " -->"
 	newContent := "Engram protocol content.\n"
 
 	oneBlock := open + "\n" + newContent + close + "\n"
@@ -329,7 +341,7 @@ func TestInjectMarkdownSection_OrphanRepair(t *testing.T) {
 }
 
 func TestInjectMarkdownSection_EmptyContentRemovesSection(t *testing.T) {
-	existing := "# Config\n\n<!-- gentle-ai:sdd -->\nSDD content here.\n<!-- /gentle-ai:sdd -->\n\nOther stuff.\n"
+	existing := "# Config\n\n<!-- shevanio-ai:sdd -->\nSDD content here.\n<!-- /shevanio-ai:sdd -->\n\nOther stuff.\n"
 	result := InjectMarkdownSection(existing, "sdd", "")
 
 	want := "# Config\n\nOther stuff.\n"
@@ -350,7 +362,7 @@ func TestInjectMarkdownSection_EmptyContentOnMissingSectionNoOp(t *testing.T) {
 func TestInjectMarkdownSection_ContentWithoutTrailingNewline(t *testing.T) {
 	result := InjectMarkdownSection("", "test", "no trailing newline")
 
-	want := "<!-- gentle-ai:test -->\nno trailing newline\n<!-- /gentle-ai:test -->\n"
+	want := "<!-- shevanio-ai:test -->\nno trailing newline\n<!-- /shevanio-ai:test -->\n"
 	if result != want {
 		t.Fatalf("content without trailing newline:\ngot:  %q\nwant: %q", result, want)
 	}
@@ -360,7 +372,7 @@ func TestInjectMarkdownSection_ExistingWithoutTrailingNewline(t *testing.T) {
 	existing := "# Title"
 	result := InjectMarkdownSection(existing, "test", "Content.\n")
 
-	want := "# Title\n\n<!-- gentle-ai:test -->\nContent.\n<!-- /gentle-ai:test -->\n"
+	want := "# Title\n\n<!-- shevanio-ai:test -->\nContent.\n<!-- /shevanio-ai:test -->\n"
 	if result != want {
 		t.Fatalf("existing without trailing newline:\ngot:  %q\nwant: %q", result, want)
 	}
@@ -382,11 +394,11 @@ Senior Architect, 15+ years experience, GDE & MVP.
 
 `
 
-const gentleAiMarkerSection = `<!-- gentle-ai:persona -->
+const shevanioAiMarkerSection = `<!-- shevanio-ai:persona -->
 ## Personality
 
 Senior Architect, 15+ years experience, GDE & MVP.
-<!-- /gentle-ai:persona -->
+<!-- /shevanio-ai:persona -->
 `
 
 func TestStripLegacyPersonaBlock_NoFingerprintReturnsSame(t *testing.T) {
@@ -398,8 +410,8 @@ func TestStripLegacyPersonaBlock_NoFingerprintReturnsSame(t *testing.T) {
 }
 
 func TestStripLegacyPersonaBlock_FingerprintInsideMarkerReturnsSame(t *testing.T) {
-	// Fingerprints only exist inside gentle-ai markers — should NOT be stripped.
-	input := "# My Config\n\n" + gentleAiMarkerSection
+	// Fingerprints only exist inside shevanio-ai markers — should NOT be stripped.
+	input := "# My Config\n\n" + shevanioAiMarkerSection
 	result := StripLegacyPersonaBlock(input)
 	if result != input {
 		t.Fatalf("fingerprint inside marker: expected unchanged result:\ngot:  %q\nwant: %q", result, input)
@@ -416,7 +428,7 @@ func TestStripLegacyPersonaBlock_LegacyBlockOnlyReturnsEmpty(t *testing.T) {
 
 func TestStripLegacyPersonaBlock_LegacyBlockBeforeMarkersStripped(t *testing.T) {
 	// Stale free-text persona block sits before a properly-marked section.
-	input := legacyPersonaBlock + "\n" + gentleAiMarkerSection
+	input := legacyPersonaBlock + "\n" + shevanioAiMarkerSection
 	result := StripLegacyPersonaBlock(input)
 
 	// The legacy block should be gone.
@@ -424,20 +436,20 @@ func TestStripLegacyPersonaBlock_LegacyBlockBeforeMarkersStripped(t *testing.T) 
 		t.Fatal("stripped result should not contain legacy '## Rules' header")
 	}
 	// The marked section must survive.
-	if !strings.Contains(result, "<!-- gentle-ai:persona -->") {
-		t.Fatal("stripped result missing gentle-ai marker section")
+	if !strings.Contains(result, "<!-- shevanio-ai:persona -->") {
+		t.Fatal("stripped result missing shevanio-ai marker section")
 	}
 }
 
 func TestStripLegacyPersonaBlock_MarkerSectionContentPreserved(t *testing.T) {
 	// Markers and their content must be fully preserved after stripping.
-	input := legacyPersonaBlock + "\n" + gentleAiMarkerSection + "\n# User Notes\n\nSome user text.\n"
+	input := legacyPersonaBlock + "\n" + shevanioAiMarkerSection + "\n# User Notes\n\nSome user text.\n"
 	result := StripLegacyPersonaBlock(input)
 
-	if !strings.Contains(result, "<!-- gentle-ai:persona -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:persona -->") {
 		t.Fatal("marker open not preserved")
 	}
-	if !strings.Contains(result, "<!-- /gentle-ai:persona -->") {
+	if !strings.Contains(result, "<!-- /shevanio-ai:persona -->") {
 		t.Fatal("marker close not preserved")
 	}
 	if !strings.Contains(result, "# User Notes") {
@@ -448,7 +460,7 @@ func TestStripLegacyPersonaBlock_MarkerSectionContentPreserved(t *testing.T) {
 func TestStripLegacyPersonaBlock_OnlyTwoOfThreeFingerprints(t *testing.T) {
 	// File has "## Personality" and "Senior Architect" but NOT "## Rules" —
 	// only two of three fingerprints, so it should NOT be stripped.
-	input := "## Personality\n\nSenior Architect, 15+ years experience.\n\n" + gentleAiMarkerSection
+	input := "## Personality\n\nSenior Architect, 15+ years experience.\n\n" + shevanioAiMarkerSection
 	result := StripLegacyPersonaBlock(input)
 	// With only 2/3 fingerprints, stripping should NOT occur.
 	if result != input {
@@ -459,14 +471,14 @@ func TestStripLegacyPersonaBlock_OnlyTwoOfThreeFingerprints(t *testing.T) {
 func TestStripLegacyPersonaBlock_MixedZone_OnlyOneFingerprint_PreMarker(t *testing.T) {
 	// Edge case: "## Rules" appears in user content before the first marker,
 	// but the other two fingerprints ("## Personality" and "Senior Architect")
-	// exist only inside a gentle-ai marker block.
+	// exist only inside a shevanio-ai marker block.
 	//
 	// Old behaviour (bug): one fingerprint in the pre-marker zone was enough to
 	// trigger stripping, destroying the user's "## Rules" section.
 	// New behaviour (fixed): ALL fingerprints must appear in the pre-marker zone;
 	// since only one does, the file is returned unchanged.
 	userRulesSection := "## Rules\n\n- Never do X.\n- Always do Y.\n\n"
-	markerWithOtherFingerprints := "<!-- gentle-ai:persona -->\n## Personality\n\nSenior Architect, 15+ years experience.\n<!-- /gentle-ai:persona -->\n"
+	markerWithOtherFingerprints := "<!-- shevanio-ai:persona -->\n## Personality\n\nSenior Architect, 15+ years experience.\n<!-- /shevanio-ai:persona -->\n"
 
 	input := userRulesSection + markerWithOtherFingerprints
 	result := StripLegacyPersonaBlock(input)
@@ -484,7 +496,7 @@ func TestStripLegacyPersonaBlock_MixedZone_TwoFingerprints_PreMarker(t *testing.
 	// third ("## Rules") exists inside the marker block. Stripping must NOT fire
 	// because not all fingerprints are in the pre-marker zone.
 	preMarker := "## Personality\n\nSenior Architect, 15+ years experience.\n\n"
-	markerWithRule := "<!-- gentle-ai:persona -->\n## Rules\n\n- Rule inside marker.\n<!-- /gentle-ai:persona -->\n"
+	markerWithRule := "<!-- shevanio-ai:persona -->\n## Rules\n\n- Rule inside marker.\n<!-- /shevanio-ai:persona -->\n"
 
 	input := preMarker + markerWithRule
 	result := StripLegacyPersonaBlock(input)
@@ -501,7 +513,7 @@ func TestStripLegacyPersonaBlock_AllFingerprintsPreMarker_Strips(t *testing.T) {
 	// Positive case: ALL three fingerprints appear before the first marker.
 	// Stripping MUST fire, removing the pre-marker legacy block.
 	preMarker := "## Rules\n\n- Some rule.\n\n## Personality\n\nSenior Architect, veteran.\n\n"
-	markerSection := "<!-- gentle-ai:persona -->\nUpdated persona.\n<!-- /gentle-ai:persona -->\n"
+	markerSection := "<!-- shevanio-ai:persona -->\nUpdated persona.\n<!-- /shevanio-ai:persona -->\n"
 
 	input := preMarker + markerSection
 	result := StripLegacyPersonaBlock(input)
@@ -512,7 +524,7 @@ func TestStripLegacyPersonaBlock_AllFingerprintsPreMarker_Strips(t *testing.T) {
 	if strings.Contains(result, "## Rules") {
 		t.Fatal("all-fingerprints-pre-marker: legacy '## Rules' should have been stripped")
 	}
-	if !strings.Contains(result, "<!-- gentle-ai:persona -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:persona -->") {
 		t.Fatal("all-fingerprints-pre-marker: marker section must be preserved")
 	}
 }
@@ -524,7 +536,7 @@ func TestStripLegacyPersonaBlock_SlimResidualInstallNotFalselyStripped(t *testin
 	// the residual marker section. With 2 of 3 fingerprints permanently
 	// missing, this must NEVER be falsely stripped as legacy content.
 	preMarker := "## Rules\n\n- Never add \"Co-Authored-By\" or AI attribution to commits.\n\n"
-	markerSection := "<!-- gentle-ai:persona -->\n## Persona Voice\n\nSee the active output style.\n<!-- /gentle-ai:persona -->\n"
+	markerSection := "<!-- shevanio-ai:persona -->\n## Persona Voice\n\nSee the active output style.\n<!-- /shevanio-ai:persona -->\n"
 
 	input := preMarker + markerSection
 	result := StripLegacyPersonaBlock(input)
@@ -547,11 +559,11 @@ func TestStripLegacyPersonaBlock_UserContentBeforeAndAfterMarkersPreserved(t *te
 	// by looking for fingerprints before the first marker, user content that
 	// predates the legacy block would also be stripped.  This is an accepted
 	// tradeoff documented in the function comment.
-	input := legacyPersonaBlock + "\n" + gentleAiMarkerSection + "\n# Custom section\n\nUser stuff.\n"
+	input := legacyPersonaBlock + "\n" + shevanioAiMarkerSection + "\n# Custom section\n\nUser stuff.\n"
 	result := StripLegacyPersonaBlock(input)
 
 	if !strings.Contains(result, "# Custom section") {
-		t.Fatal("content after gentle-ai markers must be preserved")
+		t.Fatal("content after shevanio-ai markers must be preserved")
 	}
 }
 
@@ -577,7 +589,7 @@ func TestStripLegacyATLBlock_OnlyATLBlock_ReturnsEmpty(t *testing.T) {
 }
 
 func TestStripLegacyATLBlock_ATLBlockThenMarkers_StripsATLKeepsMarkers(t *testing.T) {
-	sddSection := "<!-- gentle-ai:sdd-orchestrator -->\nSome orchestrator content.\n<!-- /gentle-ai:sdd-orchestrator -->\n"
+	sddSection := "<!-- shevanio-ai:sdd-orchestrator -->\nSome orchestrator content.\n<!-- /shevanio-ai:sdd-orchestrator -->\n"
 	input := legacyATLBlock + "\n\n" + sddSection
 
 	result := StripLegacyATLBlock(input)
@@ -588,17 +600,17 @@ func TestStripLegacyATLBlock_ATLBlockThenMarkers_StripsATLKeepsMarkers(t *testin
 	if strings.Contains(result, "<!-- END:agent-teams-lite -->") {
 		t.Fatal("ATL close marker should have been stripped")
 	}
-	if !strings.Contains(result, "<!-- gentle-ai:sdd-orchestrator -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:sdd-orchestrator -->") {
 		t.Fatal("sdd-orchestrator marker section must be preserved")
 	}
-	if !strings.Contains(result, "<!-- /gentle-ai:sdd-orchestrator -->") {
+	if !strings.Contains(result, "<!-- /shevanio-ai:sdd-orchestrator -->") {
 		t.Fatal("sdd-orchestrator close marker must be preserved")
 	}
 }
 
 func TestStripLegacyATLBlock_ContentBeforeATL_StripsOnlyATL(t *testing.T) {
 	before := "# My Config\n\nSome user content.\n"
-	sddSection := "<!-- gentle-ai:sdd-orchestrator -->\nOrchestrator stuff.\n<!-- /gentle-ai:sdd-orchestrator -->\n"
+	sddSection := "<!-- shevanio-ai:sdd-orchestrator -->\nOrchestrator stuff.\n<!-- /shevanio-ai:sdd-orchestrator -->\n"
 	input := before + "\n" + legacyATLBlock + "\n\n" + sddSection
 
 	result := StripLegacyATLBlock(input)
@@ -609,7 +621,7 @@ func TestStripLegacyATLBlock_ContentBeforeATL_StripsOnlyATL(t *testing.T) {
 	if !strings.Contains(result, "# My Config") {
 		t.Fatal("user content before ATL block must be preserved")
 	}
-	if !strings.Contains(result, "<!-- gentle-ai:sdd-orchestrator -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:sdd-orchestrator -->") {
 		t.Fatal("sdd-orchestrator section must be preserved")
 	}
 }
@@ -634,7 +646,7 @@ func TestStripLegacyATLBlock_OnlyOpenMarkerNoClose_StripsOrphanMarker(t *testing
 }
 
 func TestStripLegacyATLBlock_ATLBlockAndSDDOrchestrator_StripsOnlyATL(t *testing.T) {
-	sddSection := "<!-- gentle-ai:sdd-orchestrator -->\nYou are a COORDINATOR.\n<!-- /gentle-ai:sdd-orchestrator -->\n"
+	sddSection := "<!-- shevanio-ai:sdd-orchestrator -->\nYou are a COORDINATOR.\n<!-- /shevanio-ai:sdd-orchestrator -->\n"
 	input := legacyATLBlock + "\n\n" + sddSection
 
 	result := StripLegacyATLBlock(input)
@@ -642,7 +654,7 @@ func TestStripLegacyATLBlock_ATLBlockAndSDDOrchestrator_StripsOnlyATL(t *testing
 	if strings.Contains(result, "<!-- BEGIN:agent-teams-lite -->") {
 		t.Fatal("ATL block should have been stripped")
 	}
-	if !strings.Contains(result, "<!-- gentle-ai:sdd-orchestrator -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:sdd-orchestrator -->") {
 		t.Fatal("sdd-orchestrator section must be preserved after ATL strip")
 	}
 	if !strings.Contains(result, "You are a COORDINATOR.") {
@@ -659,7 +671,7 @@ func TestStripLegacyATLBlock_EmptyFile_ReturnsEmpty(t *testing.T) {
 
 func TestStripLegacyATLBlock_Idempotent(t *testing.T) {
 	// Calling twice should produce the same result as calling once.
-	sddSection := "<!-- gentle-ai:sdd-orchestrator -->\nOrchestrator.\n<!-- /gentle-ai:sdd-orchestrator -->\n"
+	sddSection := "<!-- shevanio-ai:sdd-orchestrator -->\nOrchestrator.\n<!-- /shevanio-ai:sdd-orchestrator -->\n"
 	input := legacyATLBlock + "\n\n" + sddSection
 
 	once := StripLegacyATLBlock(input)
@@ -742,7 +754,7 @@ func TestStripLegacyATLBlock_CRLFLineEndings(t *testing.T) {
 func TestStripLegacyPersonaBlock_CRLFLineEndings(t *testing.T) {
 	// CRLF line endings in legacy block + markers should be handled cleanly.
 	legacy := "## Rules\r\n\r\n- Some rule.\r\n\r\n## Personality\r\n\r\nSenior Architect, veteran.\r\n\r\n"
-	marker := "<!-- gentle-ai:persona -->\r\nUpdated persona.\r\n<!-- /gentle-ai:persona -->\r\n"
+	marker := "<!-- shevanio-ai:persona -->\r\nUpdated persona.\r\n<!-- /shevanio-ai:persona -->\r\n"
 	input := legacy + marker
 
 	result := StripLegacyPersonaBlock(input)
@@ -750,7 +762,7 @@ func TestStripLegacyPersonaBlock_CRLFLineEndings(t *testing.T) {
 	if strings.Contains(result, "## Rules") {
 		t.Fatal("legacy block should be stripped")
 	}
-	if !strings.Contains(result, "<!-- gentle-ai:persona -->") {
+	if !strings.Contains(result, "<!-- shevanio-ai:persona -->") {
 		t.Fatal("marker section must be preserved")
 	}
 	// The marker section should not have leading \r artifacts

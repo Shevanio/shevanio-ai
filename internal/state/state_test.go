@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // TestWriteReconciledAcceptsDesiredStateVisibleAfterWriteError verifies that
@@ -24,7 +24,7 @@ func TestWriteReconciledAcceptsDesiredStateVisibleAfterWriteError(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	target := filepath.Join(home, ".gentle-ai", "persisted-state.json")
+	target := filepath.Join(home, ".shevanio-ai", "persisted-state.json")
 	if err := os.Rename(statePath, target); err != nil {
 		t.Fatal(err)
 	}
@@ -269,9 +269,9 @@ func TestWriteAndRead(t *testing.T) {
 }
 
 // TestPersonaRoundTrip verifies the Persona field round-trips through
-// Write/Read. Both `gentle-ai install` (CLI in run.go) and the TUI app
+// Write/Read. Both `shevanio-ai install` (CLI in run.go) and the TUI app
 // (internal/app/app.go) write this field after a successful install so that
-// `gentle-ai sync` regenerates the persona the user actually selected — not a
+// `shevanio-ai sync` regenerates the persona the user actually selected — not a
 // hard-coded default.
 func TestPersonaRoundTrip(t *testing.T) {
 	for _, persona := range []string{"gentleman", "neutral", "custom"} {
@@ -340,7 +340,7 @@ func TestPersonaPresenceDistinguishesOmittedAndExplicitEmpty(t *testing.T) {
 	}
 }
 
-// TestWriteCreatesStateDir verifies that Write creates the .gentle-ai directory
+// TestWriteCreatesStateDir verifies that Write creates the .shevanio-ai directory
 // when it does not exist yet.
 func TestWriteCreatesStateDir(t *testing.T) {
 	home := t.TempDir()
@@ -358,9 +358,76 @@ func TestWriteCreatesStateDir(t *testing.T) {
 func TestWriteStateFilePath(t *testing.T) {
 	home := t.TempDir()
 	got := Path(home)
-	want := filepath.Join(home, ".gentle-ai", "state.json")
+	want := filepath.Join(home, ".shevanio-ai", "state.json")
 	if got != want {
 		t.Errorf("Path() = %q, want %q", got, want)
+	}
+}
+
+func TestReadLegacyStateOnlyWhenNewStateIsMissing(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		writeNew   bool
+		wantAgents []string
+	}{
+		{name: "legacy fallback", wantAgents: []string{"legacy-agent"}},
+		{name: "new state has priority", writeNew: true, wantAgents: []string{"new-agent"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			legacyPath := filepath.Join(home, legacyStateDir, stateFile)
+			if err := os.MkdirAll(filepath.Dir(legacyPath), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			legacy := []byte(`{"installed_agents":["legacy-agent"]}`)
+			if err := os.WriteFile(legacyPath, legacy, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if tt.writeNew {
+				if err := Write(home, InstallState{InstalledAgents: []string{"new-agent"}}); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			got, err := Read(home)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got.InstalledAgents, tt.wantAgents) {
+				t.Fatalf("InstalledAgents = %v, want %v", got.InstalledAgents, tt.wantAgents)
+			}
+			legacyAfter, err := os.ReadFile(legacyPath)
+			if err != nil || !reflect.DeepEqual(legacyAfter, legacy) {
+				t.Fatalf("legacy state changed: data=%q err=%v", legacyAfter, err)
+			}
+		})
+	}
+}
+
+func TestWriteAfterLegacyReadCreatesOnlyNewState(t *testing.T) {
+	home := t.TempDir()
+	legacyPath := filepath.Join(home, legacyStateDir, stateFile)
+	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	legacy := []byte(`{"installed_agents":["opencode"]}`)
+	if err := os.WriteFile(legacyPath, legacy, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got.PendingSync = true
+	if err := Write(home, got); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(Path(home)); err != nil {
+		t.Fatalf("new state was not created: %v", err)
+	}
+	legacyAfter, err := os.ReadFile(legacyPath)
+	if err != nil || !reflect.DeepEqual(legacyAfter, legacy) {
+		t.Fatalf("legacy state changed: data=%q err=%v", legacyAfter, err)
 	}
 }
 

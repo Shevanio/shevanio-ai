@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // The kill switch reaches SDD status through this layer, which owns the single
@@ -32,7 +32,7 @@ func seedArchiveGatedSDDChange(t *testing.T, root string) {
 	writeSDDStatusFile(t, filepath.Join(changeRoot, "tasks.md"), "- [x] 1.1 Work\n")
 	writeSDDStatusFile(t, filepath.Join(changeRoot, "verify-report.md"), strings.Join([]string{
 		"```yaml",
-		"schema: gentle-ai.verify-result/v1",
+		"schema: shevanio-ai.verify-result/v1",
 		"evidence_revision: sha256:" + strings.Repeat("1", 64),
 		"verdict: pass",
 		"blockers: 0",
@@ -42,7 +42,7 @@ func seedArchiveGatedSDDChange(t *testing.T, root string) {
 		"test_command: go test ./internal/example",
 		"test_exit_code: 0",
 		"test_output_hash: sha256:" + strings.Repeat("2", 64),
-		"build_command: go test ./cmd/gentle-ai",
+		"build_command: go test ./cmd/shevanio-ai",
 		"build_exit_code: 0",
 		"build_output_hash: sha256:" + strings.Repeat("3", 64),
 		"```",
@@ -100,7 +100,7 @@ func corruptCloneLocalReviewMode(t *testing.T, repo string) {
 	// #2882 moved the switch out of the review authority tree so a damaged
 	// authority can no longer make the kill switch unreachable. The record
 	// this helper corrupts is the switch's own, wherever it now lives.
-	root := filepath.Join(repo, ".git", "gentle-ai", "review-mode")
+	root := filepath.Join(repo, ".git", "shevanio-ai", "review-mode")
 	corrupted := 0
 	if err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {

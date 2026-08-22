@@ -11,17 +11,17 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/screens"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/screens"
 )
 
 func runBenchModelPickerCommand(args []string, stdout io.Writer) (bool, error) {
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		_, _ = fmt.Fprintln(stdout, "Usage: gentle-ai bench-model-picker --json")
+		_, _ = fmt.Fprintln(stdout, "Usage: shevanio-ai bench-model-picker --json")
 		return true, nil
 	}
 	if len(args) != 1 || args[0] != "--json" {
-		return true, fmt.Errorf("usage: gentle-ai bench-model-picker --json")
+		return true, fmt.Errorf("usage: shevanio-ai bench-model-picker --json")
 	}
 
 	home, err := os.UserHomeDir()

@@ -7,10 +7,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewResultReopenSchema = "gentle-ai.review-result-reopen-result/v1"
+const ReviewResultReopenSchema = "shevanio-ai.review-result-reopen-result/v1"
 
 type ReviewResultReopenResult struct {
 	Schema    string                                       `json:"schema"`

@@ -193,7 +193,7 @@ func (store RuntimeStore) Acquire(ctx context.Context, request CompactAcquireReq
 		return CompactAttemptResult{}, err
 	}
 	if request.RemediatesEvidenceRevision != "" && !runtimeRevisionPattern.MatchString(request.RemediatesEvidenceRevision) {
-		return CompactAttemptResult{}, errors.New("remediates_evidence_revision must be sha256; rerun `gentle-ai sdd-attempt acquire` with --remediates-evidence-revision sha256:<64-lowercase-hex>")
+		return CompactAttemptResult{}, errors.New("remediates_evidence_revision must be sha256; rerun `shevanio-ai sdd-attempt acquire` with --remediates-evidence-revision sha256:<64-lowercase-hex>")
 	}
 
 	replay, err := store.load()
@@ -354,7 +354,7 @@ func unmanagedRemediationSettleable(status RuntimeStatus, failedEvidence string)
 
 func normalizeCompactSettleRequest(request CompactSettleRequest) error {
 	if request.Outcome == AttemptInterrupted && request.EvidenceRevision != "" {
-		return errors.New("interrupted evidence_revision must be empty; rerun `gentle-ai sdd-attempt settle` without --evidence-revision")
+		return errors.New("interrupted evidence_revision must be empty; rerun `shevanio-ai sdd-attempt settle` without --evidence-revision")
 	}
 	_, err := normalizeFinishAttemptRequest(FinishAttemptRequest{
 		ExpectedRevision: request.Token, RequestID: request.RequestID, Outcome: request.Outcome,
@@ -366,10 +366,10 @@ func normalizeCompactSettleRequest(request CompactSettleRequest) error {
 		return err
 	}
 	if request.SuccessorLineageID != "" && !validReviewBindingLineage(request.SuccessorLineageID) {
-		return errors.New("successor_lineage_id must be a canonical lowercase lineage; rerun `gentle-ai sdd-attempt settle` with a lowercase --successor-lineage")
+		return errors.New("successor_lineage_id must be a canonical lowercase lineage; rerun `shevanio-ai sdd-attempt settle` with a lowercase --successor-lineage")
 	}
 	if request.RemediatesEvidenceRevision != "" && !runtimeRevisionPattern.MatchString(request.RemediatesEvidenceRevision) {
-		return errors.New("remediates_evidence_revision must be sha256; rerun `gentle-ai sdd-attempt settle` with --remediates-evidence-revision sha256:<64-lowercase-hex>")
+		return errors.New("remediates_evidence_revision must be sha256; rerun `shevanio-ai sdd-attempt settle` with --remediates-evidence-revision sha256:<64-lowercase-hex>")
 	}
 	return nil
 }
@@ -514,11 +514,11 @@ func compactBlockedExitText(reason CompactBlockReason, token string) string {
 	switch reason {
 	case CompactBlockCorruptAuthority:
 		return "the attempt ledger for this work unit cannot be read as valid authority; run " +
-			"`gentle-ai sdd-attempt status --cwd <repo> --change <change>` to see what is readable, " +
+			"`shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to see what is readable, " +
 			"then ask a maintainer to inspect the SDD runtime authority under the Git common directory"
 	case CompactBlockInvalidContinuation:
 		return "this call does not continue the attempt currently on record; run " +
-			"`gentle-ai sdd-attempt status --cwd <repo> --change <change>` to see the live attempt and its " +
+			"`shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to see the live attempt and its " +
 			"current revision, then reissue this call against that state"
 	case CompactBlockMaintainerDecision:
 		// #2530: this said "rescope or reset", and rescope is structurally
@@ -536,8 +536,8 @@ func compactBlockedExitText(reason CompactBlockReason, token string) string {
 		// off cannot open one. Reset is the whole exit, and it is named here
 		// as a complete command instead of as advice.
 		return "this work unit's attempt or changed-line budget needs a maintainer decision; run " +
-			"`gentle-ai sdd-attempt status --cwd <repo> --change <change>` for the accounting, then have a " +
-			"maintainer reset the objective with `gentle-ai sdd-attempt reset --cwd <repo> --change <change> " +
+			"`shevanio-ai sdd-attempt status --cwd <repo> --change <change>` for the accounting, then have a " +
+			"maintainer reset the objective with `shevanio-ai sdd-attempt reset --cwd <repo> --change <change> " +
 			"--expected-revision <the revision that status prints> --request-id \"<unique-request-id>\" " +
 			"--reason \"<why-the-objective-is-being-reset>\" --actor \"<actor>\"`; turning receipt-driven " +
 			"review off does not clear this, because review governs delivery of a finished change, not " +
@@ -550,17 +550,17 @@ func compactBlockedExitText(reason CompactBlockReason, token string) string {
 		// --evidence-goal; settle additionally requires --cwd, --change,
 		// --request-id, --outcome, --evidence-revision, --diagnosis,
 		// --harness-disposition, --cleanup-evidence, --process-evidence).
-		// Only `gentle-ai sdd-attempt status --cwd <repo> --change <change>`
+		// Only `shevanio-ai sdd-attempt status --cwd <repo> --change <change>`
 		// is named as a complete command; the token is described as an
 		// addition to the caller's own already-in-flight acquire/settle
 		// call, never as a standalone invocation.
 		return "a distinct attempt token " + token + " is already active for this work unit; run " +
-			"`gentle-ai sdd-attempt status --cwd <repo> --change <change>` to see it, then add `--token " + token +
+			"`shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to see it, then add `--token " + token +
 			"` to your own `sdd-attempt acquire` call to continue that exact attempt, or to your " +
 			"`sdd-attempt settle` call to close it before starting a new one"
 	case CompactBlockRemediationUnsatisfiable:
 		return "this acquire declares a correction for failed evidence the attempt chain does not hold unremediated (nothing failed, the failure was already corrected by a passed settlement, or the declared revision differs from the chain's), so its settle could never succeed and no token is issued; run " +
-			"`gentle-ai sdd-attempt status --cwd <repo> --change <change>` to read the attempt chain and its most recent unremediated failed evidence, then either reissue this acquire declaring that exact revision, or drop --remediates-evidence-revision and continue through a fresh verification objective whose own failed settlement records new evidence a bounded correction can name"
+			"`shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to read the attempt chain and its most recent unremediated failed evidence, then either reissue this acquire declaring that exact revision, or drop --remediates-evidence-revision and continue through a fresh verification objective whose own failed settlement records new evidence a bounded correction can name"
 	default:
 		return ""
 	}

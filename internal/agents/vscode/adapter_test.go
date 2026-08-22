@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 func TestDetectRequiresVSCodeAndCopilotExtension(t *testing.T) {
@@ -71,8 +71,8 @@ func TestSystemPromptFileUsesInstructionsExtension(t *testing.T) {
 		t.Fatalf("SystemPromptFile() should end with .md: %q", path)
 	}
 
-	if filepath.Base(path) != "gentle-ai.instructions.md" {
-		t.Fatalf("SystemPromptFile() = %q, want filename gentle-ai.instructions.md", path)
+	if filepath.Base(path) != "shevanio-ai.instructions.md" {
+		t.Fatalf("SystemPromptFile() = %q, want filename shevanio-ai.instructions.md", path)
 	}
 }
 

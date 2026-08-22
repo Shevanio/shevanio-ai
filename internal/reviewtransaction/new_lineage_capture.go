@@ -51,7 +51,7 @@ import (
 // stable across every capture, including the idempotent-resubmission case.
 func NewLineageArtifactSubjectHash(authority NewLineageAuthority, lens string, order int) string {
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.new-lineage-artifact-subject/v1\x00"))
+	hash.Write([]byte("shevanio-ai.new-lineage-artifact-subject/v1\x00"))
 	for _, value := range []string{
 		authority.LineageID, authority.CandidateIdentity.RepositoryID,
 		authority.CandidateIdentity.BaseTree, authority.CandidateIdentity.CandidateTree,

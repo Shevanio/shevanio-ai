@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 // TestPartialUninstallCommitsSucceededAgentsWhenAnotherAgentFails reproduces
@@ -25,7 +25,7 @@ func TestPartialUninstallCommitsSucceededAgentsWhenAnotherAgentFails(t *testing.
 
 	writeBatchFile(t, claudeSettings, `{"theme":"gentleman","outputStyle":"gentleman","env":{"MY_VAR":"1"}}`)
 	writeBatchFile(t, hermesConfig, "providers:\n  - name: hermes\n")
-	writeBatchFile(t, hermesSoul, "<!-- gentle-ai:persona -->\nmanaged\n<!-- /gentle-ai:persona -->\n")
+	writeBatchFile(t, hermesSoul, "<!-- shevanio-ai:persona -->\nmanaged\n<!-- /shevanio-ai:persona -->\n")
 	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"claude-code", "hermes"}}); err != nil {
 		t.Fatal(err)
 	}

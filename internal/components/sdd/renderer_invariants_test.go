@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 type orchestratorContractSection struct {
@@ -31,7 +31,7 @@ var currentOpenCodeOrchestratorSections = []orchestratorContractSection{
 	},
 	{
 		name:   "provider defect handoff",
-		marker: "#### Gentle AI Provider Defect Handoff (MANDATORY)",
+		marker: "#### Shevanio AI Provider Defect Handoff (MANDATORY)",
 		sentinels: []string{
 			"`report_and_continue`, `continue_without_reporting`, `stop_here`",
 			"Only after explicit consent and that final privacy scan",
@@ -42,7 +42,7 @@ var currentOpenCodeOrchestratorSections = []orchestratorContractSection{
 		name:   "edit-authority consent relay",
 		marker: "#### SDD Edit-Authority Consent Relay (MANDATORY)",
 		sentinels: []string{
-			"gentle-ai.sdd-integration.consent/v1",
+			"shevanio-ai.sdd-integration.consent/v1",
 			"never run the grant unprompted",
 			"re-enter through native status",
 		},
@@ -202,7 +202,7 @@ func assertCurrentOpenCodeOrchestratorContract(t *testing.T, label string, conte
 	})
 	if profileName == "" {
 		assertTextContainsClauses(t, label+" model assignment contract", content, []string{
-			"<!-- gentle-ai:sdd-model-assignments -->",
+			"<!-- shevanio-ai:sdd-model-assignments -->",
 			"## Model Assignments",
 			"agent.gentle-orchestrator.model",
 			"agent.sdd-<phase>.model",
@@ -215,7 +215,7 @@ func TestOpenCodeBaseOrchestratorPreservesCurrentContract(t *testing.T) {
 	content := renderSDDOrchestratorAsset(model.AgentOpenCode)
 	assertCurrentOpenCodeOrchestratorContract(t, "OpenCode base orchestrator", content, model.AgentOpenCode, "")
 
-	visibilityMarker := "<!-- gentle-ai:" + openCodeDelegationVisibilitySectionID + " -->"
+	visibilityMarker := "<!-- shevanio-ai:" + openCodeDelegationVisibilitySectionID + " -->"
 	for _, required := range []string{
 		visibilityMarker,
 		"#### Delegation Visibility (OpenCode Desktop)",
@@ -283,8 +283,8 @@ func TestOpenCodeNamedProfileOrchestratorPreservesCurrentContract(t *testing.T) 
 	assertCurrentOpenCodeOrchestratorContract(t, "OpenCode named profile", content, model.AgentOpenCode, profileName)
 
 	assertTextContainsClauses(t, "OpenCode named profile model assignments", content, []string{
-		"<!-- gentle-ai:sdd-model-assignments -->",
-		"<!-- /gentle-ai:sdd-model-assignments -->",
+		"<!-- shevanio-ai:sdd-model-assignments -->",
+		"<!-- /shevanio-ai:sdd-model-assignments -->",
 		"## Model Assignments",
 		"| orchestrator | openai/gpt-5.1 |",
 		"| sdd-apply-" + profileName + " | anthropic/claude-sonnet-4-5 |",
@@ -321,7 +321,7 @@ func TestOpenCodeNamedProfileOrchestratorPreservesCurrentContract(t *testing.T) 
 
 	// This is an existing named-profile exclusion, not a future inheritance rule:
 	// profile rendering deliberately removes the default Desktop narration block.
-	visibilityMarker := "<!-- gentle-ai:" + openCodeDelegationVisibilitySectionID + " -->"
+	visibilityMarker := "<!-- shevanio-ai:" + openCodeDelegationVisibilitySectionID + " -->"
 	if strings.Contains(content, visibilityMarker) {
 		t.Fatalf("named profile unexpectedly inherited the default Desktop delegation section")
 	}

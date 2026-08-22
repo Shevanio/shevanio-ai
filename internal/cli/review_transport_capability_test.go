@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestImmutableReviewRuntimeMatrix keeps runtime advertisement fail-closed for
@@ -184,7 +184,7 @@ func TestImmutableReviewTransportRefusalNamesWorkingExits(t *testing.T) {
 			if err == nil {
 				t.Fatal("want a refusal")
 			}
-			const exit = "gentle-ai review mode disable --scope clone --cwd <repo>"
+			const exit = "shevanio-ai review mode disable --scope clone --cwd <repo>"
 			if !strings.Contains(err.Error(), exit) {
 				t.Fatalf("refusal does not name the clone-scoped kill switch: %v", err)
 			}

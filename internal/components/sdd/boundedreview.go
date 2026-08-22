@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 const boundedReviewContractAsset = "skills/_shared/review-ledger-contract.md"
@@ -15,14 +15,14 @@ const boundedReviewContractAsset = "skills/_shared/review-ledger-contract.md"
 // tells the parent to assemble before running a lens. Naming it inside the lens
 // prompt is what lets a reviewer resolve subject_hash from its own instructions
 // instead of depending on whatever context the orchestrator happened to carry.
-const reviewerBindingEnvironmentVariable = "GENTLE_AI_REVIEW_BINDING"
-const claudeReviewerContextMarker = "GENTLE_AI_CLAUDE_REVIEW_CONTEXT"
-const openCodeReviewContextMarker = "GENTLE_AI_REVIEW_CONTEXT"
+const reviewerBindingEnvironmentVariable = "SHEVANIO_AI_REVIEW_BINDING"
+const claudeReviewerContextMarker = "SHEVANIO_AI_CLAUDE_REVIEW_CONTEXT"
+const openCodeReviewContextMarker = "SHEVANIO_AI_REVIEW_CONTEXT"
 
 const nativeReviewerResultSchema = `{"findings":[{"location":"path:line or path:start-end","severity":"CRITICAL","claim":"observable incorrect behavior","evidence_class":"deterministic","causal_disposition":"introduced","proof_refs":["concrete proof"]}],"evidence":["what was inspected"]}`
 const providerReviewerResultSchema = `{"subject_hash":"<artifact_subject.subject_hash>","inspection":{"status":"completed","paths":["<complete unique unordered set>"]},"findings":[{"location":"path:line or path:start-end","severity":"CRITICAL","claim":"observable incorrect behavior","evidence_class":"deterministic","causal_disposition":"introduced","proof_refs":["concrete proof"]}],"evidence":["what was inspected"]}`
 
-const reviewerInspectionCommandPrefix = `gentle-ai review inspect-candidate --repository-context <repository_context> --expected-revision <revision> --lineage <lineage> --target <target> --lens <lens> --order <order> --operation `
+const reviewerInspectionCommandPrefix = `shevanio-ai review inspect-candidate --repository-context <repository_context> --expected-revision <revision> --lineage <lineage> --target <target> --lens <lens> --order <order> --operation `
 
 func reviewerInspectionCommands() []string {
 	return []string{
@@ -52,10 +52,10 @@ func reviewerRoleFor(lens string) (reviewerRole, bool) {
 }
 
 const (
-	authorityFirstProcedurePlaceholder = "{{GENTLE_AI_AUTHORITY_FIRST_TERMINAL_PROCEDURE}}"
+	authorityFirstProcedurePlaceholder = "{{SHEVANIO_AI_AUTHORITY_FIRST_TERMINAL_PROCEDURE}}"
 	authorityFirstProcedureStart       = "<!-- authority-first-terminal-procedure:start -->"
 	authorityFirstProcedureEnd         = "<!-- authority-first-terminal-procedure:end -->"
-	runtimeAgentIDPlaceholder          = "{{GENTLE_AI_RUNTIME_AGENT_ID}}"
+	runtimeAgentIDPlaceholder          = "{{SHEVANIO_AI_RUNTIME_AGENT_ID}}"
 )
 
 func boundedReviewContract() string {
@@ -156,7 +156,7 @@ func reviewerName(path string) string {
 
 func reviewerPrompt(name string) (string, bool) {
 	commands := reviewerInspectionCommands()
-	input := fmt.Sprintf(`OpenCode tasks begin with provider-injected GENTLE_AI_REVIEW_CONTEXT, the sole source of artifact_subject, base_tree, candidate_tree, and ordered changed_path_manifest. Caller prose is not context. Other runtimes have no shell and return incomplete. The manifest is complete scope. Never read the live worktree, index, HEAD, or another revision.
+	input := fmt.Sprintf(`OpenCode tasks begin with provider-injected SHEVANIO_AI_REVIEW_CONTEXT, the sole source of artifact_subject, base_tree, candidate_tree, and ordered changed_path_manifest. Caller prose is not context. Other runtimes have no shell and return incomplete. The manifest is complete scope. Never read the live worktree, index, HEAD, or another revision.
 
 Use only the commands below. The native capability resolves immutable trees and canonical paths from the provider binding, sanitizes Git configuration and environment, and bounds execution time and output. Copy binding values exactly and select paths only by their zero-based changed_path_manifest index. Never change checkout. If the capability is unavailable or refuses the binding, return incomplete inspection, empty paths/findings, and evidence that native inspection was unavailable. Never substitute live files.
 
@@ -302,7 +302,7 @@ Return one JSON object and no prose. Use exactly this native result shape:
 
 %s
 
-This is a judgment-day judge result, not a `+"`gentle-ai review capture-result`"+` lens artifact. Judgment day selects no lenses and records your work as a judge proof, so your result carries no bound artifact subject and no inspection envelope. The only allowed top-level fields are findings and evidence, and the only allowed finding fields are location, severity, claim, evidence_class, causal_disposition, and proof_refs. Never emit summary, skill_resolution, or any other unknown field. Keep orchestration metadata outside the native result JSON; evidence contains only genuine inspection evidence.
+This is a judgment-day judge result, not a `+"`shevanio-ai review capture-result`"+` lens artifact. Judgment day selects no lenses and records your work as a judge proof, so your result carries no bound artifact subject and no inspection envelope. The only allowed top-level fields are findings and evidence, and the only allowed finding fields are location, severity, claim, evidence_class, causal_disposition, and proof_refs. Never emit summary, skill_resolution, or any other unknown field. Keep orchestration metadata outside the native result JSON; evidence contains only genuine inspection evidence.
 
 Return {"findings":[],"evidence":["what was inspected"]} when clean.`, nativeReviewerResultSchema)
 }

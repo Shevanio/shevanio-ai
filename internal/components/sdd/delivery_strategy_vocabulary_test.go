@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // SDD delivery strategy has a producer and a consumer. The producer is the
@@ -276,7 +276,7 @@ func reviewWorkloadGuardSections(t *testing.T) map[string]string {
 			return nil
 		}
 		body := content[start+len(heading):]
-		for _, next := range []string{"\n### ", "\n## ", "\n# ", "\n<!-- gentle-ai:"} {
+		for _, next := range []string{"\n### ", "\n## ", "\n# ", "\n<!-- shevanio-ai:"} {
 			if end := strings.Index(body, next); end >= 0 {
 				body = body[:end]
 			}

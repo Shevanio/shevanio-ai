@@ -669,7 +669,7 @@ func nonsenseGlobalMode(sandbox *Sandbox) error {
 	if err := stageProse(sandbox.Repo, "nonsense")(sandbox); err != nil {
 		return err
 	}
-	path := filepath.Join(sandbox.Home, ".gentle-ai", "state.json")
+	path := filepath.Join(sandbox.Home, ".shevanio-ai", "state.json")
 	record := globalModeRecord{RDDMode: "sometimes", RDDModeRecorded: "2026-01-01T00:00:00Z"}
 	encoded, err := json.MarshalIndent(record, "", "  ")
 	if err != nil {
@@ -811,7 +811,7 @@ func (h authorityHead) entry(lineage string) (authorityEntry, bool) {
 
 func renderAbandonAuthorization(entry authorityEntry, actor, reason string) string {
 	return strings.Join([]string{
-		"gentle-ai.review-abandon-authorization/v2",
+		"shevanio-ai.review-abandon-authorization/v2",
 		"lineage=" + entry.LineageID,
 		"revision=" + entry.Revision,
 		"snapshot_identity=" + entry.SnapshotIdentity,
@@ -1286,7 +1286,7 @@ func edgeJourneys() []Journey {
 				{Name: "fixture: repo", Fixture: baseRepo},
 				{Name: "fixture: stage docs", Fixture: stageProse("", "contract")},
 				{Name: "review start with contract version v2", Requires: startContractCapability,
-					Args:         productArgs("review", "start", "--contract", "gentle-ai.review-integration/v2"),
+					Args:         productArgs("review", "start", "--contract", "shevanio-ai.review-integration/v2"),
 					AbortOnBlock: true},
 			},
 		},

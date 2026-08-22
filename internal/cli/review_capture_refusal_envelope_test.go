@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // These tests are the RED-first proof for the finalize-ambiguity diagnosis:
@@ -18,7 +18,7 @@ import (
 // gentle-pi runtime, the OpenCode transport host) could only classify the
 // refusal as empty-output with mutation outcome unknown -- a false ambiguity
 // for an operation that provably never started. Every refusal here must emit
-// one `gentle-ai.review-integration.failure/v2` envelope on stdout, exactly as
+// one `shevanio-ai.review-integration.failure/v2` envelope on stdout, exactly as
 // the success path already prints its JSON envelope on stdout.
 
 // decodeCaptureRefusalEnvelope decodes the single stdout document a refused
@@ -151,7 +151,7 @@ func TestCaptureEvidenceSuccessEnvelopeIsByteIdenticalThroughRunReview(t *testin
 	}
 	var record reviewtransaction.VerificationEvidenceRecord
 	decodeStrictReviewJSON(t, output.Bytes(), &record)
-	if record.Schema != "gentle-ai.review-verification-evidence/v2" || record.LineageID != lineage {
+	if record.Schema != "shevanio-ai.review-verification-evidence/v2" || record.LineageID != lineage {
 		t.Fatalf("captured evidence record = %#v", record)
 	}
 	var reencoded bytes.Buffer

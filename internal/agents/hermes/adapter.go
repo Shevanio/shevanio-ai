@@ -7,9 +7,9 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 var LookPathOverride = exec.LookPath
@@ -172,5 +172,5 @@ type AgentNotInstallableError struct {
 }
 
 func (e AgentNotInstallableError) Error() string {
-	return fmt.Sprintf("agent %q must be installed manually before Gentle AI can configure it", e.Agent)
+	return fmt.Sprintf("agent %q must be installed manually before Shevanio AI can configure it", e.Agent)
 }

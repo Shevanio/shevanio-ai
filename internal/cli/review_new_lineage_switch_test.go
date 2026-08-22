@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestReviewStartNewLineageSwitchOffCreatesNoV3Entries is task 4.6 (spec
 // rdd-new-lineage-activation, "Kill-Switch-Off Is Structurally Unfailable
-// and Creates Nothing"): with GENTLE_AI_RDD_NEW_LINEAGE unset (the default),
+// and Creates Nothing"): with SHEVANIO_AI_RDD_NEW_LINEAGE unset (the default),
 // `review start` takes the legacy path and the v3/ authority root is never
 // created — not even an empty directory.
 func TestReviewStartNewLineageSwitchOffCreatesNoV3Entries(t *testing.T) {
 	reviewEnabledHome(t)
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "")
 	repo := initReviewCLIRepo(t)
 	path := filepath.Join(repo, "docs", "kill-switch-off.md")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -49,14 +49,14 @@ func TestReviewStartNewLineageSwitchOffCreatesNoV3Entries(t *testing.T) {
 }
 
 // TestReviewStartNewLineageSwitchOnFreezesV3Authority is task 4.5's GREEN
-// evidence for the ON branch: GENTLE_AI_RDD_NEW_LINEAGE set routes `review
+// evidence for the ON branch: SHEVANIO_AI_RDD_NEW_LINEAGE set routes `review
 // start` through ReviewCore.Next and AuthorityStore.Mutate, writing exactly
 // review-state.json under v3/<lineage>/ with the tier, lenses, and
 // correction budget the shared preamble already computed — and creates no
 // legacy v1/v2 artifact for that lineage.
 func TestReviewStartNewLineageSwitchOnFreezesV3Authority(t *testing.T) {
 	reviewEnabledHome(t)
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	repo := initReviewCLIRepo(t)
 	lines := make([]string, 129)
 	for index := range lines {

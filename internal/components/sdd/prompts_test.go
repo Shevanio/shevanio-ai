@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/communitytool"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/opencode"
 )
 
 // TestSharedPromptDir verifies the expected directory path is returned.
@@ -485,7 +485,7 @@ func TestWriteSharedPromptFilesOmitCodeGraphGuidanceByDefault(t *testing.T) {
 			t.Fatalf("ReadFile(%q) error = %v", path, err)
 		}
 		text := string(content)
-		if strings.Contains(text, "<!-- gentle-ai:codegraph-guidance -->") || strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>") {
+		if strings.Contains(text, "<!-- shevanio-ai:codegraph-guidance -->") || strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s unexpectedly contains CodeGraph guidance by default", phase)
 		}
 	}
@@ -506,10 +506,10 @@ func TestWriteSharedPromptFilesIncludeCodeGraphGuidanceWhenEnabled(t *testing.T)
 			t.Fatalf("ReadFile(%q) error = %v", path, err)
 		}
 		text := string(content)
-		if !strings.Contains(text, "<!-- gentle-ai:codegraph-guidance -->") || !strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>") {
+		if !strings.Contains(text, "<!-- shevanio-ai:codegraph-guidance -->") || !strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s missing CodeGraph guidance when enabled", phase)
 		}
-		if count := strings.Count(text, "<!-- gentle-ai:codegraph-guidance -->"); count != 1 {
+		if count := strings.Count(text, "<!-- shevanio-ai:codegraph-guidance -->"); count != 1 {
 			t.Fatalf("%s has %d CodeGraph guidance sections, want 1", phase, count)
 		}
 	}
@@ -526,7 +526,7 @@ func TestInjectOpenCodeSingleModeSubagentPromptsOmitCodeGraphGuidanceByDefault(t
 	agentsMap := readOpenCodeAgents(t, filepath.Join(home, ".config", "opencode", "opencode.json"))
 	for _, agentName := range sddInstalledSubAgentsForCodeGraphTest() {
 		prompt := agentPrompt(t, agentsMap, agentName)
-		if strings.Contains(prompt, "<!-- gentle-ai:codegraph-guidance -->") || strings.Contains(prompt, "gentle-ai codegraph init --cwd <project-root>") {
+		if strings.Contains(prompt, "<!-- shevanio-ai:codegraph-guidance -->") || strings.Contains(prompt, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s unexpectedly contains CodeGraph guidance by default", agentName)
 		}
 	}
@@ -544,16 +544,16 @@ func TestInjectOpenCodeSingleModeSubagentPromptsRespectBashCapabilityWhenCodeGra
 	bashCapableAgents := append(SharedPromptPhases(), "jd-fix-agent", opencode.ReviewValidatorAgent)
 	for _, agentName := range bashCapableAgents {
 		prompt := agentPrompt(t, agentsMap, agentName)
-		if !strings.Contains(prompt, "<!-- gentle-ai:codegraph-guidance -->") || !strings.Contains(prompt, "gentle-ai codegraph init --cwd <project-root>") {
+		if !strings.Contains(prompt, "<!-- shevanio-ai:codegraph-guidance -->") || !strings.Contains(prompt, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s missing CodeGraph guidance when enabled", agentName)
 		}
-		if count := strings.Count(prompt, "<!-- gentle-ai:codegraph-guidance -->"); count != 1 {
+		if count := strings.Count(prompt, "<!-- shevanio-ai:codegraph-guidance -->"); count != 1 {
 			t.Fatalf("%s has %d CodeGraph guidance sections, want 1", agentName, count)
 		}
 	}
 	for _, agentName := range sddShellDisabledSubAgentsForCodeGraphTest() {
 		prompt := agentPrompt(t, agentsMap, agentName)
-		if strings.Contains(prompt, "<!-- gentle-ai:codegraph-guidance -->") || strings.Contains(prompt, "gentle-ai codegraph init --cwd <project-root>") {
+		if strings.Contains(prompt, "<!-- shevanio-ai:codegraph-guidance -->") || strings.Contains(prompt, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s contains shell-based CodeGraph guidance with bash disabled", agentName)
 		}
 		assertOpenCodeSubAgentReadOnlyTools(t, agentsMap, agentName)
@@ -575,19 +575,19 @@ func TestInjectOpenCodeMultiModeSubagentPromptFilesIncludeCodeGraphGuidanceWhenE
 			t.Fatalf("ReadFile(%q) error = %v", path, err)
 		}
 		text := string(content)
-		if !strings.Contains(text, "<!-- gentle-ai:codegraph-guidance -->") || !strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>") {
+		if !strings.Contains(text, "<!-- shevanio-ai:codegraph-guidance -->") || !strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s missing CodeGraph guidance when enabled", phase)
 		}
 	}
 
 	agentsMap := readOpenCodeAgents(t, filepath.Join(home, ".config", "opencode", "opencode.json"))
 	fixPrompt := agentPrompt(t, agentsMap, "jd-fix-agent")
-	if !strings.Contains(fixPrompt, "<!-- gentle-ai:codegraph-guidance -->") || !strings.Contains(fixPrompt, "gentle-ai codegraph init --cwd <project-root>") {
+	if !strings.Contains(fixPrompt, "<!-- shevanio-ai:codegraph-guidance -->") || !strings.Contains(fixPrompt, "shevanio-ai codegraph init --cwd <project-root>") {
 		t.Fatal("jd-fix-agent missing CodeGraph guidance in multi-mode inline prompt when enabled")
 	}
 	for _, agentName := range sddShellDisabledSubAgentsForCodeGraphTest() {
 		prompt := agentPrompt(t, agentsMap, agentName)
-		if strings.Contains(prompt, "<!-- gentle-ai:codegraph-guidance -->") || strings.Contains(prompt, "gentle-ai codegraph init --cwd <project-root>") {
+		if strings.Contains(prompt, "<!-- shevanio-ai:codegraph-guidance -->") || strings.Contains(prompt, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s contains shell-based CodeGraph guidance with bash disabled", agentName)
 		}
 		assertOpenCodeSubAgentReadOnlyTools(t, agentsMap, agentName)
@@ -625,7 +625,7 @@ func TestInjectNativeSDDSubagentsIncludeCodeGraphGuidanceWhenEnabled(t *testing.
 					t.Fatalf("ReadFile(%q) error = %v", path, err)
 				}
 				text := string(content)
-				if count := strings.Count(text, "<!-- gentle-ai:codegraph-guidance -->"); count != 1 {
+				if count := strings.Count(text, "<!-- shevanio-ai:codegraph-guidance -->"); count != 1 {
 					t.Fatalf("%s guidance count = %d, want 1", fileName, count)
 				}
 
@@ -684,7 +684,7 @@ func TestInjectNativeSDDSubagentsOmitCodeGraphGuidanceByDefault(t *testing.T) {
 					t.Fatalf("ReadFile(%q) error = %v", path, err)
 				}
 				text := string(content)
-				if strings.Contains(text, "<!-- gentle-ai:codegraph-guidance -->") || strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>") {
+				if strings.Contains(text, "<!-- shevanio-ai:codegraph-guidance -->") || strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>") {
 					t.Fatalf("%s native subagent unexpectedly contains CodeGraph guidance by default", fileName)
 				}
 				for _, grant := range []string{claudeCodeGraphToolGrant, kiroCodeGraphToolGrant} {
@@ -723,7 +723,7 @@ func TestInjectKimiYAMLSubagentsOmitCodeGraphGuidanceByDefault(t *testing.T) {
 			t.Fatalf("ReadFile(%q) error = %v", path, err)
 		}
 		text := string(content)
-		if strings.Contains(text, "  instructions: |-") || strings.Contains(text, "gentle-ai codegraph init --cwd <project-root>") {
+		if strings.Contains(text, "  instructions: |-") || strings.Contains(text, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s YAML unexpectedly contains CodeGraph guidance by default", fileName)
 		}
 	}
@@ -748,7 +748,7 @@ func TestInjectKimiYAMLSubagentsRemainControlFilesWhenCodeGraphEnabled(t *testin
 				t.Fatalf("%s YAML missing %q:\n%s", fileName, want, text)
 			}
 		}
-		for _, forbidden := range []string{"  instructions: |-", "<!-- gentle-ai:codegraph-guidance -->", "gentle-ai codegraph init --cwd <project-root>"} {
+		for _, forbidden := range []string{"  instructions: |-", "<!-- shevanio-ai:codegraph-guidance -->", "shevanio-ai codegraph init --cwd <project-root>"} {
 			if strings.Contains(text, forbidden) {
 				t.Fatalf("%s YAML unexpectedly contains %q:\n%s", fileName, forbidden, text)
 			}
@@ -760,7 +760,7 @@ func TestInjectKimiYAMLSubagentsRemainControlFilesWhenCodeGraphEnabled(t *testin
 			t.Fatalf("ReadFile(%q) error = %v", markdownPath, err)
 		}
 		markdownText := string(markdownContent)
-		if !strings.Contains(markdownText, "<!-- gentle-ai:codegraph-guidance -->") || !strings.Contains(markdownText, "gentle-ai codegraph init --cwd <project-root>") {
+		if !strings.Contains(markdownText, "<!-- shevanio-ai:codegraph-guidance -->") || !strings.Contains(markdownText, "shevanio-ai codegraph init --cwd <project-root>") {
 			t.Fatalf("%s referenced Markdown prompt missing CodeGraph guidance when enabled", markdownPath)
 		}
 	}

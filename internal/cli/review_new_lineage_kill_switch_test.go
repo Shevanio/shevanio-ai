@@ -9,7 +9,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // This file is coverage closure for spec rdd-new-lineage-activation ->
@@ -74,18 +74,18 @@ func snapshotAuthorityTree(t *testing.T, root string) string {
 // validate` gates plus OfferReviewAfterVerify's own guard path — with the
 // kill switch off and the new-lineage activation env var on, twice against
 // the identical fixture (same-fixture double-eval), and proves the entire
-// .git/gentle-ai subtree is byte-identical before and after each pass.
+// .git/shevanio-ai subtree is byte-identical before and after each pass.
 func TestNewLineageKillSwitchOffProducesZeroSideEffectsAcrossEntrySurfaces(t *testing.T) {
 	reviewModeHome(t)
 	repo := initReviewCLIRepo(t)
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	if err := os.WriteFile(filepath.Join(repo, "tracked.txt"), []byte("kill-switch-off fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	runReviewCLIGit(t, repo, "add", "tracked.txt")
 	disableReviewForClone(t, repo)
 
-	authorityRoot := filepath.Join(repo, ".git", "gentle-ai")
+	authorityRoot := filepath.Join(repo, ".git", "shevanio-ai")
 	runFullPass := func(pass string) {
 		before := snapshotAuthorityTree(t, authorityRoot)
 		for _, gate := range []reviewtransaction.GateKind{
@@ -122,7 +122,7 @@ func TestNewLineageKillSwitchOffProducesZeroSideEffectsAcrossEntrySurfaces(t *te
 
 		after := snapshotAuthorityTree(t, authorityRoot)
 		if before != after {
-			t.Fatalf("%s: .git/gentle-ai changed while the kill switch was off:\nbefore:\n%s\nafter:\n%s", pass, before, after)
+			t.Fatalf("%s: .git/shevanio-ai changed while the kill switch was off:\nbefore:\n%s\nafter:\n%s", pass, before, after)
 		}
 	}
 

@@ -76,7 +76,7 @@ func (b *battery) runOpenCodeLane() {
 	consent, stderr, _ := b.runJSON("consent", repo,
 		"review", "start", "--contract", reviewContract, "--cwd", repo,
 		"--target", target, "--projection", "workspace", "--agent", "opencode", "--consent", "relay")
-	if getString(consent, "action") != "consent_required" || getString(consent, "schema") != "gentle-ai.review-integration.consent/v3" {
+	if getString(consent, "action") != "consent_required" || getString(consent, "schema") != "shevanio-ai.review-integration.consent/v3" {
 		b.fail(openCodeLane, "consent envelope surfaced", fmt.Sprintf("schema=%q action=%q %s", getString(consent, "schema"), getString(consent, "action"), firstLine(stderr)))
 		return
 	}
@@ -186,12 +186,12 @@ func (b *battery) runOpenCodeLane() {
 		case !controlResult.AfterOK:
 			b.fail(openCodeLane, "lens frame: Go-typed control", firstLine(controlResult.Error))
 			return
-		case !strings.HasPrefix(controlResult.ChildPrompt, "GENTLE_AI_REVIEW_PROVIDER_MATERIALIZATION "):
+		case !strings.HasPrefix(controlResult.ChildPrompt, "SHEVANIO_AI_REVIEW_PROVIDER_MATERIALIZATION "):
 			b.fail(openCodeLane, "lens frame: Go-typed control", "child prompt is not the Go-issued materialization")
 			return
 		default:
 			manifest := b.record("result-artifact", []byte(controlResult.Output))
-			if getString(manifest, "schema") != "gentle-ai.review-result-artifact/v2" || getString(manifest, "admission_decision") != "completed" {
+			if getString(manifest, "schema") != "shevanio-ai.review-result-artifact/v2" || getString(manifest, "admission_decision") != "completed" {
 				b.fail(openCodeLane, "lens frame: Go-typed control", "completion did not round-trip a completed result artifact")
 				return
 			}
@@ -435,7 +435,7 @@ func (b *battery) driveCorrectionToValidation(repo, fixedBase string) bool {
 }
 
 // prepareHookHarness materializes the node harness directory: the REAL plugin
-// bytes, the hook emulator, and a PATH shim so the plugin's spawn("gentle-ai")
+// bytes, the hook emulator, and a PATH shim so the plugin's spawn("shevanio-ai")
 // resolves to the binary under test.
 func (b *battery) prepareHookHarness(repo string) (string, error) {
 	if _, err := exec.LookPath("node"); err != nil {
@@ -456,7 +456,7 @@ func (b *battery) prepareHookHarness(repo string) (string, error) {
 		return "", err
 	}
 	shim := "#!/bin/sh\nexec \"" + b.binary + "\" \"$@\"\n"
-	if err := os.WriteFile(filepath.Join(dir, "bin", "gentle-ai"), []byte(shim), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "bin", "shevanio-ai"), []byte(shim), 0o755); err != nil {
 		return "", err
 	}
 	_ = repo
@@ -499,7 +499,7 @@ func (b *battery) checkValidatorInspectionRecipe(repo, childPrompt string) {
 		b.fail(openCodeLane, name, "child prompt Input is not decodable JSON: "+err.Error())
 		return
 	}
-	if !strings.Contains(childPrompt, "gentle-ai review inspect-candidate") {
+	if !strings.Contains(childPrompt, "shevanio-ai review inspect-candidate") {
 		b.fail(openCodeLane, name, "child prompt never names the immutable inspection command")
 		return
 	}
@@ -543,7 +543,7 @@ func (b *battery) runHookCase(harnessDir string, c harnessCase) (harnessResult, 
 	}
 	command := exec.Command("node", "harness.mts", configPath)
 	command.Dir = harnessDir
-	// The harness spawns gentle-ai itself, so it has to inherit the battery's
+	// The harness spawns shevanio-ai itself, so it has to inherit the battery's
 	// sandbox HOME too. Without it the transport child resolves the operator's
 	// own review mode instead of the battery's, and on any machine that never
 	// opted in the lane fails as an unavailable materialization rather than
@@ -588,7 +588,7 @@ func grantedInvocation(consent map[string]any) string {
 // preserving the binding semantics byte-for-byte at the field level.
 func reserializeBindingLine(prompt string) (string, error) {
 	line, rest, hasRest := strings.Cut(prompt, "\n")
-	const header = "GENTLE_AI_REVIEW_PROVIDER_TASK "
+	const header = "SHEVANIO_AI_REVIEW_PROVIDER_TASK "
 	encoded, found := strings.CutPrefix(line, header)
 	if !found {
 		return "", fmt.Errorf("provider task prompt has no role binding header")

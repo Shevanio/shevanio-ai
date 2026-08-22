@@ -45,7 +45,7 @@ console.log(JSON.stringify({ prompt: before.args.prompt, output: after.output })
 	if result.Prompt != "Go-materialized immutable prompt" || result.Output != "captured" {
 		t.Fatalf("relay result = %#v", result)
 	}
-	frames := "{\"schema\":\"gentle-ai.provider-transport/v1\",\"operation\":\"start\",\"prompt\":\"Go must receive this original host prompt\"}\n{\"schema\":\"gentle-ai.provider-transport/v1\",\"operation\":\"complete\",\"nonce\":\"nonce\",\"output\":\"untrusted reviewer output\"}\n"
+	frames := "{\"schema\":\"shevanio-ai.provider-transport/v1\",\"operation\":\"start\",\"prompt\":\"Go must receive this original host prompt\"}\n{\"schema\":\"shevanio-ai.provider-transport/v1\",\"operation\":\"complete\",\"nonce\":\"nonce\",\"output\":\"untrusted reviewer output\"}\n"
 	if log != frames+frames {
 		t.Fatalf("relay frames = %q", log)
 	}
@@ -92,11 +92,11 @@ console.log(JSON.stringify({ refused, output: after.output }))
 // one completion frame with a captured result, logging both inbound frames.
 const posixRelayFixture = `#!/bin/sh
 IFS= read -r start
-printf '%s\n' "$start" >> "$GENTLE_AI_RELAY_LOG"
-printf '%s\n' '{"schema":"gentle-ai.provider-transport/v1","operation":"prompt","nonce":"nonce","prompt":"Go-materialized immutable prompt"}'
+printf '%s\n' "$start" >> "$SHEVANIO_AI_RELAY_LOG"
+printf '%s\n' '{"schema":"shevanio-ai.provider-transport/v1","operation":"prompt","nonce":"nonce","prompt":"Go-materialized immutable prompt"}'
 IFS= read -r complete
-printf '%s\n' "$complete" >> "$GENTLE_AI_RELAY_LOG"
-printf '%s\n' '{"schema":"gentle-ai.provider-transport/v1","operation":"result","output":"captured"}'
+printf '%s\n' "$complete" >> "$SHEVANIO_AI_RELAY_LOG"
+printf '%s\n' '{"schema":"shevanio-ai.provider-transport/v1","operation":"result","output":"captured"}'
 `
 
 func TestOpenCodeReviewTransportPluginRefusesCompletionWithoutMatchingBeforeHook(t *testing.T) {
@@ -216,7 +216,7 @@ func TestOpenCodeReviewTransportPluginPassesThroughIsolatedLegacyHook(t *testing
 	// managed plugin from before current instances shared a global registry.
 	const legacy = `import { spawn } from "node:child_process"
 const REVIEW_AGENTS = new Set(["review-risk", "review-resilience", "review-readability", "review-reliability", "review-refuter", "review-validator"])
-const TRANSPORT = { Command: "gentle-ai", Schema: "gentle-ai.provider-transport/v1", Start: "start", Prompt: "prompt", Complete: "complete", Result: "result" }
+const TRANSPORT = { Command: "shevanio-ai", Schema: "shevanio-ai.provider-transport/v1", Start: "start", Prompt: "prompt", Complete: "complete", Result: "result" }
 function startRelay(cwd, prompt) {
   const child = spawn(TRANSPORT.Command, ["review", "opencode-transport"], { cwd, stdio: ["pipe", "pipe", "pipe"] })
   let buffered = ""
@@ -294,7 +294,7 @@ export default legacyPlugin
 import legacy from "./legacy.mts"
 
 const original = "Go must receive this original host prompt"
-const materialized = "GENTLE_AI_REVIEW_PROVIDER_MATERIALIZATION {\"task_prompt\":\"Go must receive this original host prompt\"}\nGo-materialized immutable prompt"
+const materialized = "SHEVANIO_AI_REVIEW_PROVIDER_MATERIALIZATION {\"task_prompt\":\"Go must receive this original host prompt\"}\nGo-materialized immutable prompt"
 const currentHooks = await current({ directory: process.cwd(), worktree: process.cwd() })
 const legacyHooks = await legacy({ directory: process.cwd(), worktree: process.cwd() })
 const before = async (hooks, callID, task) => hooks["tool.execute.before"]({ tool: "task", sessionID: "session", callID }, task)
@@ -326,7 +326,7 @@ console.log(JSON.stringify({ ok: true }))
 	const relay = `#!/usr/bin/env node
 import { appendFileSync } from "node:fs"
 import { createInterface } from "node:readline"
-const materializationHeader = "GENTLE_AI_REVIEW_PROVIDER_MATERIALIZATION "
+const materializationHeader = "SHEVANIO_AI_REVIEW_PROVIDER_MATERIALIZATION "
 let start
 const lines = createInterface({ input: process.stdin })
 lines.on("line", (line) => {
@@ -334,13 +334,13 @@ lines.on("line", (line) => {
   if (!start) {
     start = frame
     const prompt = frame.prompt.startsWith(materializationHeader) ? frame.prompt : materializationHeader + JSON.stringify({ task_prompt: frame.prompt }) + "\nGo-materialized immutable prompt"
-    process.stdout.write(JSON.stringify({ schema: "gentle-ai.provider-transport/v1", operation: "prompt", nonce: "nonce", prompt }) + "\n")
+    process.stdout.write(JSON.stringify({ schema: "shevanio-ai.provider-transport/v1", operation: "prompt", nonce: "nonce", prompt }) + "\n")
     return
   }
   const secondary = start.prompt.startsWith(materializationHeader)
-  appendFileSync(process.env.GENTLE_AI_RELAY_LOG, JSON.stringify({ secondary, output: frame.output }) + "\n")
+  appendFileSync(process.env.SHEVANIO_AI_RELAY_LOG, JSON.stringify({ secondary, output: frame.output }) + "\n")
   const output = secondary ? frame.output : "captured"
-  process.stdout.write(JSON.stringify({ schema: "gentle-ai.provider-transport/v1", operation: "result", output }) + "\n")
+  process.stdout.write(JSON.stringify({ schema: "shevanio-ai.provider-transport/v1", operation: "result", output }) + "\n")
 })
 `
 	output, log := runOpenCodeTransportPluginHarness(t, map[string]string{"current.mts": string(current), "legacy.mts": legacy}, harness, relay)
@@ -383,13 +383,13 @@ func runOpenCodeTransportPluginHarness(t *testing.T, modules map[string]string, 
 	if err := os.WriteFile(filepath.Join(root, "harness.mts"), []byte(harness), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(bin, "gentle-ai"), []byte(relay), 0o700); err != nil {
+	if err := os.WriteFile(filepath.Join(bin, "shevanio-ai"), []byte(relay), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	logPath := filepath.Join(root, "relay.log")
 	command := exec.Command(node, "harness.mts")
 	command.Dir = root
-	command.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "GENTLE_AI_RELAY_LOG="+logPath)
+	command.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "SHEVANIO_AI_RELAY_LOG="+logPath)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		t.Fatalf("transport plugin harness failed: %v\n%s", err, output)
