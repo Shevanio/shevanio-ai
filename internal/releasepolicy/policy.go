@@ -44,6 +44,13 @@ func Validate(root, markerPath, runID string) error {
 	if err := validateYAMLSemantics("release workflow", workflow, expectedReleaseWorkflowYAML); err != nil {
 		return err
 	}
+	rcWorkflow, err := readRegularFile(filepath.Join(root, ".github", "workflows", "release-rc.yml"))
+	if err != nil {
+		return fmt.Errorf("read canonical RC release workflow: %w", err)
+	}
+	if err := validateYAMLSemantics("RC release workflow", rcWorkflow, expectedRCReleaseWorkflowYAML); err != nil {
+		return err
+	}
 	contractSemver, err := readProviderContractSemver(filepath.Join(root, "contracts", "review-provider-contract", "CONTRACT_SEMVER"))
 	if err != nil {
 		return err
@@ -623,6 +630,8 @@ signs:
       - "-t"
       - "repo=Shevanio/shevanio-ai;tag={{ .Tag }}"
     output: true
+release:
+  prerelease: auto
 changelog:
   sort: asc
   filters:
@@ -649,6 +658,14 @@ on:
     tags:
       - "v*"
       - "!v*-*"
+  workflow_call:
+    inputs:
+      release_channel:
+        required: true
+        type: string
+env:
+  RELEASE_CHANNEL: ${{ inputs.release_channel || 'stable' }}
+  GORELEASER_PUBLISH_SKIP: ${{ inputs.release_channel == 'rc' && '--skip=homebrew' || '' }}
 permissions:
   contents: read
 concurrency:
@@ -770,10 +787,10 @@ jobs:
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
         with:
           version: v2.15.2
-          args: release --clean
+          args: release --clean ${{ env.GORELEASER_PUBLISH_SKIP }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ env.RELEASE_CHANNEL == 'stable' && secrets.HOMEBREW_TAP_TOKEN || '' }}
           MINISIGN_SECRET_KEY_FILE: ${{ env.MINISIGN_SECRET_KEY_FILE }}
           MINISIGN_PUBLIC_KEYS_CANONICAL: ${{ steps.trust-anchors.outputs.canonical }}
       - name: Remove signing material
@@ -809,4 +826,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MINISIGN_PUBLIC_KEYS: ${{ vars.MINISIGN_PUBLIC_KEYS }}
         run: ./scripts/verify-release-assets.sh
+`
+
+const expectedRCReleaseWorkflowYAML = `name: Release candidate
+on:
+  push:
+    tags:
+      - "v*-rc.*"
+permissions:
+  contents: write
+  actions: read
+jobs:
+  release-candidate:
+    uses: ./.github/workflows/release.yml
+    with:
+      release_channel: rc
 `

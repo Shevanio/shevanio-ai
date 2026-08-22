@@ -19,7 +19,18 @@ require_env GITHUB_SHA
 [[ "$GITHUB_REF_TYPE" == "tag" ]] || die "release must run from a tag push"
 
 tag=$GITHUB_REF_NAME
-[[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || die "tag must be exact stable semver (vMAJOR.MINOR.PATCH)"
+channel=${RELEASE_CHANNEL:-stable}
+case "$channel" in
+  stable)
+    [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] ||
+      die "tag must be exact stable semver (vMAJOR.MINOR.PATCH)"
+    ;;
+  rc)
+    [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc\.([1-9][0-9]*)$ ]] ||
+      die "tag must be exact RC semver (vMAJOR.MINOR.PATCH-rc.N)"
+    ;;
+  *) die "RELEASE_CHANNEL must be stable or rc" ;;
+esac
 if ! canonical_public_keys=$(./scripts/canonicalize-release-public-keys.sh); then
   die "MINISIGN_PUBLIC_KEYS is not canonical"
 fi

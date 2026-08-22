@@ -31,7 +31,7 @@ The public key is not secret, but its provenance is security-critical. A key fet
    ```
 
 2. Extract the base64 payload from line 2 of `shevanio-ai-release.pub`. Publish that payload and a separately computed fingerprint through the project website or another maintainer-authenticated channel **before** publishing the first signed release.
-3. Create or protect the GitHub Actions environment named `release`. Require appropriate reviewers and restrict it to protected stable-version tags.
+3. Create or protect the GitHub Actions environment named `release`. Require appropriate reviewers and restrict it to protected `v*` tags.
 4. Configure the public trust anchor as a repository Actions variable so the read-only preflight job can validate it. Configure the private key only inside the protected `release` environment:
 
    | Name | Kind | Exact value |
@@ -55,6 +55,30 @@ The updater caps a release archive at **128 MiB**. It rejects both oversized `Co
 ### Bootstrap existing installations
 
 Binaries released before authenticated manifests cannot retroactively authenticate their first upgrade. For the first signed version, instruct existing users to download manually, verify the out-of-band public key fingerprint, verify the signed manifest and checksum, and then install. All later built-in upgrades are authenticated by the embedded trust anchor.
+
+## Publish a release candidate
+
+Public trust anchors and fingerprints must be independently published before the first public RC. Do not use the GitHub release being authenticated as their only publication channel.
+
+1. Merge the release candidate bytes to `main` and wait for CI on that exact commit to succeed.
+2. Fetch `origin/main`, verify the intended commit is still its exact tip, then create an annotated tag matching exactly `vMAJOR.MINOR.PATCH-rc.N`, where `N` starts at 1 and has no leading zero:
+
+   ```bash
+   git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
+   git switch --detach refs/remotes/origin/main
+   test -z "$(git status --porcelain=v1 --untracked-files=all)"
+   tag=v2.5.0-rc.1
+   [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc\.([1-9][0-9]*)$ ]]
+   git tag -a "$tag" -m "Release $tag"
+   test "$(git cat-file -t "refs/tags/$tag")" = tag
+   git push origin "refs/tags/$tag:refs/tags/$tag"
+   ```
+
+3. The tag push starts the `Release candidate` workflow, which rejects lightweight tags, tags not pointing at current `origin/main`, dirty or module-mutating checkouts, noncanonical tag forms, missing trust anchors, signing-key mismatches, and failed repository/tag-bound signing canaries.
+4. Approve the protected `release` environment deployment only after confirming the workflow names the intended tag and commit.
+5. Wait for remote verification to prove the GitHub release is immutable, non-draft, and prerelease; that its asset inventory is exact; and that the signed checksums carry the trusted comment `repo=Shevanio/shevanio-ai;tag=vMAJOR.MINOR.PATCH-rc.N`.
+
+RC publication uses the canonical GoReleaser configuration with `--skip=homebrew`. It publishes the normal archives, checksum manifest and signature, and provider-contract bundle, but cannot update `Shevanio/homebrew-tap`. Because the release is verified as a prerelease, the stable updater channel ignores it. Stable publication and RC-to-stable promotion remain separate paths.
 
 ## Rotate without a trust gap
 

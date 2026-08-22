@@ -125,6 +125,13 @@ func TestReleaseDistributionPolicyAssertionFailsClosed(t *testing.T) {
 			},
 		},
 		{
+			name: "RC workflow bypasses shared publisher",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join(".github", "workflows", "release-rc.yml"),
+					"uses: ./.github/workflows/release.yml", "uses: actions/upload-artifact@v4")
+			},
+		},
+		{
 			name: "renamed canonical config",
 			mutate: func(t *testing.T, root string) {
 				if err := os.Rename(filepath.Join(root, ".goreleaser.yaml"), filepath.Join(root, ".goreleaser-renamed.yaml")); err != nil {
@@ -406,6 +413,7 @@ func newReleasePolicyFixture(t *testing.T) string {
 		"go.mod": readRepositoryFile(t, "go.mod"),
 		"go.sum": readRepositoryFile(t, "go.sum"),
 		filepath.Join(".github", "workflows", "release.yml"):              readRepositoryFile(t, ".github", "workflows", "release.yml"),
+		filepath.Join(".github", "workflows", "release-rc.yml"):           readRepositoryFile(t, ".github", "workflows", "release-rc.yml"),
 		filepath.Join("internal", "releasepolicy", "policy.go"):           readRepositoryFile(t, "internal", "releasepolicy", "policy.go"),
 		filepath.Join("internal", "releasepolicycmd", "main.go"):          readRepositoryFile(t, "internal", "releasepolicycmd", "main.go"),
 		filepath.Join("scripts", "verify-release-assets.sh"):              readRepositoryFile(t, "scripts", "verify-release-assets.sh"),

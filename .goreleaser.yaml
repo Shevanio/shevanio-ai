@@ -92,6 +92,9 @@ signs:
       - "repo=Shevanio/shevanio-ai;tag={{ .Tag }}"
     output: true
 
+release:
+  prerelease: auto
+
 changelog:
   sort: asc
   filters:

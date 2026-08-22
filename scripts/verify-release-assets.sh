@@ -22,7 +22,18 @@ else
   : "${GITHUB_REF_NAME:?GITHUB_REF_NAME is required when RELEASE_VERIFICATION_TAG is unset}"
   tag=$GITHUB_REF_NAME
 fi
-[[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || die "tag is not exact stable semver"
+channel=${RELEASE_CHANNEL:-stable}
+case "$channel" in
+  stable)
+    [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || die "tag is not exact stable semver"
+    expected_prerelease=false
+    ;;
+  rc)
+    [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc\.([1-9][0-9]*)$ ]] || die "tag is not exact RC semver"
+    expected_prerelease=true
+    ;;
+  *) die "RELEASE_CHANNEL must be stable or rc" ;;
+esac
 version=${tag#v}
 if [[ -v PROVIDER_CONTRACT_SEMVER ]]; then
   contract_semver=$PROVIDER_CONTRACT_SEMVER
@@ -50,7 +61,8 @@ release_json=$work/release.json
 gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" >"$release_json"
 [[ "$(jq -r '.tag_name' "$release_json")" == "$tag" ]] || die "remote release tag mismatch"
 [[ "$(jq -r '.draft' "$release_json")" == "false" ]] || die "remote release is still a draft"
-[[ "$(jq -r '.prerelease' "$release_json")" == "false" ]] || die "stable release is marked prerelease"
+[[ "$(jq -r '.prerelease' "$release_json")" == "$expected_prerelease" ]] || die "remote release channel mismatch"
+[[ "$(jq -r '.immutable' "$release_json")" == "true" ]] || die "remote release is not immutable"
 
 mapfile -t actual_assets < <(jq -r '.assets[].name' "$release_json" | LC_ALL=C sort)
 mapfile -t sorted_expected_assets < <(printf '%s\n' "${expected_assets[@]}" | LC_ALL=C sort)
