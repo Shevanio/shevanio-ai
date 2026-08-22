@@ -73,7 +73,7 @@ else
     if jq -e '.draft == true and (.assets | length) == 0' <<<"$release" >/dev/null; then
       recovery_state=reset-empty-draft
     elif jq -e '.draft == false and .prerelease == false and .immutable == true' <<<"$release" >/dev/null &&
-      diff -u <(printf '%s\n' "shevanio-ai_${version}_darwin_amd64.tar.gz" "shevanio-ai_${version}_darwin_arm64.tar.gz" "shevanio-ai_${version}_linux_amd64.tar.gz" "shevanio-ai_${version}_linux_arm64.tar.gz" "shevanio-ai-review-provider-contract-${provider_contract_semver}.tar.gz" checksums.txt checksums.txt.minisig | LC_ALL=C sort) <(jq -r '.assets[].name' <<<"$release" | LC_ALL=C sort); then
+      diff -u <(printf '%s\n' "shevanio-ai_${version}_darwin_amd64.tar.gz" "shevanio-ai_${version}_darwin_arm64.tar.gz" "shevanio-ai_${version}_linux_amd64.tar.gz" "shevanio-ai_${version}_linux_arm64.tar.gz" "shevanio-ai-review-provider-contract-${provider_contract_semver}.tar.gz" "shevanio-ai_${version}_darwin_amd64.tar.gz.sbom.json" "shevanio-ai_${version}_darwin_arm64.tar.gz.sbom.json" "shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json" "shevanio-ai_${version}_linux_arm64.tar.gz.sbom.json" "shevanio-ai-review-provider-contract-${provider_contract_semver}.tar.gz.sbom.json" checksums.txt checksums.txt.minisig | LC_ALL=C sort) <(jq -r '.assets[].name' <<<"$release" | LC_ALL=C sort); then
       recovery_state=verify-existing
     else
       die "stable release state is incompatible with safe recovery"

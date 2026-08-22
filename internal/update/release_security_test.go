@@ -46,6 +46,8 @@ func TestReleaseWorkflowUsesFailClosedLeastPrivilegeGates(t *testing.T) {
 		"MINISIGN_PUBLIC_KEYS_CANONICAL: ${{ steps.trust-anchors.outputs.canonical }}",
 		"MINISIGN_SECRET_KEY_FILE:",
 		"version: v2.15.2",
+		"anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610",
+		"syft-version: v1.51.0",
 		"workflow_call:",
 		"RELEASE_CHANNEL: ${{ inputs.release_channel || 'stable' }}",
 		"--skip=homebrew",
@@ -59,6 +61,13 @@ func TestReleaseWorkflowUsesFailClosedLeastPrivilegeGates(t *testing.T) {
 	}
 	if count := strings.Count(workflow, "persist-credentials: false"); count != 3 {
 		t.Errorf("persist-credentials: false occurs %d times, want all three checkouts to avoid retaining repository credentials", count)
+	}
+	const syftAction = "anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610"
+	if count := strings.Count(workflow, syftAction); count != 2 {
+		t.Errorf("pinned Syft action occurs %d times, want snapshot and publication jobs", count)
+	}
+	if verifyIndex := strings.Index(workflow, "  verify:\n"); verifyIndex == -1 || strings.Contains(workflow[verifyIndex:], syftAction) {
+		t.Error("post-publication verification must not install Syft")
 	}
 	if strings.Contains(workflow, "version: \"~> v2\"") {
 		t.Error("release workflow uses a floating GoReleaser version")
@@ -127,6 +136,13 @@ func TestStablePromotionWorkflowUsesBoundSourceAndProtectedPublication(t *testin
 		"Read immutable provider contract semver",
 		"provider_contract_semver",
 		"PROVIDER_CONTRACT_SEMVER: ${{ needs.preflight.outputs.provider_contract_semver }}",
+		"anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610",
+		"syft-version: v1.51.0",
+		"shevanio-ai_${stableTag.slice(1)}_darwin_amd64.tar.gz.sbom.json",
+		"shevanio-ai_${stableTag.slice(1)}_darwin_arm64.tar.gz.sbom.json",
+		"shevanio-ai_${stableTag.slice(1)}_linux_amd64.tar.gz.sbom.json",
+		"shevanio-ai_${stableTag.slice(1)}_linux_arm64.tar.gz.sbom.json",
+		"shevanio-ai-review-provider-contract-${contractSemver}.tar.gz.sbom.json",
 		"RELEASE_ENVIRONMENT_POLICY_TOKEN",
 		"--method DELETE",
 	} {
@@ -142,6 +158,13 @@ func TestStablePromotionWorkflowUsesBoundSourceAndProtectedPublication(t *testin
 	}
 	if strings.Contains(workflow, "GITHUB_REF_NAME: ${{ inputs.stable_tag }}") {
 		t.Error("stable promotion workflow must not override reserved GITHUB_REF_NAME")
+	}
+	const syftAction = "anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610"
+	if count := strings.Count(workflow, syftAction); count != 2 {
+		t.Errorf("pinned Syft action occurs %d times, want snapshot and publication jobs", count)
+	}
+	if verifyIndex := strings.Index(workflow, "  verify:\n"); verifyIndex == -1 || strings.Contains(workflow[verifyIndex:], syftAction) {
+		t.Error("stable-promotion verification must not install Syft")
 	}
 	action := regexp.MustCompile(`^\s*(-\s*)?uses:\s*[^@\s]+@([0-9a-f]{40})(?:\s|$)`)
 	scanner := bufio.NewScanner(strings.NewReader(workflow))
@@ -214,8 +237,10 @@ prerelease=false
 [[ -z "${FAKE_PRERELEASE:-}" ]] || prerelease=$FAKE_PRERELEASE
 immutable=${FAKE_IMMUTABLE:-true}
 if [[ "$1" == api && "$2" == "repos/$GITHUB_REPOSITORY/releases/tags/$tag" ]]; then
+  provider_sbom_asset=',{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json"}'
+  [[ "${FAKE_SBOM_MODE:-}" != missing-asset ]] || provider_sbom_asset=
   cat <<JSON
-{"tag_name":"$tag","draft":false,"prerelease":$prerelease,"immutable":$immutable,"assets":[{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
+{"tag_name":"$tag","draft":false,"prerelease":$prerelease,"immutable":$immutable,"assets":[{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz.sbom.json"}${provider_sbom_asset},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
 JSON
   exit 0
 fi
@@ -234,7 +259,20 @@ if [[ "$1" == release && "$2" == download && "$3" == "$tag" ]]; then
     printf 'archive %s\n' "$platform" >"$directory/shevanio-ai_${version}_${platform}.tar.gz"
   done
   printf 'provider contract\n' >"$directory/shevanio-ai-review-provider-contract-1.1.0.tar.gz"
-  (cd "$directory" && sha256sum shevanio-ai_${version}_*.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz >checksums.txt)
+  for archive in "$directory"/shevanio-ai_${version}_*.tar.gz "$directory"/shevanio-ai-review-provider-contract-1.1.0.tar.gz; do
+    printf '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}\n' >"${archive}.sbom.json"
+  done
+  case "${FAKE_SBOM_MODE:-}" in
+    invalid-json) printf '{' >"$directory/shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json" ;;
+    invalid-spdx) printf '{"spdxVersion":"CycloneDX","SPDXID":"document"}\n' >"$directory/shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json" ;;
+  esac
+  (
+    cd "$directory"
+    for asset in shevanio-ai_${version}_*.tar.gz shevanio-ai_${version}_*.tar.gz.sbom.json shevanio-ai-review-provider-contract-1.1.0.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json; do
+      [[ "${FAKE_SBOM_MODE:-}" != missing-manifest || "$asset" != shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json ]] || continue
+      sha256sum "$asset"
+    done >checksums.txt
+  )
   printf 'test signature\n' >"$directory/checksums.txt.minisig"
   exit 0
 fi
@@ -262,6 +300,7 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 		channel         string
 		fakePrerelease  string
 		fakeImmutable   string
+		fakeSBOMMode    string
 		wantSuccess     bool
 		wantOutput      string
 	}{
@@ -276,6 +315,30 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			name:        "native tag ref remains supported",
 			githubRef:   "v1.2.3",
 			wantSuccess: true,
+		},
+		{
+			name:         "missing SBOM release asset is rejected",
+			githubRef:    "v1.2.3",
+			fakeSBOMMode: "missing-asset",
+			wantOutput:   "remote asset set is incomplete or unexpected",
+		},
+		{
+			name:         "signed manifest must include every SBOM",
+			githubRef:    "v1.2.3",
+			fakeSBOMMode: "missing-manifest",
+			wantOutput:   "signed manifest has duplicate, missing, or unexpected archive or SBOM entries",
+		},
+		{
+			name:         "invalid SBOM JSON is rejected after authentication",
+			githubRef:    "v1.2.3",
+			fakeSBOMMode: "invalid-json",
+			wantOutput:   "is not valid JSON",
+		},
+		{
+			name:         "SBOM without SPDX identity is rejected after authentication",
+			githubRef:    "v1.2.3",
+			fakeSBOMMode: "invalid-spdx",
+			wantOutput:   "does not have the required SPDX document identity",
 		},
 		{
 			name:        "canonical RC tag is accepted only in RC mode",
@@ -350,7 +413,7 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			for _, value := range os.Environ() {
 				name, _, _ := strings.Cut(value, "=")
 				switch name {
-				case "PATH", "GH_CALL_LOG", "GH_TOKEN", "GITHUB_REPOSITORY", "GITHUB_REF_NAME", "MINISIGN_PUBLIC_KEYS", "EXPECTED_SIGNING_KEY", "RELEASE_VERIFICATION_TAG", "RELEASE_CHANNEL", "FAKE_PRERELEASE", "FAKE_IMMUTABLE":
+				case "PATH", "GH_CALL_LOG", "GH_TOKEN", "GITHUB_REPOSITORY", "GITHUB_REF_NAME", "MINISIGN_PUBLIC_KEYS", "EXPECTED_SIGNING_KEY", "RELEASE_VERIFICATION_TAG", "RELEASE_CHANNEL", "FAKE_PRERELEASE", "FAKE_IMMUTABLE", "FAKE_SBOM_MODE":
 					continue
 				}
 				environment = append(environment, value)
@@ -375,6 +438,9 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			}
 			if tc.fakeImmutable != "" {
 				command.Env = append(command.Env, "FAKE_IMMUTABLE="+tc.fakeImmutable)
+			}
+			if tc.fakeSBOMMode != "" {
+				command.Env = append(command.Env, "FAKE_SBOM_MODE="+tc.fakeSBOMMode)
 			}
 			output, err := command.CombinedOutput()
 			if tc.wantSuccess && err != nil {
@@ -434,6 +500,11 @@ func TestStablePromotionPreflightUsesRESTCompatibleReleaseID(t *testing.T) {
 		".data.repository.release.databaseId // empty",
 		"recovery_state=verify-existing",
 		"repos/$GITHUB_REPOSITORY/releases/$stable_release",
+		"shevanio-ai_${version}_darwin_amd64.tar.gz.sbom.json",
+		"shevanio-ai_${version}_darwin_arm64.tar.gz.sbom.json",
+		"shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json",
+		"shevanio-ai_${version}_linux_arm64.tar.gz.sbom.json",
+		"shevanio-ai-review-provider-contract-${provider_contract_semver}.tar.gz.sbom.json",
 	} {
 		if !strings.Contains(preflight, required) {
 			t.Errorf("stable promotion preflight is missing %q", required)
@@ -447,6 +518,7 @@ func TestStablePromotionPreflightUsesRESTCompatibleReleaseID(t *testing.T) {
 func TestGoReleaserSignsBoundManifestAndInjectsTrustAnchors(t *testing.T) {
 	config := readRepositoryFile(t, ".goreleaser.yaml")
 	for _, required := range []string{
+		"sboms:\n  - artifacts: archive",
 		"artifacts: checksum",
 		`signature: ${artifact}.minisig`,
 		`- "${artifact}"`,
@@ -540,7 +612,11 @@ func TestReleaseSecurityScriptsAreSyntacticallyValidAndFailClosed(t *testing.T) 
 				`canonicalize-release-public-keys.sh`,
 				`MINISIGN_PUBLIC_KEYS`,
 				`sha256sum --check --strict`,
+				`jq empty`,
+				`SPDX-`,
+				`SPDXRef-DOCUMENT`,
 				`shevanio-ai_${version}_linux_amd64.tar.gz`,
+				`sboms+=("${archive}.sbom.json")`,
 				`checksums.txt.minisig`,
 				`RELEASE_CHANNEL`,
 				`remote release is not immutable`,

@@ -49,7 +49,12 @@ archives=(
   "shevanio-ai_${version}_linux_arm64.tar.gz"
   "shevanio-ai-review-provider-contract-${contract_semver}.tar.gz"
 )
-expected_assets=("${archives[@]}" checksums.txt checksums.txt.minisig)
+sboms=()
+for archive in "${archives[@]}"; do
+  sboms+=("${archive}.sbom.json")
+done
+signed_assets=("${archives[@]}" "${sboms[@]}")
+expected_assets=("${signed_assets[@]}" checksums.txt checksums.txt.minisig)
 
 work=$(mktemp -d)
 cleanup() {
@@ -91,10 +96,16 @@ done
 [[ "$trusted" == "repo=$GITHUB_REPOSITORY;tag=$tag" ]] || die "remote trusted comment identity mismatch"
 
 mapfile -t manifest_assets < <(awk 'NF == 2 { print $2 }' "$download_dir/checksums.txt" | LC_ALL=C sort)
-mapfile -t sorted_archives < <(printf '%s\n' "${archives[@]}" | LC_ALL=C sort)
-if ! diff -u <(printf '%s\n' "${sorted_archives[@]}") <(printf '%s\n' "${manifest_assets[@]}"); then
-  die "signed manifest has duplicate, missing, or unexpected archive entries"
+mapfile -t sorted_signed_assets < <(printf '%s\n' "${signed_assets[@]}" | LC_ALL=C sort)
+if ! diff -u <(printf '%s\n' "${sorted_signed_assets[@]}") <(printf '%s\n' "${manifest_assets[@]}"); then
+  die "signed manifest has duplicate, missing, or unexpected archive or SBOM entries"
 fi
 (cd "$download_dir" && sha256sum --check --strict checksums.txt)
 
-printf 'remote release verification: authenticated %d archives for %s\n' "${#archives[@]}" "$tag"
+for sbom in "${sboms[@]}"; do
+  jq empty "$download_dir/$sbom" >/dev/null || die "$sbom is not valid JSON"
+  jq -e 'type == "object" and (.spdxVersion | strings | startswith("SPDX-")) and (.SPDXID == "SPDXRef-DOCUMENT")' "$download_dir/$sbom" >/dev/null ||
+    die "$sbom does not have the required SPDX document identity"
+done
+
+printf 'remote release verification: authenticated %d archives and %d SBOMs for %s\n' "${#archives[@]}" "${#sboms[@]}" "$tag"

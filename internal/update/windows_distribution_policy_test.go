@@ -24,7 +24,7 @@ func TestOfficialReleaseOmitsUnsignedWindowsDistribution(t *testing.T) {
 			t.Errorf("GoReleaser config still enables forbidden Windows distribution: %s", forbidden)
 		}
 	}
-	for _, required := range []string{"- linux", "- darwin", "brews:", "artifacts: checksum"} {
+	for _, required := range []string{"- linux", "- darwin", "brews:", "sboms:", "artifacts: archive", "artifacts: checksum"} {
 		if !strings.Contains(config, required) {
 			t.Errorf("GoReleaser config lost non-Windows release behavior %q", required)
 		}
@@ -107,9 +107,54 @@ func TestReleaseDistributionPolicyAssertionFailsClosed(t *testing.T) {
 			},
 		},
 		{
+			name: "SBOM pipeline removed",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, ".goreleaser.yaml", "sboms:\n  - artifacts: archive\n\n", "")
+			},
+		},
+		{
+			name: "Syft action pin removed",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join(".github", "workflows", "release.yml"),
+					"anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610",
+					"anchore/sbom-action/download-syft@v0.24.0")
+			},
+		},
+		{
 			name: "provider contract archive version differs from committed semver",
 			mutate: func(t *testing.T, root string) {
 				replaceReleasePolicyFile(t, root, filepath.Join("dist", "artifacts.json"), "shevanio-ai-review-provider-contract-1.1.0.tar.gz", "shevanio-ai-review-provider-contract-2.0.0.tar.gz")
+			},
+		},
+		{
+			name: "resolved SBOM artifact removed",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join("dist", "artifacts.json"),
+					`  {"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","path":"dist/shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},`+"\n", "")
+			},
+		},
+		{
+			name: "resolved SBOM is not bound to an approved archive",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join("dist", "artifacts.json"),
+					`{"name":"shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}}`,
+					`{"name":"unapproved.tar.gz.sbom.json","path":"dist/unapproved.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}}`)
+			},
+		},
+		{
+			name: "resolved SBOM carries platform metadata",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join("dist", "artifacts.json"),
+					`"path":"dist/shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","type":"SBOM"`,
+					`"path":"dist/shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","goos":"linux","goarch":"amd64","target":"linux_amd64_v1","type":"SBOM"`)
+			},
+		},
+		{
+			name: "resolved SBOM has unexpected pipeline ID",
+			mutate: func(t *testing.T, root string) {
+				replaceReleasePolicyFile(t, root, filepath.Join("dist", "artifacts.json"),
+					`{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","path":"dist/shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}}`,
+					`{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","path":"dist/shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"provider-contract"}}`)
 			},
 		},
 		{
@@ -515,6 +560,11 @@ const releasePolicyArtifactsFixture = `[
   {"name":"shevanio-ai_0.0.0-SNAPSHOT_darwin_amd64.tar.gz","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_darwin_amd64.tar.gz","goos":"darwin","goarch":"amd64","target":"darwin_amd64_v1","type":"Archive","extra":{"Binaries":["shevanio-ai"],"Format":"tar.gz","ID":"default"}},
   {"name":"shevanio-ai_0.0.0-SNAPSHOT_darwin_arm64.tar.gz","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_darwin_arm64.tar.gz","goos":"darwin","goarch":"arm64","target":"darwin_arm64_v8.0","type":"Archive","extra":{"Binaries":["shevanio-ai"],"Format":"tar.gz","ID":"default"}},
   {"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz","path":"dist/shevanio-ai-review-provider-contract-1.1.0.tar.gz","type":"Archive","extra":{"Binaries":[],"Format":"tar.gz","ID":"review-provider-contract"}},
+  {"name":"shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_linux_amd64.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},
+  {"name":"shevanio-ai_0.0.0-SNAPSHOT_linux_arm64.tar.gz.sbom.json","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_linux_arm64.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},
+  {"name":"shevanio-ai_0.0.0-SNAPSHOT_darwin_amd64.tar.gz.sbom.json","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_darwin_amd64.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},
+  {"name":"shevanio-ai_0.0.0-SNAPSHOT_darwin_arm64.tar.gz.sbom.json","path":"dist/shevanio-ai_0.0.0-SNAPSHOT_darwin_arm64.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},
+  {"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","path":"dist/shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json","type":"SBOM","extra":{"ID":"default"}},
   {"name":"checksums.txt","path":"dist/checksums.txt","type":"Checksum","extra":{}},
   {"name":"shevanio-ai.rb","path":"dist/homebrew/Formula/shevanio-ai.rb","type":"Homebrew Formula","extra":{"BrewConfig":{"name":"shevanio-ai","repository":{"owner":"Shevanio","name":"homebrew-tap","token":"{{ .Env.HOMEBREW_TAP_TOKEN }}"},"directory":"Formula"}}}
 ]`

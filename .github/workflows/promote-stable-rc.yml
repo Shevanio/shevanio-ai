@@ -46,6 +46,10 @@ jobs:
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: source/go.mod
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          syft-version: v1.51.0
       - name: Verify immutable source checkout
         working-directory: source
         env:
@@ -118,7 +122,7 @@ jobs:
             const stableTag = process.env.STABLE_TAG;
             const recovery = process.env.RECOVERY_STATE;
             const contractSemver = process.env.PROVIDER_CONTRACT_SEMVER;
-            const expectedAssets = [`shevanio-ai_${stableTag.slice(1)}_darwin_amd64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_darwin_arm64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_linux_amd64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_linux_arm64.tar.gz`, `shevanio-ai-review-provider-contract-${contractSemver}.tar.gz`, 'checksums.txt', 'checksums.txt.minisig'].sort().join('\n');
+            const expectedAssets = [`shevanio-ai_${stableTag.slice(1)}_darwin_amd64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_darwin_arm64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_linux_amd64.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_linux_arm64.tar.gz`, `shevanio-ai-review-provider-contract-${contractSemver}.tar.gz`, `shevanio-ai_${stableTag.slice(1)}_darwin_amd64.tar.gz.sbom.json`, `shevanio-ai_${stableTag.slice(1)}_darwin_arm64.tar.gz.sbom.json`, `shevanio-ai_${stableTag.slice(1)}_linux_amd64.tar.gz.sbom.json`, `shevanio-ai_${stableTag.slice(1)}_linux_arm64.tar.gz.sbom.json`, `shevanio-ai-review-provider-contract-${contractSemver}.tar.gz.sbom.json`, 'checksums.txt', 'checksums.txt.minisig'].sort().join('\n');
             const optional = async (request) => {
               try { return await request(); } catch (error) {
                 if (error.status === 404) return null;
@@ -165,6 +169,10 @@ jobs:
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: source/go.mod
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          syft-version: v1.51.0
       - name: Recheck stable tag source
         working-directory: source
         env:

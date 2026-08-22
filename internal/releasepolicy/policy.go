@@ -316,7 +316,7 @@ func validateArtifacts(root string, payload []byte, markerTime time.Time, contra
 	if err := requireJSONEOF(decoder); err != nil {
 		return err
 	}
-	expectedCounts := map[string]int{"Metadata": 1, "Binary": 4, "Archive": 5, "Checksum": 1, "Homebrew Formula": 1}
+	expectedCounts := map[string]int{"Metadata": 1, "Binary": 4, "Archive": 5, "SBOM": 5, "Checksum": 1, "Homebrew Formula": 1}
 	byType := make(map[string][]artifact)
 	counts := make(map[string]int)
 	paths := make(map[string]struct{})
@@ -362,6 +362,7 @@ func validateArtifacts(root string, payload []byte, markerTime time.Time, contra
 	}
 
 	seenArchives := make(map[string]struct{})
+	approvedArchives := make(map[string]struct{})
 	snapshotVersion := ""
 	providerArchive := false
 	for _, item := range byType["Archive"] {
@@ -371,6 +372,7 @@ func validateArtifacts(root string, payload []byte, markerTime time.Time, contra
 				return errors.New("resolved provider contract archive identity changed")
 			}
 			providerArchive = true
+			approvedArchives[item.Name] = struct{}{}
 			continue
 		}
 		platform := item.GOOS + "/" + item.GOARCH
@@ -395,12 +397,31 @@ func validateArtifacts(root string, payload []byte, markerTime time.Time, contra
 			return fmt.Errorf("resolved archive target is repeated: %s", platform)
 		}
 		seenArchives[platform] = struct{}{}
+		approvedArchives[item.Name] = struct{}{}
 	}
 	if len(seenArchives) != len(expectedTargets) {
 		return errors.New("resolved archive matrix is incomplete")
 	}
 	if !providerArchive {
 		return errors.New("resolved provider contract archive is missing")
+	}
+
+	seenSBOMs := make(map[string]struct{})
+	for _, item := range byType["SBOM"] {
+		if !strings.HasSuffix(item.Name, ".sbom.json") {
+			return fmt.Errorf("resolved SBOM name changed: %s", item.Name)
+		}
+		archiveName := strings.TrimSuffix(item.Name, ".sbom.json")
+		if _, approved := approvedArchives[archiveName]; !approved || item.Path != "dist/"+item.Name || item.GOOS != "" || item.GOARCH != "" || item.Target != "" || extraString(item.Extra, "ID") != "default" {
+			return fmt.Errorf("resolved SBOM identity changed: %s", item.Name)
+		}
+		if _, exists := seenSBOMs[archiveName]; exists {
+			return fmt.Errorf("resolved SBOM archive is repeated: %s", archiveName)
+		}
+		seenSBOMs[archiveName] = struct{}{}
+	}
+	if len(seenSBOMs) != len(approvedArchives) {
+		return errors.New("resolved SBOM set is incomplete")
 	}
 
 	if item := byType["Checksum"][0]; item.Name != "checksums.txt" || item.Path != "dist/checksums.txt" {
@@ -610,6 +631,8 @@ archives:
         info:
           mode: 0644
           mtime: "1970-01-01T00:00:00Z"
+sboms:
+  - artifacts: archive
 checksum:
   name_template: "checksums.txt"
   algorithm: sha256
@@ -695,6 +718,10 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
         with:
           go-version-file: go.mod
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          syft-version: v1.51.0
       - name: Mark release distribution snapshot start
         run: |
           set -euo pipefail
@@ -745,6 +772,10 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
         with:
           go-version-file: go.mod
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          syft-version: v1.51.0
       - name: Recheck immutable release provenance
         env:
           MINISIGN_PUBLIC_KEYS: ${{ vars.MINISIGN_PUBLIC_KEYS }}
