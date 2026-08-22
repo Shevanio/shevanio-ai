@@ -4,7 +4,7 @@ Shevanio AI releases only when the protected `release` environment provides a re
 
 ## User verification
 
-1. Obtain the production Minisign public-key payload and its SHA256 fingerprint from a maintainer-controlled channel independent of the GitHub release assets.
+1. Obtain the production Minisign public-key payload and its SHA256 fingerprint from the maintained [release trust anchor](release-trust-anchor.md), independently of the GitHub release assets.
 2. Download `checksums.txt`, `checksums.txt.minisig`, and the archive from one exact `vMAJOR.MINOR.PATCH` release.
 3. Verify the signed identity before trusting any checksum:
 
@@ -30,7 +30,7 @@ The public key is not secret, but its provenance is security-critical. A key fet
    minisign -G -W -p shevanio-ai-release.pub -s shevanio-ai-release.key
    ```
 
-2. Extract the base64 payload from line 2 of `shevanio-ai-release.pub`. Publish that payload and a separately computed fingerprint through the project website or another maintainer-authenticated channel **before** publishing the first signed release.
+2. Extract the base64 payload from line 2 of `shevanio-ai-release.pub`. Publish that payload and a separately computed fingerprint through the maintained [release trust anchor](release-trust-anchor.md), the project website, or another maintainer-authenticated channel **before** publishing the first signed release.
 3. Create or protect the GitHub Actions environment named `release`. Require appropriate reviewers and restrict it to protected `v*` tags.
 4. Configure the public trust anchor as a repository Actions variable so the read-only preflight job can validate it. Configure the private key only inside the protected `release` environment:
 
