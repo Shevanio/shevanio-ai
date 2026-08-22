@@ -7,8 +7,9 @@ import (
 )
 
 // markerFormat is the HTML comment marker used to identify a custom-agent block.
-// Example: <!-- gentle-ai:custom-agent:my-skill -->
-const markerFormat = "<!-- gentle-ai:custom-agent:%s -->"
+// Example: <!-- shevanio-ai:custom-agent:my-skill -->
+const markerFormat = "<!-- shevanio-ai:custom-agent:%s -->"
+const legacyMarkerFormat = "<!-- gentle-ai:custom-agent:%s -->"
 
 // InjectSDDReference appends (or replaces) a custom-agent reference block in the
 // system prompt file at systemPromptPath.
@@ -29,11 +30,14 @@ func InjectSDDReference(agent *GeneratedAgent, systemPromptPath string) error {
 
 	content := string(data)
 	marker := fmt.Sprintf(markerFormat, agent.Name)
+	legacyMarker := fmt.Sprintf(legacyMarkerFormat, agent.Name)
 	block := buildSDDBlock(agent, marker)
 
 	if strings.Contains(content, marker) {
 		// Replace the existing block.
 		content = replaceBlock(content, marker, block)
+	} else if strings.Contains(content, legacyMarker) {
+		content = replaceBlock(content, legacyMarker, block)
 	} else {
 		// Append the block.
 		if !strings.HasSuffix(content, "\n") {
@@ -87,14 +91,18 @@ func buildSDDBlock(agent *GeneratedAgent, marker string) string {
 		body = fmt.Sprintf("## Custom Agent: %s\n\nTrigger: %s\n", agent.Title, agent.Trigger)
 	}
 
-	endMarker := fmt.Sprintf("<!-- /gentle-ai:custom-agent:%s -->", agent.Name)
+	endMarker := fmt.Sprintf("<!-- /shevanio-ai:custom-agent:%s -->", agent.Name)
 	return marker + "\n" + body + endMarker
 }
 
 // replaceBlock replaces the content between the opening marker and its matching
 // closing marker with the new block string.
 func replaceBlock(content, marker, newBlock string) string {
-	endMarker := fmt.Sprintf("<!-- /gentle-ai:custom-agent:%s -->", extractName(marker))
+	prefix := "shevanio-ai"
+	if strings.HasPrefix(marker, "<!-- gentle-ai:") {
+		prefix = "gentle-ai"
+	}
+	endMarker := fmt.Sprintf("<!-- /%s:custom-agent:%s -->", prefix, extractName(marker))
 
 	start := strings.Index(content, marker)
 	if start == -1 {
@@ -116,12 +124,13 @@ func replaceBlock(content, marker, newBlock string) string {
 }
 
 // extractName parses the agent name from a marker string.
-// Example: "<!-- gentle-ai:custom-agent:my-skill -->" → "my-skill"
+// Example: "<!-- shevanio-ai:custom-agent:my-skill -->" → "my-skill"
 func extractName(marker string) string {
-	prefix := "<!-- gentle-ai:custom-agent:"
 	suffix := " -->"
-	if strings.HasPrefix(marker, prefix) && strings.HasSuffix(marker, suffix) {
-		return marker[len(prefix) : len(marker)-len(suffix)]
+	for _, prefix := range []string{"<!-- shevanio-ai:custom-agent:", "<!-- gentle-ai:custom-agent:"} {
+		if strings.HasPrefix(marker, prefix) && strings.HasSuffix(marker, suffix) {
+			return marker[len(prefix) : len(marker)-len(suffix)]
+		}
 	}
 	return ""
 }

@@ -2,7 +2,7 @@
 
 <- [Back to README](../README.md)
 
-Ask for the outcome. Gentle AI keeps already-understood work inline, delegates only
+Ask for the outcome. Shevanio AI keeps already-understood work inline, delegates only
 the actions that benefit from fresh context, and offers SDD only when durable
 planning would materially reduce uncertainty. Verification, review, delivery, and
 lifecycle authority remain native provider responsibilities behind that simple
@@ -11,7 +11,7 @@ interaction.
 ## Quick path
 
 1. Describe the outcome in natural language.
-2. Gentle AI uses the smallest useful implementation route: direct inline,
+2. Shevanio AI uses the smallest useful implementation route: direct inline,
    delegated direct, or an optional SDD proposal.
 3. The normal interaction reports only **Working**, **Checking**, **Ready**, or
    **Needs your decision**.
@@ -38,7 +38,7 @@ actors may use fresh workers without changing the implementation route or
 creating an SDD run. Direct and delegated work create no SDD artifacts, phase
 attempts, or synthetic SDD lifecycle.
 
-If apparently simple work reveals substantial ambiguity, Gentle AI may offer SDD
+If apparently simple work reveals substantial ambiguity, Shevanio AI may offer SDD
 at the next safe boundary. Declining it leads to a safely reduced scope, a
 justified direct or delegated route, or **Needs your decision**—never silent SDD
 enrollment.
@@ -48,9 +48,9 @@ enrollment.
 | Public state | Meaning |
 |---|---|
 | **Working** | The implementation can still change. |
-| **Checking** | Gentle AI is performing the applicable functional proof and bounded review. |
+| **Checking** | Shevanio AI is performing the applicable functional proof and bounded review. |
 | **Ready** | The exact candidate has sufficient evidence for the selected delivery route. |
-| **Needs your decision** | Safe automatic convergence is impossible; Gentle AI presents the cause, impact, and concrete choices. |
+| **Needs your decision** | Safe automatic convergence is impossible; Shevanio AI presents the cause, impact, and concrete choices. |
 
 The user still asks only for the outcome. Repository identity, route, policy,
 candidate, delivery mechanism, and authority references remain owner-derived.
@@ -66,11 +66,11 @@ reported as decided by `default`:
 
 | Command | Effect |
 |---|---|
-| `gentle-ai review mode status --cwd <repo>` | Report the global source, clone-local source, deciding source, and effective mode without mutation. |
-| `gentle-ai review mode enable --scope global --cwd <repo>` | Opt in. Enables receipt-driven development globally for future candidates. This is the only command that turns it on. |
-| `gentle-ai review mode disable --cwd <repo>` | Disable receipt-driven development globally. |
-| `gentle-ai review mode disable --scope clone --cwd <repo>` | Disable it only for this clone; no other clone inherits the override. |
-| `gentle-ai review mode enable --scope clone --cwd <repo>` | Clear this clone's off-only override. Does not turn review on by itself. |
+| `shevanio-ai review mode status --cwd <repo>` | Report the global source, clone-local source, deciding source, and effective mode without mutation. |
+| `shevanio-ai review mode enable --scope global --cwd <repo>` | Opt in. Enables receipt-driven development globally for future candidates. This is the only command that turns it on. |
+| `shevanio-ai review mode disable --cwd <repo>` | Disable receipt-driven development globally. |
+| `shevanio-ai review mode disable --scope clone --cwd <repo>` | Disable it only for this clone; no other clone inherits the override. |
+| `shevanio-ai review mode enable --scope clone --cwd <repo>` | Clear this clone's off-only override. Does not turn review on by itself. |
 
 Any disabled source wins. A clone may opt out but cannot require review for the
 user, so the global scope is the only way in. Interactive starts ask before
@@ -84,7 +84,7 @@ or optional SDD routing without starting, retrying, or re-enabling review on the
 user's behalf. Existing exact governing receipts remain authoritative; otherwise, native review delivery gates report `disabled/unmanaged` and
 defer to ordinary repository policy without fabricating approval.
 
-In stable [`v2.3.0`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.3.0), prerelease [`v2.4.0-rc.1`](https://github.com/Gentleman-Programming/gentle-ai/releases/tag/v2.4.0-rc.1), and unreleased `main`, disabled SDD status skips review authority and leaves `reviewGate` structurally absent. Pre-verify continues without routing to review, and archive proceeds under ordinary repository policy when `reviewGate` is absent. A present `reviewGate.result: allow` is required only when review activity was discovered for the candidate. Native delivery gates remain distinct: when no exact governing receipt applies, they report `disabled/unmanaged`. See the [SDD status contract](../internal/assets/skills/_shared/sdd-status-contract.md).
+In stable [`v2.3.0`](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.3.0), prerelease [`v2.4.0-rc.1`](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.4.0-rc.1), and unreleased `main`, disabled SDD status skips review authority and leaves `reviewGate` structurally absent. Pre-verify continues without routing to review, and archive proceeds under ordinary repository policy when `reviewGate` is absent. A present `reviewGate.result: allow` is required only when review activity was discovered for the candidate. Native delivery gates remain distinct: when no exact governing receipt applies, they report `disabled/unmanaged`. See the [SDD status contract](../internal/assets/skills/_shared/sdd-status-contract.md).
 
 ## Review store reset
 
@@ -96,11 +96,11 @@ holding authoritative artifacts, so until now a degraded store had no exit.
 
 | Command | Effect |
 |---|---|
-| `gentle-ai review store-reset --cwd <repo>` | Report, per category, what a reset would remove and what it would preserve. Removes nothing. |
-| `gentle-ai review store-reset --cwd <repo> --confirm` | Remove this clone's review lineage state. Irreversible. |
-| `gentle-ai review store-reset --cwd <repo> --confirm --include-in-flight` | Also remove reviews that have not reached a terminal state. |
-| `gentle-ai review store-reset --cwd <repo> --confirm --include-adapter-reviews` | Also remove the adapter-written `reviews/` graph store, which the lease and the in-flight refusal do not cover. |
-| `gentle-ai review store-reset --cwd <repo> --json` | The same report, machine-readable. |
+| `shevanio-ai review store-reset --cwd <repo>` | Report, per category, what a reset would remove and what it would preserve. Removes nothing. |
+| `shevanio-ai review store-reset --cwd <repo> --confirm` | Remove this clone's review lineage state. Irreversible. |
+| `shevanio-ai review store-reset --cwd <repo> --confirm --include-in-flight` | Also remove reviews that have not reached a terminal state. |
+| `shevanio-ai review store-reset --cwd <repo> --confirm --include-adapter-reviews` | Also remove the adapter-written `reviews/` graph store, which the lease and the in-flight refusal do not cover. |
+| `shevanio-ai review store-reset --cwd <repo> --json` | The same report, machine-readable. |
 
 Every sub-action is user-initiated only; no adapter and no automation reaches
 it, because the verb carries no negotiated contract row. Preview is the default
@@ -158,7 +158,7 @@ in-flight work is never one keystroke away.
 
 ## Installation and refresh
 
-`gentle-ai install` and `gentle-ai sync` project the same canonical rules into
+`shevanio-ai install` and `shevanio-ai sync` project the same canonical rules into
 every supported adapter, independently of whether the optional SDD component is
 selected:
 
@@ -170,8 +170,8 @@ selected:
   managed router template.
 
 ```bash
-gentle-ai install   # full install
-gentle-ai sync      # refresh managed content
+shevanio-ai install   # full install
+shevanio-ai sync      # refresh managed content
 ```
 
 Refresh is idempotent: the managed projection is replaced without duplication.

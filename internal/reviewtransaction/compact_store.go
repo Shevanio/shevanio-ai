@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	compactRecordSchema                 = "gentle-ai.review-state-record/v2"
+	compactRecordSchema                 = "shevanio-ai.review-state-record/v2"
 	CompactEffectClassRepositoryContext = "repository_context"
 	compactEffectClassRequestedTrace    = "requested_trace"
 )
@@ -33,7 +33,7 @@ const (
 	// CompactReviewerResultsDir holds captured reviewer result artifacts.
 	CompactReviewerResultsDir = "reviewer-results"
 )
-const CompactTransportSchema = "gentle-ai.review-transport/v2"
+const CompactTransportSchema = "shevanio-ai.review-transport/v2"
 const LegacyReadOnlyErrorCode = "legacy_v1_read_only"
 
 var compactStartLockTimeout = 2 * time.Second
@@ -113,7 +113,7 @@ func (err *CompactRecoveryAuthorizationInexactError) Unwrap() error {
 
 // compactRecoveryAuthorizationSchema is the first line of the exact six-line
 // escalated-recovery maintainer authorization binding.
-const compactRecoveryAuthorizationSchema = "gentle-ai.review-recovery-authorization/v1"
+const compactRecoveryAuthorizationSchema = "shevanio-ai.review-recovery-authorization/v1"
 
 // ErrHistoricalCompatReadOnly denies ordinary mutation of authority loaded
 // through the retired-field compatibility path.
@@ -184,6 +184,7 @@ type CompactStore struct {
 	repo                string
 	lockPath            string
 	maintenanceLockPath string
+	legacyNamespace     bool
 	TracePath           string
 }
 
@@ -248,7 +249,7 @@ type CompactRecoveryRequest struct {
 	MaintainerAuthorization     string
 }
 
-const ReleaseScopeRecoveryAuthorization = "gentle-ai.release-scope-recovery/v1"
+const ReleaseScopeRecoveryAuthorization = "shevanio-ai.release-scope-recovery/v1"
 
 func BuildReleaseScopeSnapshot(ctx context.Context, repo string) (Snapshot, error) {
 	builder := SnapshotBuilder{Repo: repo}
@@ -890,11 +891,11 @@ func (scan compactAuthorityScan) blocked(lineageID string) error {
 func compactBlockedLineageError(lineageID, carrier string, cause error) error {
 	if carrier == lineageID {
 		return fmt.Errorf(
-			"compact authority lineage %q cannot govern: %w. Every other lineage is unaffected; see this entry's own diagnosis and sanctioned exits with `gentle-ai review inspect-authority`",
+			"compact authority lineage %q cannot govern: %w. Every other lineage is unaffected; see this entry's own diagnosis and sanctioned exits with `shevanio-ai review inspect-authority`",
 			lineageID, cause)
 	}
 	return fmt.Errorf(
-		"compact authority lineage %q cannot govern because the entry %q it recovers from carries: %w. Every lineage that does not recover through %q is unaffected; see that entry's own diagnosis and sanctioned exits with `gentle-ai review inspect-authority`",
+		"compact authority lineage %q cannot govern because the entry %q it recovers from carries: %w. Every lineage that does not recover through %q is unaffected; see that entry's own diagnosis and sanctioned exits with `shevanio-ai review inspect-authority`",
 		lineageID, carrier, cause, carrier)
 }
 
@@ -1111,7 +1112,19 @@ func CompactAuthoritativeStore(ctx context.Context, repo, lineageID string) (Com
 	}
 	versionRoot := filepath.Join(base, "v2")
 	dir := filepath.Join(versionRoot, lineageID)
-	return CompactStore{Dir: dir, lineageID: lineageID, repo: root, lockPath: filepath.Join(versionRoot, "LOCK"), maintenanceLockPath: compactMaintenanceLockPath(base)}, nil
+	legacyNamespace := false
+	if _, statErr := os.Stat(filepath.Join(dir, compactStateFileName)); os.IsNotExist(statErr) {
+		legacyBase, _, legacyErr := legacyReviewAuthorityRoot(ctx, repo)
+		if legacyErr == nil {
+			legacyVersionRoot := filepath.Join(legacyBase, "v2")
+			legacyDir := filepath.Join(legacyVersionRoot, lineageID)
+			if _, legacyStatErr := os.Stat(filepath.Join(legacyDir, compactStateFileName)); legacyStatErr == nil {
+				versionRoot, dir, base = legacyVersionRoot, legacyDir, legacyBase
+				legacyNamespace = true
+			}
+		}
+	}
+	return CompactStore{Dir: dir, lineageID: lineageID, repo: root, lockPath: filepath.Join(versionRoot, "LOCK"), maintenanceLockPath: compactMaintenanceLockPath(base), legacyNamespace: legacyNamespace}, nil
 }
 
 func compactMaintenanceLockPath(authorityRoot string) string {
@@ -1168,30 +1181,42 @@ func DiscoverCompactStores(ctx context.Context, repo string) ([]CompactStore, er
 	if err := ensureNoPreparedCompactBatchReconciliation(base); err != nil {
 		return nil, err
 	}
-	versionRoot := filepath.Join(base, "v2")
-	entries, err := os.ReadDir(versionRoot)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []CompactStore{}, nil
-		}
-		return nil, err
+	legacyBase, _, legacyErr := legacyReviewAuthorityRoot(ctx, repo)
+	if legacyErr != nil {
+		return nil, legacyErr
 	}
-	stores := make([]CompactStore, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() || validateLineageID(entry.Name()) != nil {
+	stores := []CompactStore{}
+	seen := map[string]struct{}{}
+	for _, candidateBase := range []string{base, legacyBase} {
+		legacyNamespace := candidateBase == legacyBase
+		versionRoot := filepath.Join(candidateBase, "v2")
+		entries, readErr := os.ReadDir(versionRoot)
+		if os.IsNotExist(readErr) {
 			continue
 		}
-		dir := filepath.Join(versionRoot, entry.Name())
-		if _, statErr := os.Stat(filepath.Join(dir, compactStateFileName)); os.IsNotExist(statErr) {
-			residue, readErr := os.ReadDir(dir)
-			if onlyUnpublishedCompactCrashResidue(residue, readErr) {
+		if readErr != nil {
+			return nil, readErr
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() || validateLineageID(entry.Name()) != nil {
 				continue
 			}
+			if _, exists := seen[entry.Name()]; exists {
+				continue
+			}
+			dir := filepath.Join(versionRoot, entry.Name())
+			if _, statErr := os.Stat(filepath.Join(dir, compactStateFileName)); os.IsNotExist(statErr) {
+				residue, residueErr := os.ReadDir(dir)
+				if onlyUnpublishedCompactCrashResidue(residue, residueErr) {
+					continue
+				}
+			}
+			seen[entry.Name()] = struct{}{}
+			stores = append(stores, CompactStore{
+				Dir: dir, lineageID: entry.Name(), repo: root,
+				lockPath: filepath.Join(versionRoot, "LOCK"), maintenanceLockPath: compactMaintenanceLockPath(candidateBase), legacyNamespace: legacyNamespace,
+			})
 		}
-		stores = append(stores, CompactStore{
-			Dir: dir, lineageID: entry.Name(), repo: root,
-			lockPath: filepath.Join(versionRoot, "LOCK"), maintenanceLockPath: compactMaintenanceLockPath(base),
-		})
 	}
 	sort.Slice(stores, func(i, j int) bool { return stores[i].lineageID < stores[j].lineageID })
 	return stores, nil
@@ -1860,6 +1885,9 @@ func (store CompactStore) LoadContext(ctx context.Context) (CompactRecord, error
 // lease; the maintenance acquisition closes the race with a batch that starts
 // after that check and repeats the marker check once shared access is held.
 func (store CompactStore) acquireReadMaintenance(ctx context.Context) (*MaintenanceLock, error) {
+	if store.legacyNamespace {
+		return nil, nil
+	}
 	if store.maintenanceLockPath == "" {
 		return nil, nil
 	}
@@ -1921,6 +1949,9 @@ func (store CompactStore) replaceContextGuarded(ctx context.Context, expectedRev
 	}
 	if strings.TrimSpace(operation) == "" {
 		return "", errors.New("compact review operation is required")
+	}
+	if store.legacyNamespace {
+		return "", fmt.Errorf("%w: %s for lineage %q", ErrHistoricalCompatReadOnly, operation, store.lineageID)
 	}
 	if err := next.Validate(); err != nil {
 		return "", fmt.Errorf("%w: %v", ErrInvalidSuccessor, err)
@@ -2339,7 +2370,7 @@ func makeCompactRecordWithIntents(state CompactState, intents []CompactEffectInt
 				return CompactRecord{}, nil, errors.New("invalid compact required effect binding") // refusal:by-design operator-knowledge: caller-supplied binding cannot override the enclosing state identity
 			}
 			eventPayload, _ := json.Marshal([]string{state.LineageID, intents[index].BindingRevision, intents[index].Class, intents[index].Destination, intents[index].PayloadHash})
-			eventSum := sha256.Sum256(append([]byte("gentle-ai.review-effect-event/v1\x00"), eventPayload...))
+			eventSum := sha256.Sum256(append([]byte("shevanio-ai.review-effect-event/v1\x00"), eventPayload...))
 			wantEventID := "sha256:" + hex.EncodeToString(eventSum[:])
 			if intents[index].EventID == "" {
 				intents[index].EventID = wantEventID
@@ -2358,7 +2389,7 @@ func makeCompactRecordWithIntents(state CompactState, intents []CompactEffectInt
 }
 
 func compactStateRevision(statePayload []byte) string {
-	sum := sha256.Sum256(append([]byte("gentle-ai.review-state/v2\x00"), statePayload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.review-state/v2\x00"), statePayload...))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
@@ -2370,6 +2401,8 @@ func CompactRevisionForState(state CompactState) (string, error) {
 }
 
 func parseCompactRecord(payload []byte, lineageID string) (CompactRecord, error) {
+	rawPayload := payload
+	payload, legacyIdentity := normalizeLegacyProductIdentity(payload)
 	decoder := json.NewDecoder(bytes.NewReader(payload))
 	decoder.DisallowUnknownFields()
 	var record CompactRecord
@@ -2395,11 +2428,14 @@ func parseCompactRecord(payload []byte, lineageID string) (CompactRecord, error)
 			return CompactRecord{}, errors.New("multiple JSON values in compact review state")
 		}
 	}
+	if legacyIdentity {
+		record.HistoricalCompat = true
+	}
 	if record.Schema != compactRecordSchema || !validSHA256(record.Revision) {
 		return CompactRecord{}, errors.New("invalid compact review state record")
 	}
 	if err := record.State.Validate(); err != nil {
-		forensic, historical := forensicHistoricalCompactRecord(payload, lineageID)
+		forensic, historical := forensicHistoricalCompactRecord(rawPayload, lineageID)
 		return CompactRecord{}, &CompactSemanticStateError{LineageID: record.State.LineageID, State: record.State.State, Problem: err.Error(),
 			OutdatedIdentity: historical, PriorSchemaPredecessorLineageID: forensic.PredecessorLineageID}
 	}
@@ -2433,7 +2469,7 @@ func validateCompactEffectIntents(record CompactRecord) error {
 			return errors.New("invalid compact required effect identity")
 		}
 		eventPayload, _ := json.Marshal([]string{record.State.LineageID, intent.BindingRevision, intent.Class, intent.Destination, intent.PayloadHash})
-		eventSum := sha256.Sum256(append([]byte("gentle-ai.review-effect-event/v1\x00"), eventPayload...))
+		eventSum := sha256.Sum256(append([]byte("shevanio-ai.review-effect-event/v1\x00"), eventPayload...))
 		if intent.EventID != "sha256:"+hex.EncodeToString(eventSum[:]) {
 			// refusal:by-design operator-knowledge: persisted authority is corrupt and cannot be repaired by an operator command
 			return errors.New("invalid compact required effect identity")
@@ -2466,6 +2502,8 @@ func validCompactEffectIntentFields(intent CompactEffectIntent) bool {
 }
 
 func forensicHistoricalCompactRecord(payload []byte, lineageID string) (historicalCompactForensicRecord, bool) {
+	rawPayload := payload
+	payload, legacyIdentity := normalizeLegacyProductIdentity(payload)
 	decoder := json.NewDecoder(bytes.NewReader(payload))
 	decoder.DisallowUnknownFields()
 	var record CompactRecord
@@ -2476,8 +2514,9 @@ func forensicHistoricalCompactRecord(payload []byte, lineageID string) (historic
 	if err := decoder.Decode(&extra); err != io.EOF || record.Schema != compactRecordSchema || !validSHA256(record.Revision) || record.State.LineageID != lineageID {
 		return historicalCompactForensicRecord{}, false
 	}
-	want, _, err := makeCompactRecord(record.State)
-	if err != nil || want.Revision != record.Revision || !errors.Is(record.State.Validate(), errCompactSnapshotIdentityMismatch) {
+	wantRevision, err := persistedCompactStateRevision(rawPayload, legacyIdentity)
+	if err != nil || wantRevision != record.Revision ||
+		(!legacyIdentity && !errors.Is(record.State.Validate(), errCompactSnapshotIdentityMismatch)) {
 		return historicalCompactForensicRecord{}, false
 	}
 	state := record.State
@@ -2490,30 +2529,50 @@ func forensicHistoricalCompactRecord(payload []byte, lineageID string) (historic
 	// is remapped through the exact same bijection, never invented. A record
 	// that still fails validation after that is not prior-schema.
 	reminted := map[string]string{}
-	remint := func(snapshot *Snapshot) {
+	remintPaths := func(snapshot *Snapshot) bool {
+		if !legacyIdentity {
+			return true
+		}
+		paths, err := canonicalPaths(snapshot.Paths)
+		if err != nil || !equalStrings(paths, snapshot.Paths) || snapshot.PathsDigest != legacyCompactPathsDigest(paths) {
+			return false
+		}
+		snapshot.PathsDigest = digestPaths(paths)
+		return true
+	}
+	remint := func(snapshot *Snapshot) bool {
+		if !remintPaths(snapshot) {
+			return false
+		}
 		minted := snapshotIdentityForProjection(snapshot.Kind, snapshot.Projection, snapshot.BaseTree, snapshot.CandidateTree, snapshot.PathsDigest, snapshot.IntendedUntrackedProof, snapshot.IntendedUntracked, snapshot.LedgerIDs)
 		reminted[snapshot.Identity] = minted
 		snapshot.Identity = minted
+		return true
 	}
 	for _, snapshot := range []*Snapshot{&state.InitialSnapshot, &state.CurrentSnapshot} {
-		if snapshot.Identity != retiredCompactSnapshotIdentity(*snapshot) {
+		if snapshot.Identity != retiredCompactSnapshotIdentity(*snapshot) || !remint(snapshot) {
 			return historicalCompactForensicRecord{}, false
 		}
-		remint(snapshot)
 	}
 	for index := range state.CorrectionAttempts {
 		snapshot := &state.CorrectionAttempts[index].Snapshot
 		if minted, seen := reminted[snapshot.Identity]; seen {
+			if !remintPaths(snapshot) {
+				return historicalCompactForensicRecord{}, false
+			}
 			snapshot.Identity = minted
-		} else if snapshot.Identity == retiredCompactSnapshotIdentity(*snapshot) {
-			remint(snapshot)
+		} else if snapshot.Identity == retiredCompactSnapshotIdentity(*snapshot) && !remint(snapshot) {
+			return historicalCompactForensicRecord{}, false
 		}
 	}
 	if target := state.CorrectionVerificationTarget; target != nil {
 		if minted, seen := reminted[target.Identity]; seen {
+			if !remintPaths(target) {
+				return historicalCompactForensicRecord{}, false
+			}
 			target.Identity = minted
-		} else if target.Identity == retiredCompactSnapshotIdentity(*target) {
-			remint(target)
+		} else if target.Identity == retiredCompactSnapshotIdentity(*target) && !remint(target) {
+			return historicalCompactForensicRecord{}, false
 		}
 	}
 	if minted, seen := reminted[state.EvidenceTargetIdentity]; seen {
@@ -2531,8 +2590,36 @@ func forensicHistoricalCompactRecord(payload []byte, lineageID string) (historic
 	if state.Recovery != nil {
 		predecessor = state.Recovery.PredecessorLineageID
 	}
-	sum := sha256.Sum256(payload)
+	sum := sha256.Sum256(rawPayload)
 	return historicalCompactForensicRecord{RawDigest: "sha256:" + hex.EncodeToString(sum[:]), PredecessorLineageID: predecessor}, true
+}
+
+func persistedCompactStateRevision(payload []byte, legacyIdentity bool) (string, error) {
+	var envelope struct {
+		State json.RawMessage `json:"state"`
+	}
+	if err := json.Unmarshal(payload, &envelope); err != nil {
+		return "", err
+	}
+	var compacted bytes.Buffer
+	if err := json.Compact(&compacted, envelope.State); err != nil {
+		return "", err
+	}
+	domain := CompactStateSchema
+	if legacyIdentity {
+		domain = "gentle-ai.review-state/v2"
+	}
+	sum := sha256.Sum256(append([]byte(domain+"\x00"), compacted.Bytes()...))
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
+}
+
+func legacyCompactPathsDigest(paths []string) string {
+	hash := sha256.New()
+	hash.Write([]byte("gentle-ai.paths/v1\x00"))
+	for _, logicalPath := range paths {
+		writeLengthPrefixed(hash, []byte(logicalPath))
+	}
+	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
 }
 
 func retiredCompactSnapshotIdentity(snapshot Snapshot) string {
@@ -2573,8 +2660,8 @@ func retiredCompactSnapshotIdentity(snapshot Snapshot) string {
 // older binary parse newer bytes. The message therefore names the only thing
 // that does resolve it: run a build at least as new as the writer.
 var ErrCompactAuthorityFromNewerRelease = errors.New(
-	"this compact review authority was written by a newer gentle-ai than the one reading it, which cannot parse it; " +
-		"upgrade the reading gentle-ai to at least the build that wrote this authority",
+	"this compact review authority was written by a newer shevanio-ai than the one reading it, which cannot parse it; " +
+		"upgrade the reading shevanio-ai to at least the build that wrote this authority",
 )
 
 // compactAuthorityFromNewerRelease reports whether a strict-decode failure is
@@ -2925,6 +3012,6 @@ func compactTransportDigest(transport CompactTransport) string {
 	copy := transport
 	copy.BundleDigest = ""
 	payload, _ := json.Marshal(copy)
-	sum := sha256.Sum256(append([]byte("gentle-ai.review-transport/v2\x00"), payload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.review-transport/v2\x00"), payload...))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }

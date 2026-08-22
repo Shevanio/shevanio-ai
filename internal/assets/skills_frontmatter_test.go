@@ -70,7 +70,7 @@ func TestSkillFrontmatterIsLintClean(t *testing.T) {
 			switch path {
 			case "skills/systemic-issue-triage/SKILL.md":
 				budget = 205
-			case "skills/gentle-ai-bench/SKILL.md":
+			case "skills/shevanio-ai-bench/SKILL.md":
 				budget = 194
 			}
 			if got := len([]rune(fm.description)); got > budget {
@@ -135,7 +135,7 @@ func skillDirBasename(path string) string {
 
 // extractSkillFrontmatter parses the leading `---` ... `---` block of a
 // SKILL.md file and returns the rules-relevant fields. It intentionally
-// supports only the simple key forms used by gentle-ai's SKILL.md files:
+// supports only the simple key forms used by shevanio-ai's SKILL.md files:
 //
 //   - `key: value`                  — plain scalar on the same line
 //   - `key: > / key: |` + indented continuation lines (block scalars)

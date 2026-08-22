@@ -8,13 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/mutationjournal"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/mutationjournal"
 )
 
 const (
 	ManagedAgent = "gentle-orchestrator"
-	schema       = "gentle-ai.opencode-default-agent"
+	schema       = "shevanio-ai.opencode-default-agent"
 	version      = 1
 )
 
@@ -42,7 +42,7 @@ type UninstallPlan struct {
 }
 
 func OwnershipPath(settingsPath string) string {
-	return filepath.Join(filepath.Dir(settingsPath), ".gentle-ai-default-agent.json")
+	return filepath.Join(filepath.Dir(settingsPath), ".shevanio-ai-default-agent.json")
 }
 func PrepareInstall(settingsPath string) (*InstallPlan, error) {
 	root, _, exists, _, err := readSettings(settingsPath)

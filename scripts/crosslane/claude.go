@@ -114,7 +114,7 @@ func (b *battery) runClaudeMediumConsent() {
 	consent, stderr, _ := b.runJSON("consent", repo,
 		"review", "start", "--contract", reviewContract, "--cwd", repo,
 		"--target", target, "--projection", "workspace", "--agent", "claude-code", "--consent", "relay")
-	if getString(consent, "schema") != "gentle-ai.review-integration.consent/v3" || getString(consent, "action") != "consent_required" {
+	if getString(consent, "schema") != "shevanio-ai.review-integration.consent/v3" || getString(consent, "action") != "consent_required" {
 		b.fail(claudeLane, "medium consent: envelope surfaced", fmt.Sprintf("schema=%q action=%q %s", getString(consent, "schema"), getString(consent, "action"), firstLine(stderr)))
 		return
 	}
@@ -160,7 +160,7 @@ func (b *battery) runClaudeModelReview(repo string) {
 		"--order", args["order"],
 		"--subject-hash", args["subject-hash"],
 		"--agent", "claude-code")
-	if code != 0 || getString(capture, "schema") != "gentle-ai.review-result-artifact/v2" {
+	if code != 0 || getString(capture, "schema") != "shevanio-ai.review-result-artifact/v2" {
 		b.fail(claudeLane, "medium reviewer model run", fmt.Sprintf("exit=%d schema=%q %s", code, getString(capture, "schema"), firstLine(stderr)))
 		return
 	}

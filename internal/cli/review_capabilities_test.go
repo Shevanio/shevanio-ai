@@ -13,11 +13,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const capabilityFixtureExecutable = "gentle-ai capability fixture\n"
+const capabilityFixtureExecutable = "shevanio-ai capability fixture\n"
 
 func TestReviewCapabilitiesMatchesConformanceFixtureOutsideRepository(t *testing.T) {
 	fixturePath, err := filepath.Abs(filepath.Join("..", "..", "contracts", "review-integration", "v1", "fixtures", "capabilities-v1.5.fixture.json"))
@@ -28,7 +28,7 @@ func TestReviewCapabilitiesMatchesConformanceFixtureOutsideRepository(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	executable := filepath.Join(t.TempDir(), "gentle-ai-fixture")
+	executable := filepath.Join(t.TempDir(), "shevanio-ai-fixture")
 	if err := os.WriteFile(executable, []byte(capabilityFixtureExecutable), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestReviewCapabilitiesV22MatchesConformanceFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	executable := filepath.Join(t.TempDir(), "gentle-ai-fixture")
+	executable := filepath.Join(t.TempDir(), "shevanio-ai-fixture")
 	if err := os.WriteFile(executable, []byte(capabilityFixtureExecutable), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func validateReviewCapabilitiesSchema(t *testing.T, name, id string, fixture []b
 	}
 	compiler := jsonschema.NewCompiler()
 	for uri, payload := range map[string][]byte{
-		"https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.4.schema.json": v14,
+		"https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.4.schema.json": v14,
 		id: capabilities,
 	} {
 		var document any
@@ -194,7 +194,7 @@ func TestReviewCapabilitiesContractValidationIsExactAndReadOnly(t *testing.T) {
 		{name: "supported", contract: ReviewIntegrationContractV1},
 		{name: "native Git", contract: ReviewIntegrationContractV2},
 		{name: "empty", contract: "", wantErr: true},
-		{name: "future major", contract: "gentle-ai.review-integration/v3", wantErr: true},
+		{name: "future major", contract: "shevanio-ai.review-integration/v3", wantErr: true},
 		{name: "surrounding whitespace", contract: " " + ReviewIntegrationContractV1, wantErr: true},
 	}
 	for _, tt := range tests {
@@ -221,7 +221,7 @@ func TestReviewCapabilitiesContractValidationIsExactAndReadOnly(t *testing.T) {
 }
 
 func TestReviewCapabilitiesAdvertisesOnlyNativeSurface(t *testing.T) {
-	executable := filepath.Join(t.TempDir(), "gentle-ai-fixture")
+	executable := filepath.Join(t.TempDir(), "shevanio-ai-fixture")
 	if err := os.WriteFile(executable, []byte(capabilityFixtureExecutable), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func TestReviewCapabilitiesAdvertisesOnlyNativeSurface(t *testing.T) {
 	if !slices.Contains(result.Schemas, reviewResultArtifactSchema) || !slices.Contains(result.Schemas, ReviewIntegrationOperationSchema) || !slices.Contains(result.Schemas, ReviewIntegrationStartSchemaV2) || !slices.Contains(result.Schemas, ReviewIntegrationStatusSchemaV2) || !slices.Contains(result.Schemas, ReviewIntegrationProjectionSchema) || !slices.Contains(result.Schemas, ReviewIntegrationRepairSchema) || !slices.Contains(result.Schemas, reviewtransaction.AuthorityRepairAssessmentSchema) || !slices.Contains(result.Schemas, reviewtransaction.FinalVerificationIncidentSchema) {
 		t.Fatalf("capability schemas do not advertise the negotiated provider surface: %v", result.Schemas)
 	}
-	if result.Bootstrap == nil || result.Bootstrap.Command != "gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v1 --next-transition" ||
+	if result.Bootstrap == nil || result.Bootstrap.Command != "shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v1 --next-transition" ||
 		result.Bootstrap.RequiredFeature != "native_next_transition" || result.Bootstrap.UnsupportedOutcome != "unsupported-capability" || !result.Bootstrap.ParentOnly ||
 		len(result.Bootstrap.TargetSelectorVariants) != 4 {
 		t.Fatalf("capability bootstrap = %#v", result.Bootstrap)
@@ -254,7 +254,7 @@ func TestReviewCapabilitiesAdvertisesOnlyNativeSurface(t *testing.T) {
 	if slices.Contains(result.Operations, "review.capture_result") {
 		t.Fatal("headless capture-result was advertised as a negotiated repository operation")
 	}
-	if result.Executable.Evidence != "self-reported" || result.Executable.Verification != "compare-with-published-manifest" || result.Executable.SHA256 != "sha256:dcc846103b16d365eaeeb9d7f289c23fc4f2897f23def1cb3fe7f05557b64705" {
+	if result.Executable.Evidence != "self-reported" || result.Executable.Verification != "compare-with-published-manifest" || result.Executable.SHA256 != "sha256:9c0033f9a971b5cad5f10484da28e7828ca090f1f91c70b90541ba7919dce538" {
 		t.Fatalf("executable identity = %#v", result.Executable)
 	}
 	var document any
@@ -550,7 +550,7 @@ func stubReviewCapabilityIdentity(t *testing.T, executable string) func() {
 	reviewCapabilitiesBuildInfoReader = func() (*debug.BuildInfo, bool) {
 		return &debug.BuildInfo{
 			GoVersion: "go1.25.10",
-			Main:      debug.Module{Path: "github.com/gentleman-programming/gentle-ai/v2", Version: "v2.1.7"},
+			Main:      debug.Module{Path: "github.com/shevanio/shevanio-ai/v2", Version: "v2.1.7"},
 			Settings: []debug.BuildSetting{
 				{Key: "vcs", Value: "git"},
 				{Key: "vcs.revision", Value: "0123456789abcdef0123456789abcdef01234567"},
@@ -588,7 +588,7 @@ func findCapabilityForbiddenField(value any, forbidden map[string]struct{}) stri
 }
 
 func TestReviewCapabilitiesFeatureRequirementsAreExplicit(t *testing.T) {
-	executable := filepath.Join(t.TempDir(), "gentle-ai-fixture")
+	executable := filepath.Join(t.TempDir(), "shevanio-ai-fixture")
 	if err := os.WriteFile(executable, []byte(capabilityFixtureExecutable), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -641,7 +641,7 @@ func TestReviewCapabilitiesFeatureRequirementsAreExplicit(t *testing.T) {
 }
 
 func TestReviewCapabilitiesBootstrapIsOptionalForExistingV1Consumers(t *testing.T) {
-	executable := filepath.Join(t.TempDir(), "gentle-ai-fixture")
+	executable := filepath.Join(t.TempDir(), "shevanio-ai-fixture")
 	if err := os.WriteFile(executable, []byte(capabilityFixtureExecutable), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestDetect(t *testing.T) {
@@ -89,8 +89,8 @@ func TestConfigPathsCrossPlatform(t *testing.T) {
 		t.Fatalf("MCPConfigPath() = %q, want %q", got, filepath.Join(home, ".cursor", "mcp.json"))
 	}
 
-	if got := a.SystemPromptFile(home); got != filepath.Join(home, ".cursor", "rules", "gentle-ai.mdc") {
-		t.Fatalf("SystemPromptFile() = %q, want %q", got, filepath.Join(home, ".cursor", "rules", "gentle-ai.mdc"))
+	if got := a.SystemPromptFile(home); got != filepath.Join(home, ".cursor", "rules", "shevanio-ai.mdc") {
+		t.Fatalf("SystemPromptFile() = %q, want %q", got, filepath.Join(home, ".cursor", "rules", "shevanio-ai.mdc"))
 	}
 }
 

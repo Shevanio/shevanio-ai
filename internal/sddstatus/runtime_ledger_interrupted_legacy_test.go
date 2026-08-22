@@ -29,7 +29,7 @@ func TestRuntimeLedgerRejectsMalformedPersistedInterruptedEvidence(t *testing.T)
 		t.Fatal(err)
 	}
 	record.Finish.EvidenceRevision = "sha256:" + strings.Repeat("G", 64)
-	record.RequestDigest = runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
+	record.RequestDigest = runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{
 		ExpectedRevision: record.PreviousRevision, RequestID: record.RequestID, Outcome: record.Finish.Outcome,
 		EvidenceRevision: record.Finish.EvidenceRevision, Diagnosis: record.Finish.Diagnosis,
 		HarnessDisposition: record.Finish.HarnessDisposition, CleanupEvidence: record.Finish.CleanupEvidence,

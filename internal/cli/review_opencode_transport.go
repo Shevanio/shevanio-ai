@@ -16,15 +16,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 const (
 	openCodeReviewTransportSchema          = reviewerprovider.TransportCapability
 	openCodeTaskHostOutputLimit            = reviewResultArtifactLimit + 8<<10
 	openCodeTransportEnvelopeMaxBytes      = reviewResultArtifactLimit*2 + 8<<10
-	openCodeTransportMaterializationHeader = "GENTLE_AI_REVIEW_PROVIDER_MATERIALIZATION"
+	openCodeTransportMaterializationHeader = "SHEVANIO_AI_REVIEW_PROVIDER_MATERIALIZATION"
 )
 
 // openCodeTransportEnvelope is the strict bidirectional wire protocol shared
@@ -368,11 +368,11 @@ func openCodeTransportStartBound(ctx context.Context, taskPrompt string) (openCo
 }
 
 // openCodeProviderRoleResultEnvelope renders the exact published
-// gentle-ai.opencode-review-provider-role/v1 envelope for a captured provider
+// shevanio-ai.opencode-review-provider-role/v1 envelope for a captured provider
 // role result. It is the single wording source for those bytes, so the
 // transport and the published-schema conformance test cannot drift apart.
 func openCodeProviderRoleResultEnvelope(role reviewProviderRole) string {
-	return `{"schema":"gentle-ai.opencode-review-provider-role/v1","role":"` + string(role) + `","captured":true}`
+	return `{"schema":"shevanio-ai.opencode-review-provider-role/v1","role":"` + string(role) + `","captured":true}`
 }
 
 func openCodeTransportComplete(ctx context.Context, session openCodeTransportSession, envelope openCodeTransportEnvelope) (openCodeTransportEnvelope, error) {
@@ -628,9 +628,9 @@ func reviewResultArtifactPath(order int, lens string) string {
 }
 
 func openCodeTransportFailure(code string) error {
-	return fmt.Errorf("%s: OpenCode Task transport did not produce a capturable reviewer result; run `gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition` before retrying", code)
+	return fmt.Errorf("%s: OpenCode Task transport did not produce a capturable reviewer result; run `shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition` before retrying", code)
 }
 
 func openCodeTransportAuthorityUnavailable(cause error) error {
-	return fmt.Errorf("opencode_review_transport_authority_unavailable: OpenCode Task transport did not produce a capturable reviewer result; run `gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition` before retrying: %w", cause)
+	return fmt.Errorf("opencode_review_transport_authority_unavailable: OpenCode Task transport did not produce a capturable reviewer result; run `shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition` before retrying: %w", cause)
 }

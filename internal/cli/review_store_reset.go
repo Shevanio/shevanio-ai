@@ -9,11 +9,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // ReviewStoreResetSchema identifies the user-facing store reset projection.
-const ReviewStoreResetSchema = "gentle-ai.review-store-reset-result/v1"
+const ReviewStoreResetSchema = "shevanio-ai.review-store-reset-result/v1"
 
 // ReviewStoreResetResult is the command's machine-readable output.
 type ReviewStoreResetResult struct {

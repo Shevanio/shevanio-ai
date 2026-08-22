@@ -1,5 +1,5 @@
 # Binaries
-/gentle-ai
+/shevanio-ai
 *.exe
 *.dll
 *.so
@@ -24,14 +24,15 @@ Thumbs.db
 
 # Docker
 *.tar
-cmd/gentle-ai/main
-cmd/gentle-ai/gentle-ai
+cmd/shevanio-ai/main
+cmd/shevanio-ai/shevanio-ai
 dist/
 .goreleaser-provider-contract/
 
 # Agent tooling metadata (generated per-user, not product code)
 .atl/
 .pi/
+.codegraph/
 
 # Engram local runtime state (project sync chunks are intentionally versioned)
 .engram/engram.db

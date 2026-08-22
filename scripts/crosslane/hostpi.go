@@ -22,7 +22,7 @@ var piRelayDriver string
 // a real pi process over the dev subscription.
 const hostPiLane = "host-pi"
 
-// piRelayContractEnv is the exact handshake gentle-ai requires before the pi
+// piRelayContractEnv is the exact handshake shevanio-ai requires before the pi
 // runtime identity becomes eligible for immutable review transport.
 var piRelayContractEnv = []string{"GENTLE_PI_REVIEW_RELAY_CONTRACT=gentle-pi.review-relay/v1"}
 
@@ -166,7 +166,7 @@ func (b *battery) runPiRelaySlot(lane, repo string, input map[string]any) bool {
 	caseConfig := map[string]any{
 		"capture_argument_tokens": argumentTokens(input),
 		"submission":              input["submission"],
-		"gentle_ai_executable":    b.binary,
+		"shevanio_ai_executable":  b.binary,
 		"pi_executable":           "pi",
 	}
 	payload, err := json.Marshal(caseConfig)
@@ -200,7 +200,7 @@ func (b *battery) runPiRelaySlot(lane, repo string, input map[string]any) bool {
 		return false
 	}
 	manifest := b.record("result-artifact", []byte(result.Submission))
-	if getString(manifest, "schema") != "gentle-ai.review-result-artifact/v2" {
+	if getString(manifest, "schema") != "shevanio-ai.review-result-artifact/v2" {
 		b.fail(lane, check, "relay submission did not round-trip a native result artifact")
 		return false
 	}

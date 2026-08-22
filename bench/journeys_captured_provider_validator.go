@@ -66,7 +66,7 @@ func captureProviderValidatorSlot(r *journeyRun) error {
 		return err
 	}
 	start, err := json.Marshal(map[string]string{
-		"schema": "gentle-ai.provider-transport/v1", "operation": "start", "prompt": input.ProviderTask.Prompt,
+		"schema": "shevanio-ai.provider-transport/v1", "operation": "start", "prompt": input.ProviderTask.Prompt,
 	})
 	if err != nil {
 		return err
@@ -85,12 +85,12 @@ func captureProviderValidatorSlot(r *journeyRun) error {
 			Nonce     string `json:"nonce"`
 			Prompt    string `json:"prompt"`
 		}
-		if err := json.Unmarshal([]byte(line), &prompt); err != nil || prompt.Schema != "gentle-ai.provider-transport/v1" ||
+		if err := json.Unmarshal([]byte(line), &prompt); err != nil || prompt.Schema != "shevanio-ai.provider-transport/v1" ||
 			prompt.Operation != "prompt" || prompt.Nonce == "" || prompt.Prompt == "" {
 			return fmt.Errorf("relay prompt = %q: %w", line, err)
 		}
 		completion, err := json.Marshal(map[string]string{
-			"schema": "gentle-ai.provider-transport/v1", "operation": "complete", "nonce": prompt.Nonce, "output": string(payload),
+			"schema": "shevanio-ai.provider-transport/v1", "operation": "complete", "nonce": prompt.Nonce, "output": string(payload),
 		})
 		if err != nil {
 			return err

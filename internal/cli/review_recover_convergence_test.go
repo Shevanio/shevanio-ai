@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestNegotiatedRecoverTransitionRunsVerbatimForStagedPredecessorAfterRebase
@@ -79,7 +79,7 @@ func TestNegotiatedRecoverTransitionRunsVerbatimForStagedPredecessorAfterRebase(
 		bound[argument.Name] = argument.Value
 	}
 	authorization := strings.Join([]string{
-		"gentle-ai.review-recovery-authorization/v1",
+		"shevanio-ai.review-recovery-authorization/v1",
 		"predecessor_lineage=" + bound["lineage"],
 		"predecessor_revision=" + bound["expected-revision"],
 		"target_identity=" + bound["target"],

@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-var errReviewProviderRefuterNotRequired = errors.New("provider refuter request has no inferential findings; continue with `gentle-ai review finalize --captured-results`")
+var errReviewProviderRefuterNotRequired = errors.New("provider refuter request has no inferential findings; continue with `shevanio-ai review finalize --captured-results`")
 
 // errReviewProviderRefuterResultNotCaptured and its targeted-validator twin
 // are typed absence, not damage: finalize discovery distinguishes an
@@ -30,7 +30,7 @@ var errReviewProviderTargetedValidatorResultNotCaptured = errors.New("provider t
 
 type reviewProviderRole = reviewerprovider.Role
 
-const reviewProviderTaskBindingHeader = "GENTLE_AI_REVIEW_PROVIDER_TASK"
+const reviewProviderTaskBindingHeader = "SHEVANIO_AI_REVIEW_PROVIDER_TASK"
 
 type reviewProviderTaskBinding struct {
 	LineageID         string `json:"lineage_id"`

@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
 
-func TestGentleAIWindowsUpgradeFailsClosedToSourceInstall(t *testing.T) {
+func TestShevanioAIWindowsUpgradeFailsClosedToSourceInstall(t *testing.T) {
 	originalExec := execCommand
 	t.Cleanup(func() { execCommand = originalExec })
 	execCommand = func(name string, args ...string) *exec.Cmd {
@@ -30,9 +30,9 @@ func TestGentleAIWindowsUpgradeFailsClosedToSourceInstall(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := update.UpdateResult{
 				Tool: update.ToolInfo{
-					Name:          "gentle-ai",
+					Name:          "shevanio-ai",
 					Owner:         "Gentleman-Programming",
-					Repo:          "gentle-ai",
+					Repo:          "shevanio-ai",
 					InstallMethod: update.InstallBinary,
 				},
 				LatestVersion: tc.latestVersion,
@@ -50,7 +50,7 @@ func TestGentleAIWindowsUpgradeFailsClosedToSourceInstall(t *testing.T) {
 			}
 			for _, required := range []string{
 				"Windows binary distribution and Scoop are temporarily unavailable",
-				"go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai" + tc.wantTarget,
+				"go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai" + tc.wantTarget,
 			} {
 				if !strings.Contains(hint, required) {
 					t.Errorf("manual hint is missing %q: %s", required, hint)

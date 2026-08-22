@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestExplicitFrozenReviewingStatusResumesPendingCandidateAfterDrift(t *testing.T) {
@@ -232,7 +232,7 @@ func frozenStagedReviewingStatusFixture(t *testing.T) (string, reviewtransaction
 	writeReviewStartCandidate(t, repo, "service-token.ts", "export const token = 'frozen'\n", 0o644)
 	probe := selectorTransitionStatus(t, repo, "--lineage", "frozen-staged-root", "--base-ref", base, "--projection", "staged", "--workspace-overlay")
 	const successor, actor, reason = "frozen-staged-reviewing", "maintainer", "include staged token"
-	authorization := "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=frozen-staged-root\npredecessor_revision=" + probe.Authority.Revision +
+	authorization := "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=frozen-staged-root\npredecessor_revision=" + probe.Authority.Revision +
 		"\ntarget_identity=" + probe.TargetIdentity + "\nsuccessor_lineage=" + successor + "\nactor=" + actor + "\nreason=" + reason
 	status := selectorTransitionStatus(t, repo, "--lineage", "frozen-staged-root", "--base-ref", base, "--projection", "staged", "--workspace-overlay",
 		"--recovery-successor-lineage", successor, "--recovery-reason", reason, "--recovery-actor", actor, "--recovery-authorization", authorization)

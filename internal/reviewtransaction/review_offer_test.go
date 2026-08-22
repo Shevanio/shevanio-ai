@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 // TestOfferReviewAfterVerifyDisabledKillSwitchReturnsUnavailableBeforeRepoRead
@@ -90,7 +90,7 @@ func TestOfferReviewAfterVerifyUnsetModeOffersNothing(t *testing.T) {
 }
 
 // enableGlobalRDDModeForOfferTest gives the test an isolated home carrying the
-// same explicit global "on" that `gentle-ai review mode enable` persists.
+// same explicit global "on" that `shevanio-ai review mode enable` persists.
 func enableGlobalRDDModeForOfferTest(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()

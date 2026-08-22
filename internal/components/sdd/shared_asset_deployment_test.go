@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
 )
 
 // embeddedSharedFileNames returns the names of every file embedded under

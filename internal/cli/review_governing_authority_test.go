@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestResolveGoverningAuthorityAbsentWithoutMarkerCostsNoGitCall proves the
@@ -110,7 +110,7 @@ func TestReviewValidateDiscoveryIntegrityMarkerCorruptedDeniesNeverLegacy(t *tes
 
 // TestResolveGoverningAuthorityInFlightDeniesEveryGate is CRITICAL C5's
 // primary RED/GREEN evidence: the verify report's exact repro
-// (`GENTLE_AI_RDD_NEW_LINEAGE=1 gentle-ai review start --lineage inflight`,
+// (`SHEVANIO_AI_RDD_NEW_LINEAGE=1 shevanio-ai review start --lineage inflight`,
 // nothing else — no reviewer, no finalize, no review-receipt.json) reached
 // GateAllow at all five gates including release. A lineage that was started
 // but never finalized is `reviewing`, never `approved`, and has no receipt —
@@ -308,7 +308,7 @@ func TestResolveGoverningAuthorityCandidateIdentityMismatchDenies(t *testing.T) 
 // TestResolveGoverningAuthorityCorruptReceiptNamesFreshLineageNotFinalize is
 // W-7 (Wave 5 fix cycle 2, verify-report #10186): a PRESENT but tampered/
 // mismatched receipt used to name the exact same continuation as a genuinely
-// ABSENT one (reviewFacadeReceiptNotAvailableReason, "run gentle-ai review
+// ABSENT one (reviewFacadeReceiptNotAvailableReason, "run shevanio-ai review
 // finalize --lineage %s"). Investigated: WriteReceipt's own publishImmutable
 // (authority_store.go, store.go's publishNoReplace path) refuses to
 // overwrite EXISTING content that differs from what it would (re)publish --
@@ -384,7 +384,7 @@ func TestResolveGoverningAuthorityCorruptReceiptNamesFreshLineageNotFinalize(t *
 	if strings.Contains(evaluation.Reason, "review finalize --lineage") {
 		t.Fatalf("reason = %q, must not name finalize -- WriteReceipt refuses to overwrite the differing on-disk bytes, so finalize would itself refuse", evaluation.Reason)
 	}
-	if !strings.Contains(evaluation.Reason, "gentle-ai review start") {
+	if !strings.Contains(evaluation.Reason, "shevanio-ai review start") {
 		t.Fatalf("reason = %q, must name the only continuation that actually clears a corrupted receipt: a fresh lineage via review start", evaluation.Reason)
 	}
 }
@@ -428,7 +428,7 @@ func TestRunReviewFacadeValidateNewLineageGovernsOverAnAllowingLegacyReceipt(t *
 
 	// v3: a record for the IDENTICAL lineage id AND the identical staged
 	// candidate, started but deliberately never finalized (reviewing).
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	var start bytes.Buffer
 	if err := RunReviewFacadeStart([]string{"--cwd", repo, "--lineage", lineage}, &start); err != nil {
 		t.Fatalf("new-lineage start for the same lineage id: %v\n%s", err, start.String())

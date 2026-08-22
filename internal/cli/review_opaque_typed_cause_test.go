@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // The defect these tests pin: on the provider-issued repository-context path
@@ -232,7 +232,7 @@ func assertPairwiseDistinct(t *testing.T, messages map[string]string, want int) 
 }
 
 func reviewCLICompactStoreDir(repo, lineage string) string {
-	return filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2", lineage)
+	return filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2", lineage)
 }
 
 func reviewCLICompactStatePath(repo, lineage string) string {

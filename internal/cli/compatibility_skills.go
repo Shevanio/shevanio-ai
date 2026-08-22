@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/sdd"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/skills"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // compatibilitySkillsRefreshStep refreshes the registry-scanned shared skills
@@ -129,7 +129,7 @@ func validateCompatibilityDestinations(root string, destinations []string) error
 	for _, destination := range destinations {
 		relative, err := filepath.Rel(root, destination)
 		if err != nil || relative == "." || filepath.IsAbs(relative) || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-			return fmt.Errorf("compatibility destination %q escapes %q; remove the escaping destination, then rerun gentle-ai install or gentle-ai sync", destination, root)
+			return fmt.Errorf("compatibility destination %q escapes %q; remove the escaping destination, then rerun shevanio-ai install or shevanio-ai sync", destination, root)
 		}
 		current := root
 		for _, part := range strings.Split(filepath.Dir(relative), string(filepath.Separator)) {
@@ -145,12 +145,12 @@ func validateCompatibilityDestinations(root string, destinations []string) error
 				return fmt.Errorf("stat compatibility destination ancestor %q: %w", current, err)
 			}
 			if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
-				return fmt.Errorf("compatibility destination ancestor %q must be a physical directory; replace it with a physical directory, then rerun gentle-ai install or gentle-ai sync", current)
+				return fmt.Errorf("compatibility destination ancestor %q must be a physical directory; replace it with a physical directory, then rerun shevanio-ai install or shevanio-ai sync", current)
 			}
 		}
 		info, err := lstatCompatibilityDestination(destination)
 		if err == nil && (info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular()) {
-			return fmt.Errorf("compatibility destination %q must be a regular file; replace it with a regular file or remove it, then rerun gentle-ai install or gentle-ai sync", destination)
+			return fmt.Errorf("compatibility destination %q must be a regular file; replace it with a regular file or remove it, then rerun shevanio-ai install or shevanio-ai sync", destination)
 		}
 		if err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("stat compatibility destination %q: %w", destination, err)

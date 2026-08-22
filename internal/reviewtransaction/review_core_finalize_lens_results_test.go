@@ -13,7 +13,7 @@ package reviewtransaction
 // RunReviewFacadeFinalize's new-lineage branch (review_facade.go) explicitly
 // REFUSES --result/--captured-results/etc. flags for a v3 lineage. So a
 // medium/high tier candidate (SelectedLenses non-empty) reaches `approved`
-// through `gentle-ai review finalize --lineage L` (no --failed) with zero
+// through `shevanio-ai review finalize --lineage L` (no --failed) with zero
 // lens reviews ever having been performed or even POSSIBLE to supply --
 // genuine self-approval.
 

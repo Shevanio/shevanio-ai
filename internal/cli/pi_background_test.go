@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 func TestPiBackgroundIntentValidation(t *testing.T) {
@@ -127,7 +127,7 @@ func TestPiBackgroundStateIsOptionalAndLossless(t *testing.T) {
 	}
 
 	legacy := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(legacy, ".gentle-ai"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(legacy, ".shevanio-ai"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(state.Path(legacy), []byte(`{"installed_agents":["pi"]}`), 0o644); err != nil {
@@ -175,7 +175,7 @@ func TestPreparePiBackgroundProjectionHonorsEffectiveIntent(t *testing.T) {
 			if plan == nil || plan.policy != tt.want || resolution.projectionPlan != plan {
 				t.Fatalf("prepared plan = %#v, want policy %q", plan, tt.want)
 			}
-			if plan.path != filepath.Join(home, ".pi", "gentle-ai", "background-subagents.json") {
+			if plan.path != filepath.Join(home, ".pi", "shevanio-ai", "background-subagents.json") {
 				t.Fatalf("plan path = %q", plan.path)
 			}
 		})
@@ -228,7 +228,7 @@ func TestPiBackgroundProjectionHonorsConfigHomeOverride(t *testing.T) {
 	t.Setenv(PiConfigHomeEnv, configHome)
 	resolution := PiBackgroundResolution{Effective: model.PiBackgroundOn, managed: true}
 	plan := preparePiBackgroundProjection(home, &resolution, true)
-	want := filepath.Join(configHome, "gentle-ai", "background-subagents.json")
+	want := filepath.Join(configHome, "shevanio-ai", "background-subagents.json")
 	if plan == nil || plan.path != want {
 		t.Fatalf("plan path = %#v, want %q", plan, want)
 	}
@@ -258,7 +258,7 @@ func TestPiBackgroundProjectionRollback(t *testing.T) {
 	})
 	t.Run("prior managed file is restored", func(t *testing.T) {
 		home := t.TempDir()
-		path := filepath.Join(home, ".pi", "gentle-ai", "background-subagents.json")
+		path := filepath.Join(home, ".pi", "shevanio-ai", "background-subagents.json")
 		prior := []byte("{\n  \"schema\": \"gentle-pi.background-subagents/v1\",\n  \"policy\": \"on\"\n}\n")
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
@@ -322,7 +322,7 @@ func TestPiBackgroundProjectionRefusesForeignFile(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			home := t.TempDir()
-			path := filepath.Join(home, ".pi", "gentle-ai", "background-subagents.json")
+			path := filepath.Join(home, ".pi", "shevanio-ai", "background-subagents.json")
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				t.Fatal(err)
 			}
@@ -464,7 +464,7 @@ func TestSyncPiBackgroundPrecedenceAndDryRunReporting(t *testing.T) {
 			if result.PiBackground.Intent != tt.wantIntent || result.PiBackground.Effective != tt.wantEffect || result.PiBackground.Persist != tt.wantPersist {
 				t.Fatalf("pi background resolution = %#v, want intent=%q effective=%q persist=%q", result.PiBackground, tt.wantIntent, tt.wantEffect, tt.wantPersist)
 			}
-			if _, statErr := os.Stat(filepath.Join(home, ".pi", "gentle-ai", "background-subagents.json")); !os.IsNotExist(statErr) {
+			if _, statErr := os.Stat(filepath.Join(home, ".pi", "shevanio-ai", "background-subagents.json")); !os.IsNotExist(statErr) {
 				t.Fatalf("dry-run projected policy: %v", statErr)
 			}
 			after, readErr := os.ReadFile(state.Path(home))

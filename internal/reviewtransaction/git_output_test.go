@@ -45,7 +45,7 @@ func TestRunGitCapturesBoundedSeparateOutput(t *testing.T) {
 				return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRunGitOutputHelper$", "--")
 			}
 
-			extraEnv := []string{"GENTLE_AI_GIT_OUTPUT_HELPER=" + tt.mode}
+			extraEnv := []string{"SHEVANIO_AI_GIT_OUTPUT_HELPER=" + tt.mode}
 			var output []byte
 			var err error
 			switch tt.runner {
@@ -127,7 +127,7 @@ func TestRunGitTraceDoesNotContaminateMachineOutput(t *testing.T) {
 }
 
 func TestRunGitOutputHelper(t *testing.T) {
-	mode := os.Getenv("GENTLE_AI_GIT_OUTPUT_HELPER")
+	mode := os.Getenv("SHEVANIO_AI_GIT_OUTPUT_HELPER")
 	if mode == "" {
 		return
 	}

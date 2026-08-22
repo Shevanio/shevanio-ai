@@ -1,6 +1,6 @@
 {
-  "schema": "gentle-ai.review-integration.start/v1",
-  "contract": "gentle-ai.review-integration/v1",
+  "schema": "shevanio-ai.review-integration.start/v1",
+  "contract": "shevanio-ai.review-integration/v1",
   "operation": "review.start",
   "action": "created",
   "lenses_required": true,

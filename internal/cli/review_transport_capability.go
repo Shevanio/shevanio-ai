@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 const reviewImmutableTransportUnsupportedCode = "immutable_review_transport_unsupported"
@@ -118,7 +118,7 @@ func reviewTransportSupportedRuntimeIDs() []string {
 }
 
 func reviewTransportRefusalExitGuidance() string {
-	return "; exit receipt-driven review with `gentle-ai review mode disable --scope clone --cwd <repo>`; supported immutable review runtimes: " +
+	return "; exit receipt-driven review with `shevanio-ai review mode disable --scope clone --cwd <repo>`; supported immutable review runtimes: " +
 		strings.Join(reviewTransportSupportedRuntimeIDs(), ", ")
 }
 

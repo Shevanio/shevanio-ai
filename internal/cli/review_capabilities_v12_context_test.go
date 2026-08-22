@@ -8,7 +8,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestReviewCapabilitiesV13AdvertisesProviderAdmissionAndRecovery(t *testing.T) {
@@ -40,12 +40,12 @@ func TestReviewCapabilitiesV13AdvertisesProviderAdmissionAndRecovery(t *testing.
 func TestReviewCapabilitiesV10ThroughV12ArtifactsRemainByteIdentical(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v1")
 	want := map[string]string{
-		"fixtures/capabilities.fixture.json":      "b3ca822189a236f2d891628c665ca23e308bf5185a1701e1f07231bd970461bb",
-		"fixtures/capabilities-v1.1.fixture.json": "1b3dc40dce7bfb5d3ecc7e92af68d66e71b733ba0b0f71ba94d3c633adc48bcf",
-		"fixtures/capabilities-v1.2.fixture.json": "2970d21cd95a7fcaea6547c47a591a5151046e7ede658b3e8c5b9a9c5d106b65",
-		"schemas/capabilities.schema.json":        "ad333177494a251beac153f74bd751fa77126a9968aad69e64fc2abf15cff0f7",
-		"schemas/capabilities-v1.1.schema.json":   "2b14162284f375f8563e49d3a28caaa0aabb572094d8d290eb61844b1353af78",
-		"schemas/capabilities-v1.2.schema.json":   "df1722adcd9c999edbef090bfd5d9a9713f6852a9bc9cb79684ef7c9c91c0d62",
+		"fixtures/capabilities.fixture.json":      "4ee341bf210fac15e1b496b611a50536aff581c07a8aab858d84cdc1ab5333ca",
+		"fixtures/capabilities-v1.1.fixture.json": "04390bb79b39a336652ba58c19174a16ee6c4b3ba6e31c2e9b28d3497215360c",
+		"fixtures/capabilities-v1.2.fixture.json": "1e7129edb9972acb6167c106f25c8d840ac5ccb3ba5e54a07e15ba9b38478f4e",
+		"schemas/capabilities.schema.json":        "45517303ed645a4242d17a40434a0cc3ff630da0e1066434e98452757cefe4c8",
+		"schemas/capabilities-v1.1.schema.json":   "42092663c4a33ca5ccda935dfa050f061b3ede2a36a0f059e1a4112ebe42b65c",
+		"schemas/capabilities-v1.2.schema.json":   "5273e79a70eda7c8cb6cb7cbec61d7d73dfea59717cb4e7672026c19dee54236",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))

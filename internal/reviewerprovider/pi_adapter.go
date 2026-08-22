@@ -38,7 +38,7 @@ func (adapter *PiAdapter) Review(ctx context.Context, invocation Invocation) ([]
 	if err != nil {
 		return nil, fmt.Errorf("pi reviewer transport unavailable: %w", err)
 	}
-	scratch, err := os.MkdirTemp("", "gentle-ai-pi-reviewer-*")
+	scratch, err := os.MkdirTemp("", "shevanio-ai-pi-reviewer-*")
 	if err != nil {
 		return nil, fmt.Errorf("pi reviewer transport unavailable: create scratch directory: %w", err)
 	}

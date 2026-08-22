@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 func TestSDDOrchestratorsRequireSafeFormatterOrdering(t *testing.T) {
@@ -103,7 +103,7 @@ func TestOrganicRuntimeE2EUsesInstalledOpenCodePin(t *testing.T) {
 	}
 	for _, required := range []string{
 		"TestOpenCodeRuntimeIsPinnedForTheLiveProviderTransport",
-		`GENTLE_AI_OPENCODE_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}`,
+		`SHEVANIO_AI_OPENCODE_RUNTIME_E2E: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}`,
 	} {
 		if !strings.Contains(string(data), required) {
 			t.Fatalf("organic runtime E2E is missing live OpenCode provider isolation guard %q", required)
@@ -124,7 +124,7 @@ func TestWindowsReleaseBlockerCannotSkipOwnerRebinding(t *testing.T) {
 	}
 	for _, required := range []string{
 		"TestRARPrivateOwnerRemainsTokenUserOnly",
-		`GENTLE_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER: "1"`,
+		`SHEVANIO_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER: "1"`,
 	} {
 		if !strings.Contains(string(workflow), required) {
 			t.Fatalf(
@@ -149,7 +149,7 @@ func TestWindowsReleaseBlockerCannotSkipOwnerRebinding(t *testing.T) {
 	}
 	if !strings.Contains(
 		string(testSource),
-		`os.Getenv("GENTLE_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER") == "1"`,
+		`os.Getenv("SHEVANIO_AI_REQUIRE_DISTINCT_WINDOWS_TOKEN_OWNER") == "1"`,
 	) {
 		t.Fatal(
 			"native Windows owner-rebinding test can skip the release precondition",

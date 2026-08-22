@@ -323,7 +323,7 @@ func requireUnrelatedPredecessorByteIdentical(r *journeyRun) error {
 
 // reviewTransactionsBase resolves the same base directory
 // internal/reviewtransaction's reviewAuthorityRoot derives — the git common
-// directory's gentle-ai/review-transactions subtree — so ds11 can author a
+// directory's shevanio-ai/review-transactions subtree — so ds11 can author a
 // crash-position quarantine state directly, exactly like this axis's other
 // fixtures author review-state.json directly (file doc comment above): this
 // state (a real forward-only resume mid-transaction) is unreachable through
@@ -333,7 +333,7 @@ func reviewTransactionsBase(sandbox *Sandbox) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(common, "gentle-ai", "review-transactions"), nil
+	return filepath.Join(common, "shevanio-ai", "review-transactions"), nil
 }
 
 // requireForgedResumeMovedNothingFurther is fix cycle 1's CRITICAL-1
@@ -431,7 +431,7 @@ func requireNoDoubleMoveAcrossClosure(r *journeyRun) error {
 // through the real binary via a build-tag-gated product hook
 // (internal/reviewtransaction/bench_fixture.go, `-tags bench_fixture`,
 // mirroring internal/sddstatus/bench_fixture.go's own established pattern
-// for j57): GENTLE_AI_BENCH_CRASH_AT_PHASE names the exact "<phase>:<lineage>"
+// for j57): SHEVANIO_AI_BENCH_CRASH_AT_PHASE names the exact "<phase>:<lineage>"
 // pair to refuse right after, a genuine interruption of the real command
 // with nothing after that point in the SAME process ever executing — not an
 // authored on-disk state. Six journeys are generated, one per (phase,
@@ -458,7 +458,7 @@ var crashPositionRoles = []crashPositionRole{
 // crashPositionPhases reproduces, as plain strings, internal/reviewtransaction's
 // own compactReclaimPhasePrepared / compactReclaimPhaseCommitted literals
 // ("prepared" / "committed") — this package cannot import them, and
-// GENTLE_AI_BENCH_CRASH_AT_PHASE's own contract (bench_fixture.go) is
+// SHEVANIO_AI_BENCH_CRASH_AT_PHASE's own contract (bench_fixture.go) is
 // exactly these two literal values.
 var crashPositionPhases = []string{"prepared", "committed"}
 
@@ -490,7 +490,7 @@ func clearedCrashDispositionRepairArgs(reason string) func(*Sandbox) ([]string, 
 // entirely unrelated, real reasons — so this requires the exact
 // bench_fixture.go marker text, proof the interruption is the deterministic
 // one this journey asked for. A binary without the bench_fixture build tag
-// never links that hook, so GENTLE_AI_BENCH_CRASH_AT_PHASE has no effect and
+// never links that hook, so SHEVANIO_AI_BENCH_CRASH_AT_PHASE has no effect and
 // the disposition simply completes (exit 0) instead: that specific shape
 // reports the journey unsupported rather than failed, mirroring j57's own
 // graceful degradation when its equivalent build-tag seam is absent

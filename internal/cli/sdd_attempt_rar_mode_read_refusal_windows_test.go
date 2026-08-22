@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 func TestRunSDDAttemptSettleRepairsUnsafeDisabledRARModeWithoutRecursing(t *testing.T) {
@@ -28,7 +28,7 @@ func TestRunSDDAttemptSettleRepairsUnsafeDisabledRARModeWithoutRecursing(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	privateRARDir := filepath.Join(repo, ".git", "gentle-ai", "review-mode", "rar-authority", "v1")
+	privateRARDir := filepath.Join(repo, ".git", "shevanio-ai", "review-mode", "rar-authority", "v1")
 	child := filepath.Join(privateRARDir, "must-not-change.txt")
 	if err := os.WriteFile(child, []byte("private child\n"), 0o600); err != nil {
 		t.Fatal(err)

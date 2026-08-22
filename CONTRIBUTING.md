@@ -1,6 +1,6 @@
-# Contributing to Gentle AI
+# Contributing to Shevanio AI
 
-Thank you for your interest in contributing to **Gentle AI** (`gentle-ai`) — a Go CLI/TUI ecosystem configurator for AI coding agents.
+Thank you for your interest in contributing to **Shevanio AI** (`shevanio-ai`) — a Go CLI/TUI ecosystem configurator for AI coding agents.
 
 Before you dive in, please read this guide fully. We have a structured workflow to keep the project organized and maintainable.
 
@@ -27,7 +27,7 @@ Before you dive in, please read this guide fully. We have a structured workflow 
 
 This project follows a strict issue-first workflow:
 
-1. **Open an issue** using the appropriate template ([Bug Report](https://github.com/Gentleman-Programming/gentle-ai/issues/new?template=bug_report.yml) or [Feature Request](https://github.com/Gentleman-Programming/gentle-ai/issues/new?template=feature_request.yml))
+1. **Open an issue** using the appropriate template ([Bug Report](https://github.com/Shevanio/shevanio-ai/issues/new?template=bug_report.yml) or [Feature Request](https://github.com/Shevanio/shevanio-ai/issues/new?template=feature_request.yml))
 2. **Wait for approval** — a maintainer will add the `status:approved` label when the issue is ready to be worked on
 3. **Comment on the issue** to let others know you're working on it
 4. **Open a PR** referencing the approved issue
@@ -40,7 +40,7 @@ PRs that are not linked to an approved issue will be **automatically rejected** 
 
 Start at the **[Community Roadmap](docs/community-roadmap.md)**.
 
-Everything labelled [`up-for-grabs`](https://github.com/Gentleman-Programming/gentle-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, carries `status:approved` so a PR can be opened, and is unclaimed. Comment that you are taking it and go.
+Everything labelled [`up-for-grabs`](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, carries `status:approved` so a PR can be opened, and is unclaimed. Comment that you are taking it and go.
 
 An issue **without** that label is usually waiting on information (`status:needs-info`) or on an architectural decision (`status:needs-design`). Those want discussion first — implementing before the decision lands means the work gets thrown away.
 
@@ -110,15 +110,15 @@ For disclosure boundaries, required details, attribution rules, and reviewer exp
 ### Clone and Build
 
 ```bash
-git clone https://github.com/Gentleman-Programming/gentle-ai.git
-cd gentle-ai
-go build -o gentle-ai ./cmd/gentle-ai
+git clone https://github.com/Shevanio/shevanio-ai.git
+cd shevanio-ai
+go build -o shevanio-ai ./cmd/shevanio-ai
 ```
 
 ### Run Locally
 
 ```bash
-./gentle-ai
+./shevanio-ai
 ```
 
 ---
@@ -159,13 +159,13 @@ chmod +x docker-test.sh
 
 ### Running the Cross-Lane Battery
 
-The cross-lane battery ([`scripts/cross-lane-battery.sh`](scripts/cross-lane-battery.sh), implemented in [`scripts/crosslane/`](scripts/crosslane/)) is a local, out-of-CI regression net. It drives one real `gentle-ai` binary end to end across the supported agent-host review integration boundaries. It is deliberately not wired into CI because its optional tiers spend real reviewer model runs and real host sessions.
+The cross-lane battery ([`scripts/cross-lane-battery.sh`](scripts/cross-lane-battery.sh), implemented in [`scripts/crosslane/`](scripts/crosslane/)) is a local, out-of-CI regression net. It drives one real `shevanio-ai` binary end to end across the supported agent-host review integration boundaries. It is deliberately not wired into CI because its optional tiers spend real reviewer model runs and real host sessions.
 
 Build a binary first, then run the tier you can afford:
 
 ```bash
-go build -o /tmp/gentle-ai ./cmd/gentle-ai
-./scripts/cross-lane-battery.sh --binary /tmp/gentle-ai [--with-model] [--with-host] [--keep-work]
+go build -o /tmp/shevanio-ai ./cmd/shevanio-ai
+./scripts/cross-lane-battery.sh --binary /tmp/shevanio-ai [--with-model] [--with-host] [--keep-work]
 ```
 
 | Tier | Flags | Cost profile | What it covers |
@@ -200,10 +200,10 @@ repository root, then run it from `bench/`:
 
 ```bash
 # From the repository root.
-go build -tags bench_fixture -o /path/to/gentle-ai ./cmd/gentle-ai
+go build -tags bench_fixture -o /path/to/shevanio-ai ./cmd/shevanio-ai
 
-# From bench/, after building gentle-ai-bench above.
-./gentle-ai-bench run --binary /path/to/gentle-ai --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed
+# From bench/, after building shevanio-ai-bench above.
+./shevanio-ai-bench run --binary /path/to/shevanio-ai --axis source-coupled --only j57-sdd-authority-drift-during-discovery-fails-closed
 ```
 
 Benchmark validation applies to review-lifecycle, gate, recovery, delivery, benchmark implementation/corpus/classifier, and benchmark-claim changes. For measured product-behavior changes, use driven mode and report the command, tested binary or commit, selected subset or axes, and result summary. Compare before and after only when claiming a measured friction change. For unrelated changes, mark benchmark validation `N/A` with a brief reason.
@@ -412,4 +412,4 @@ Violations may result in removal from the project.
 
 ## Questions?
 
-Use [GitHub Discussions](https://github.com/Gentleman-Programming/gentle-ai/discussions) — not issues — for questions, ideas, and general conversation.
+Use [GitHub Discussions](https://github.com/Shevanio/shevanio-ai/discussions) — not issues — for questions, ideas, and general conversation.

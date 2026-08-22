@@ -3,8 +3,8 @@ package screens
 import (
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agentbuilder"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/agentbuilder"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 // RenderABComplete renders the agent-builder completion screen.

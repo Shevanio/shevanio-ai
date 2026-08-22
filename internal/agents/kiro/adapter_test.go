@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestAdapter_Agent(t *testing.T) {
@@ -148,7 +148,7 @@ func TestAdapter_SystemPromptDir(t *testing.T) {
 func TestAdapter_SystemPromptFile(t *testing.T) {
 	adapter := NewAdapter()
 	homeDir := "/home/user"
-	expected := filepath.Join(homeDir, ".kiro", "steering", "gentle-ai.md")
+	expected := filepath.Join(homeDir, ".kiro", "steering", "shevanio-ai.md")
 
 	got := adapter.SystemPromptFile(homeDir)
 	if got != expected {

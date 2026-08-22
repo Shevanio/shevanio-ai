@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/consentenvelope"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/consentenvelope"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // SDDIntegrationConsentSchema identifies the SDD edit-authority consent
 // question (#2540 S4a), in the same envelope family as
-// gentle-ai.review-integration.consent/v2.
-const SDDIntegrationConsentSchema = "gentle-ai.sdd-integration.consent/v1"
+// shevanio-ai.review-integration.consent/v2.
+const SDDIntegrationConsentSchema = "shevanio-ai.sdd-integration.consent/v1"
 
 // SDDIntegrationConsentSchemaID is the published JSON-schema identity for the
 // envelope, mirroring the review-integration contract layout.
-const SDDIntegrationConsentSchemaID = "https://gentle-ai.dev/contracts/sdd-integration/v1/schemas/consent.schema.json"
+const SDDIntegrationConsentSchemaID = "https://shevanio-ai.dev/contracts/sdd-integration/v1/schemas/consent.schema.json"
 
 // SDDIntegrationContractV1 names the sdd-integration contract the envelope
 // belongs to.
-const SDDIntegrationContractV1 = "gentle-ai.sdd-integration/v1"
+const SDDIntegrationContractV1 = "shevanio-ai.sdd-integration/v1"
 
 const (
 	sddConsentOperation      = "sdd-attempt.grant"
@@ -40,12 +40,12 @@ const (
 	// provisional pin lacked --request-id (found by S3) and
 	// --change-instance (added by S5); #2563 reconciled the fixture, the
 	// schema regex, and the test pin together to this flag set.
-	sddConsentGrantInvocationPrefix = "gentle-ai sdd-attempt grant "
+	sddConsentGrantInvocationPrefix = "shevanio-ai sdd-attempt grant "
 
 	// sddConsentStatusInvocationPrefix is the decline and off-path re-entry:
 	// declining persists nothing, so the runnable follow-up is native SDD
 	// status for the same change.
-	sddConsentStatusInvocationPrefix = "gentle-ai sdd-status "
+	sddConsentStatusInvocationPrefix = "shevanio-ai sdd-status "
 )
 
 // SDDIntegrationConsentResult is the typed blocking consent question an SDD

@@ -1,6 +1,6 @@
 package skills
 
-import "github.com/gentleman-programming/gentle-ai/v2/internal/model"
+import "github.com/shevanio/shevanio-ai/v2/internal/model"
 
 // sddSkills are the SDD orchestrator skills — always included.
 var sddSkills = []model.SkillID{
@@ -20,7 +20,7 @@ var sddSkills = []model.SkillID{
 // foundationSkills are baseline learning skills for the "recommended" tier.
 var foundationSkills = []model.SkillID{
 	model.SkillGoTesting,
-	model.SkillGentleAIBench,
+	model.SkillShevanioAIBench,
 	model.SkillCreator,
 	model.SkillImprover,
 	model.SkillBranchPR,

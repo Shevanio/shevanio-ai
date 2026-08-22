@@ -1,6 +1,6 @@
 # Contributors
 
-Thanks to everyone who has contributed to gentle-ai. This project exists because of the community.
+This list preserves the people who contributed to upstream [Gentle AI](https://github.com/Gentleman-Programming/gentle-ai) before the Shevanio AI fork. Their names and historical contributions remain unchanged.
 
 ## Maintainer
 
@@ -30,4 +30,4 @@ Thanks to everyone who has contributed to gentle-ai. This project exists because
 
 ## Contributing
 
-Want to contribute? Check out the [open issues](https://github.com/Gentleman-Programming/gentle-ai/issues) and read the contribution guidelines in the repo.
+Want to contribute? Check out the [open issues](https://github.com/Shevanio/shevanio-ai/issues) and read the contribution guidelines in the repo.

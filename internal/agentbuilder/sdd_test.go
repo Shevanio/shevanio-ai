@@ -42,7 +42,7 @@ func TestInjectSDDReference_InjectIntoEmptyFile(t *testing.T) {
 	}
 
 	content := string(data)
-	marker := "<!-- gentle-ai:custom-agent:my-skill -->"
+	marker := "<!-- shevanio-ai:custom-agent:my-skill -->"
 	if !strings.Contains(content, marker) {
 		t.Errorf("marker not found in file;\ngot:\n%s", content)
 	}
@@ -72,7 +72,7 @@ func TestInjectSDDReference_ExistingContentPreserved(t *testing.T) {
 	if !strings.Contains(content, "My System Prompt") {
 		t.Errorf("existing content was not preserved;\ngot:\n%s", content)
 	}
-	if !strings.Contains(content, "<!-- gentle-ai:custom-agent:my-skill -->") {
+	if !strings.Contains(content, "<!-- shevanio-ai:custom-agent:my-skill -->") {
 		t.Errorf("marker not found in file;\ngot:\n%s", content)
 	}
 }
@@ -102,10 +102,31 @@ func TestInjectSDDReference_DuplicateInjection_MarkerReplacedNotDuplicated(t *te
 	content := string(data)
 
 	// Count marker occurrences — should appear exactly once.
-	marker := "<!-- gentle-ai:custom-agent:dedup-skill -->"
+	marker := "<!-- shevanio-ai:custom-agent:dedup-skill -->"
 	count := strings.Count(content, marker)
 	if count != 1 {
 		t.Errorf("marker appears %d times, want exactly 1;\ngot:\n%s", count, content)
+	}
+}
+
+func TestInjectSDDReference_MigratesLegacyMarker(t *testing.T) {
+	dir := t.TempDir()
+	promptFile := filepath.Join(dir, "system-prompt.md")
+	legacy := "# Prompt\n\n<!-- gentle-ai:custom-agent:legacy-skill -->\nOld block\n<!-- /gentle-ai:custom-agent:legacy-skill -->\n"
+	if err := os.WriteFile(promptFile, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	agent := makeSDDAgent("legacy-skill", "When migration is needed", &SDDIntegration{Mode: SDDPhaseSupport, TargetPhase: "apply"})
+	if err := InjectSDDReference(agent, promptFile); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(promptFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if strings.Contains(content, "gentle-ai:custom-agent") || strings.Count(content, "<!-- shevanio-ai:custom-agent:legacy-skill -->") != 1 {
+		t.Fatalf("legacy custom-agent marker was not migrated exactly once:\n%s", content)
 	}
 }
 

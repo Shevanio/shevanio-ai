@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // wantEnabledReviewGateFields is the exact shipped field set of a gate result
@@ -78,7 +78,7 @@ func TestReviewValidateReportsDisabledUnmanagedDeliveryWithoutReceipt(t *testing
 	}
 	// The clone-local kill-switch override shares the review-transactions root,
 	// so the assertion targets the authority generation directory itself.
-	if _, err := os.Stat(filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2")); !os.IsNotExist(err) {
 		t.Fatalf("a disabled delivery report created review authority: %v", err)
 	}
 }
@@ -450,7 +450,7 @@ func TestReviewValidateReportsDisabledUnmanagedDeliveryOverCorruptedAuthorityAtP
 
 	// Damage the authority inventory: a truncated compact record is corruption,
 	// not a stale-but-healthy receipt.
-	broken := filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2", "corrupt-while-disabled")
+	broken := filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2", "corrupt-while-disabled")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -584,7 +584,7 @@ func TestReviewValidateReportsDisabledUnmanagedDeliveryOverCorruptedAuthorityNoU
 
 	// Damage the authority inventory: a truncated compact record is
 	// corruption, not a stale-but-healthy receipt or an unresolvable target.
-	broken := filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2", "corrupt-while-disabled-no-upstream")
+	broken := filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2", "corrupt-while-disabled-no-upstream")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}

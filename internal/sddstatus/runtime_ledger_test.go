@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestRuntimeLedgerConsumesOrdinalBeforeLaunchAndChargesNativeLines(t *testing.T) {
@@ -525,7 +525,7 @@ func TestRuntimeLedgerPrivateRootCannotBeRedirectedThroughSymlink(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	gentleRoot := filepath.Join(store.commonDir, "gentle-ai")
+	gentleRoot := filepath.Join(store.commonDir, "shevanio-ai")
 	if err := os.MkdirAll(gentleRoot, 0o755); err != nil {
 		t.Fatal(err)
 	}

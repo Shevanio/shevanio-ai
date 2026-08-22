@@ -18,23 +18,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
-// dispatchNamedReviewStart runs a `gentle-ai review start ...` invocation read
+// dispatchNamedReviewStart runs a `shevanio-ai review start ...` invocation read
 // out of a product message through the real review router. extra carries only
 // the operator-supplied value a message placeholder explicitly asks for.
 func dispatchNamedReviewStart(t *testing.T, repo string, tokens []string, extra ...string) ReviewFacadeStartResult {
 	t.Helper()
 	if len(tokens) < 2 || tokens[0] != "review" || tokens[1] != "start" {
-		t.Fatalf("named continuation is %v, want gentle-ai review start", tokens)
+		t.Fatalf("named continuation is %v, want shevanio-ai review start", tokens)
 	}
 	args := append(append([]string{}, tokens[1:]...), extra...)
 	args = append(args, "--cwd", repo)
 	var output bytes.Buffer
 	if err := RunReview(args, &output); err != nil {
-		t.Fatalf("the named continuation exits non-zero: gentle-ai review %v: %v\n%s", args, err, output.String())
+		t.Fatalf("the named continuation exits non-zero: shevanio-ai review %v: %v\n%s", args, err, output.String())
 	}
 	var started ReviewFacadeStartResult
 	decodeStrictReviewJSON(t, output.Bytes(), &started)
@@ -49,13 +49,13 @@ func dispatchNamedReviewStart(t *testing.T, repo string, tokens []string, extra 
 func dispatchNamedReviewStartExpectingRefusal(t *testing.T, repo string, tokens []string) string {
 	t.Helper()
 	if len(tokens) < 2 || tokens[0] != "review" || tokens[1] != "start" {
-		t.Fatalf("named continuation is %v, want gentle-ai review start", tokens)
+		t.Fatalf("named continuation is %v, want shevanio-ai review start", tokens)
 	}
 	args := append(append([]string{}, tokens[1:]...), "--cwd", repo)
 	var output bytes.Buffer
 	err := RunReview(args, &output)
 	if err == nil {
-		t.Fatalf("the named continuation on a clean worktree unexpectedly succeeded: gentle-ai review %v:\n%s", args, output.String())
+		t.Fatalf("the named continuation on a clean worktree unexpectedly succeeded: shevanio-ai review %v:\n%s", args, output.String())
 	}
 	return err.Error()
 }
@@ -217,7 +217,7 @@ func TestSDDStatusArchiveNeverTreatsAnEmptyCandidateReviewAsCoverage(t *testing.
 // Unmanaged Ordinary Archive"): a change at its archive decision with no
 // review authority anywhere is decline-by-absence-of-action, not a stop --
 // the offer is an invitation, never a gate. Superseded (documented, not
-// silently dropped): this test previously required naming `gentle-ai review
+// silently dropped): this test previously required naming `shevanio-ai review
 // start` as a runnable exit from a blocked state; there is no blocked state
 // to exit from anymore for this exact fixture.
 func TestSDDStatusEnabledMissingReceiptIsDeclineNotAStop(t *testing.T) {

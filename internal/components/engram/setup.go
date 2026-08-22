@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // execCommandContext is a package-level seam over exec.CommandContext,
@@ -75,8 +75,8 @@ func ProbeProtocolFlagCommand(ctx context.Context, command string) (string, erro
 }
 
 const (
-	SetupModeEnvVar   = "GENTLE_AI_ENGRAM_SETUP_MODE"
-	SetupStrictEnvVar = "GENTLE_AI_ENGRAM_SETUP_STRICT"
+	SetupModeEnvVar   = "SHEVANIO_AI_ENGRAM_SETUP_MODE"
+	SetupStrictEnvVar = "SHEVANIO_AI_ENGRAM_SETUP_STRICT"
 )
 
 type SetupMode string

@@ -10,9 +10,9 @@ import (
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // This file is the published-schema conformance suite for live envelopes: it
@@ -51,7 +51,7 @@ func compileWholePublishedReviewSchema(t *testing.T, version, name string) *json
 			}
 		}
 	}
-	schema, err := compiler.Compile("https://gentle-ai.dev/contracts/review-integration/" + version + "/schemas/" + name)
+	schema, err := compiler.Compile("https://shevanio-ai.dev/contracts/review-integration/" + version + "/schemas/" + name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func TestPiHostRelayStatusEnvelopeMatchesPublishedStatusSchemaV5(t *testing.T) {
 
 // TestReviewGateResultEnvelopeMatchesPublishedSchema walks one low-risk
 // lifecycle to its approved receipt, runs the delivery gate, and validates the
-// emitted gentle-ai.review-gate-result/v1 envelope against its published
+// emitted shevanio-ai.review-gate-result/v1 envelope against its published
 // schema — the envelope the battery found had no published schema at all.
 func TestReviewGateResultEnvelopeMatchesPublishedSchema(t *testing.T) {
 	reviewEnabledHome(t)
@@ -296,7 +296,7 @@ func TestReviewGateResultEnvelopeMatchesPublishedSchema(t *testing.T) {
 		t.Fatalf("next transition = %#v", status.NextTransition)
 	}
 	words := reviewShellWords(t, status.NextTransition.Execute.Command)
-	if len(words) < 3 || words[0] != "gentle-ai" || words[1] != "review" {
+	if len(words) < 3 || words[0] != "shevanio-ai" || words[1] != "review" {
 		t.Fatalf("finalize command = %q", status.NextTransition.Execute.Command)
 	}
 	// The provider-rendered finalize command runs from the repository it was
@@ -337,7 +337,7 @@ func TestOpenCodeProviderRoleEnvelopeMatchesPublishedSchema(t *testing.T) {
 		if err := json.Unmarshal([]byte(payload), &decoded); err != nil {
 			t.Fatal(err)
 		}
-		if decoded.Schema != "gentle-ai.opencode-review-provider-role/v1" || decoded.Role != string(role) || !decoded.Captured {
+		if decoded.Schema != "shevanio-ai.opencode-review-provider-role/v1" || decoded.Role != string(role) || !decoded.Captured {
 			t.Fatalf("provider role envelope = %s", payload)
 		}
 		validatePublishedReviewSchema(t, schema, []byte(payload))

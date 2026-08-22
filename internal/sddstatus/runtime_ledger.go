@@ -16,15 +16,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 const (
-	RuntimeStatusSchema                      = "gentle-ai.sdd-runtime-status/v1"
-	runtimeRecordSchema                      = "gentle-ai.sdd-runtime-record/v1"
-	runtimeObjectiveSchema                   = "gentle-ai.sdd-runtime-objective/v1"
-	runtimeObjectiveSchemaV2                 = "gentle-ai.sdd-runtime-objective/v2"
+	RuntimeStatusSchema                      = "shevanio-ai.sdd-runtime-status/v1"
+	runtimeRecordSchema                      = "shevanio-ai.sdd-runtime-record/v1"
+	runtimeObjectiveSchema                   = "shevanio-ai.sdd-runtime-objective/v1"
+	runtimeObjectiveSchemaV2                 = "shevanio-ai.sdd-runtime-objective/v2"
 	DefaultRuntimeAttemptLimit               = 2
 	DefaultRuntimeChangedLines               = 200
 	maximumRuntimeAttemptLimit               = 100
@@ -58,14 +58,14 @@ const (
 	// includes --cwd/--change placeholders because the bare form is rejected
 	// by the CLI for missing required flags (internal/cli/sdd_attempt.go); a
 	// continuation that fails when pasted is worse than none.
-	runtimeLedgerStatusPointer = "run `gentle-ai sdd-attempt status --cwd <repo> --change <change>` — its next_action names the continuation"
+	runtimeLedgerStatusPointer = "run `shevanio-ai sdd-attempt status --cwd <repo> --change <change>` — its next_action names the continuation"
 
 	// runtimeReviewIntegrationContract mirrors cli.ReviewIntegrationContractV1,
 	// which owns the value. internal/cli imports this package, so the constant
 	// cannot be imported back; it is duplicated only to keep a refusal from
 	// naming a `review status` invocation the CLI would reject for a missing
 	// contract selector.
-	runtimeReviewIntegrationContract = "gentle-ai.review-integration/v1"
+	runtimeReviewIntegrationContract = "shevanio-ai.review-integration/v1"
 )
 
 var (
@@ -666,7 +666,7 @@ type runtimeReplay struct {
 
 func OpenRuntimeStore(ctx context.Context, repo, change string) (RuntimeStore, error) {
 	if !validReviewBindingChange(change) {
-		return RuntimeStore{}, fmt.Errorf("invalid SDD change name %q; want letters, digits, and single hyphens or underscores between them, at most 96 characters; run `gentle-ai sdd-status --cwd <repo> --json` to read the resolved changeName", change)
+		return RuntimeStore{}, fmt.Errorf("invalid SDD change name %q; want letters, digits, and single hyphens or underscores between them, at most 96 characters; run `shevanio-ai sdd-status --cwd <repo> --json` to read the resolved changeName", change)
 	}
 	root, err := (reviewtransaction.SnapshotBuilder{Repo: repo}).ResolveRepositoryRoot(ctx)
 	if err != nil {
@@ -685,7 +685,7 @@ func OpenRuntimeStore(ctx context.Context, repo, change string) (RuntimeStore, e
 		return RuntimeStore{}, err
 	}
 	commonDir := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(probe.Dir))))
-	dir := runtimeChangeLedgerDir(filepath.Join(commonDir, "gentle-ai", "sdd-runtime"), change)
+	dir := runtimeChangeLedgerDir(filepath.Join(commonDir, "shevanio-ai", "sdd-runtime"), change)
 	return RuntimeStore{Dir: dir, Repo: root, Workspace: workspace, Change: change, commonDir: commonDir}, nil
 }
 
@@ -717,7 +717,7 @@ func runtimeChangeLedgerDir(base, change string) string {
 	if legacyRuntimeChangeDir(change) {
 		return filepath.Join(base, "v1", change)
 	}
-	digest := strings.TrimPrefix(runtimeValueHash("gentle-ai.sdd-runtime-change-identity/v1", change), "sha256:")
+	digest := strings.TrimPrefix(runtimeValueHash("shevanio-ai.sdd-runtime-change-identity/v1", change), "sha256:")
 	return filepath.Join(base, "v1", encodedRuntimeChangeNamespace, strings.ToLower(change)+"-"+digest[:encodedRuntimeChangeDigestWidth])
 }
 
@@ -755,7 +755,7 @@ func (store RuntimeStore) Begin(ctx context.Context, request BeginAttemptRequest
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-begin-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-begin-request/v1", request)
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(replay runtimeReplay) (runtimeRecord, error) {
 		status := replay.Status
 		// Every precondition, ledger-side and repository-side, is evaluated by
@@ -792,7 +792,7 @@ func (store RuntimeStore) Finish(ctx context.Context, request FinishAttemptReque
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", request)
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(replay runtimeReplay) (runtimeRecord, error) {
 		status := replay.Status
 		active := status.ActiveAttempt
@@ -804,7 +804,7 @@ func (store RuntimeStore) Finish(ctx context.Context, request FinishAttemptReque
 		// interrupted record. New interrupted requests are rejected below, after
 		// that idempotency check.
 		if request.Outcome == AttemptInterrupted && request.EvidenceRevision != "" {
-			return runtimeRecord{}, errors.New("interrupted attempts must omit evidence_revision; rerun `gentle-ai sdd-attempt finish` or `gentle-ai sdd-attempt settle` with --outcome interrupted and without --evidence-revision")
+			return runtimeRecord{}, errors.New("interrupted attempts must omit evidence_revision; rerun `shevanio-ai sdd-attempt finish` or `shevanio-ai sdd-attempt settle` with --outcome interrupted and without --evidence-revision")
 		}
 		// Check the effective binding before candidate capture or line charging.
 		if active.EffectiveWorktree != "" && active.EffectiveWorktree != store.Workspace {
@@ -847,7 +847,7 @@ func (store RuntimeStore) Finish(ctx context.Context, request FinishAttemptReque
 		if unmanagedRemediation {
 			if !store.ReviewDisabled {
 				// No by-design marker: this names a runnable continuation inline.
-				return runtimeRecord{}, errors.New("unmanaged remediation requires disabled delivery; enable it or run `gentle-ai review mode disable --scope clone --cwd <repo>` for this repository only")
+				return runtimeRecord{}, errors.New("unmanaged remediation requires disabled delivery; enable it or run `shevanio-ai review mode disable --scope clone --cwd <repo>` for this repository only")
 			}
 			// A binding that predates the switch does NOT block this. The
 			// contract on ReviewDisabled says that while review is off it "does
@@ -865,7 +865,7 @@ func (store RuntimeStore) Finish(ctx context.Context, request FinishAttemptReque
 					return runtimeRecord{}, runtimeDischargedFailureRefusal(discharged, ordinal)
 				}
 				// No by-design marker: this names a runnable continuation inline.
-				return runtimeRecord{}, errors.New("this correction names failed verification " + request.RemediatesEvidenceRevision + ", but the attempt chain records no failed verification at all; run `gentle-ai sdd-attempt status --cwd <repo> --change <change>` to read the chain, then settle without --remediates-evidence-revision if nothing is being repaired")
+				return runtimeRecord{}, errors.New("this correction names failed verification " + request.RemediatesEvidenceRevision + ", but the attempt chain records no failed verification at all; run `shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to read the chain, then settle without --remediates-evidence-revision if nothing is being repaired")
 			}
 			if chainFailedEvidence != request.RemediatesEvidenceRevision {
 				// No by-design marker: this names a runnable continuation inline.
@@ -907,7 +907,7 @@ func (store RuntimeStore) Finish(ctx context.Context, request FinishAttemptReque
 		// there. The binding and receipt stay recorded on the ledger as
 		// metadata: review stops deciding, it does not stop being tracked.
 		if store.ReviewDisabled && currentBinding == nil && request.Outcome == AttemptPassed && chainHasFailedEvidence && !unmanagedRemediation {
-			return runtimeRecord{}, fmt.Errorf("disabled failed verification requires --remediates-evidence-revision %q on the correction settle; rerun `gentle-ai sdd-attempt settle` with that flag", chainFailedEvidence)
+			return runtimeRecord{}, fmt.Errorf("disabled failed verification requires --remediates-evidence-revision %q on the correction settle; rerun `shevanio-ai sdd-attempt settle` with that flag", chainFailedEvidence)
 		}
 		if unmanagedRemediation {
 			evidenceOnly := runtimeEvidenceOnlyRetryAuthorized(status.LastReset, status.LastRescope, chainFailedAttempt, snapshot.CandidateTree)
@@ -1062,7 +1062,7 @@ func (store RuntimeStore) Handoff(ctx context.Context, request HandoffAttemptReq
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-handoff-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-handoff-request/v1", request)
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(replay runtimeReplay) (runtimeRecord, error) {
 		active := replay.Status.ActiveAttempt
 		if active == nil {
@@ -1132,7 +1132,7 @@ func (store RuntimeStore) Handoff(ctx context.Context, request HandoffAttemptReq
 func (store RuntimeStore) runtimeZeroDriftResetRefusal(status RuntimeStatus) error {
 	objective := status.Objective
 	return fmt.Errorf(
-		"%w: this objective's candidate has not drifted and it still has attempts left, so resetting it now would launder the per-objective budget. If the failed evidence proves this OBJECTIVE is wrong rather than under-attempted, a maintainer may open a narrower successor scope instead — `gentle-ai sdd-attempt rescope --cwd %q --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit \"<narrower-work-unit>\" --evidence-goal \"<narrower-evidence-goal>\" --max-attempts \"<n, at most %d>\" --max-changed-lines \"<n, at most %d>\" --reason \"<why-the-objective-is-narrowing>\" --actor \"<actor>\"`; rescope carries cumulative_attempts and cumulative_changed_lines forward unchanged and never widens a budget, so if the successor needs MORE than %d changed lines, spend this objective's remaining attempts first: the run that exhausts them reaches decision-required, where this reset is admitted",
+		"%w: this objective's candidate has not drifted and it still has attempts left, so resetting it now would launder the per-objective budget. If the failed evidence proves this OBJECTIVE is wrong rather than under-attempted, a maintainer may open a narrower successor scope instead — `shevanio-ai sdd-attempt rescope --cwd %q --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit \"<narrower-work-unit>\" --evidence-goal \"<narrower-evidence-goal>\" --max-attempts \"<n, at most %d>\" --max-changed-lines \"<n, at most %d>\" --reason \"<why-the-objective-is-narrowing>\" --actor \"<actor>\"`; rescope carries cumulative_attempts and cumulative_changed_lines forward unchanged and never widens a budget, so if the successor needs MORE than %d changed lines, spend this objective's remaining attempts first: the run that exhausts them reaches decision-required, where this reset is admitted",
 		ErrRuntimeResetNotAllowed, store.Workspace, store.Change, status.Revision,
 		objective.MaxAttempts, objective.MaxChangedLines, objective.MaxChangedLines)
 }
@@ -1152,7 +1152,7 @@ func (store RuntimeStore) runtimeZeroDriftResetRefusal(status RuntimeStatus) err
 func (store RuntimeStore) runtimeRescopeWidenedRefusal(status RuntimeStatus, flag string, requested, allowed int) error {
 	remaining := status.Objective.MaxAttempts - status.CumulativeAttempts
 	return fmt.Errorf(
-		"%w: received %s %d, the current objective allows %d. A wider successor scope is reached by finishing this objective rather than by rescoping it: spend its %d remaining attempt(s), and the run that exhausts them reaches decision-required, where `gentle-ai sdd-attempt reset --cwd %q --change %q --expected-revision \"<revision-from-status>\" --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"` opens a fresh budget of any size",
+		"%w: received %s %d, the current objective allows %d. A wider successor scope is reached by finishing this objective rather than by rescoping it: spend its %d remaining attempt(s), and the run that exhausts them reaches decision-required, where `shevanio-ai sdd-attempt reset --cwd %q --change %q --expected-revision \"<revision-from-status>\" --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"` opens a fresh budget of any size",
 		ErrRuntimeRescopeWidened, flag, requested, allowed, remaining, store.Workspace, store.Change)
 }
 
@@ -1167,7 +1167,7 @@ func (store RuntimeStore) runtimeRescopeWidenedRefusal(status RuntimeStatus, fla
 // for a caller who means to discard this scope rather than succeed it.
 func (store RuntimeStore) runtimeObjectiveCompleteRefusal(status RuntimeStatus) error {
 	return fmt.Errorf(
-		"%w: it passed within budget, so this change continues through a SUCCESSOR objective, not a repeat of this one — re-run this begin with a different --work-unit (everything else may stay as it is) and it is admitted as an advance that carries this objective's evidence forward. To discard this scope instead of succeeding it, run `gentle-ai sdd-attempt reset --cwd %q --change %q --expected-revision %q --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"`",
+		"%w: it passed within budget, so this change continues through a SUCCESSOR objective, not a repeat of this one — re-run this begin with a different --work-unit (everything else may stay as it is) and it is admitted as an advance that carries this objective's evidence forward. To discard this scope instead of succeeding it, run `shevanio-ai sdd-attempt reset --cwd %q --change %q --expected-revision %q --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"`",
 		ErrRuntimeObjectiveDone, store.Workspace, store.Change, status.Revision)
 }
 
@@ -1217,13 +1217,13 @@ func (store RuntimeStore) runtimeObjectiveChangeRefusal(ctx context.Context, sta
 	// route on errors.Is must keep working no matter which exit is named.
 	if store.runtimeObjectiveResetAdmissible(ctx, status) {
 		return fmt.Errorf(
-			"%w: reset the objective, then begin again — `gentle-ai sdd-attempt reset --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"`; the reset publishes a new ledger revision, so take the begin's --expected-revision from `gentle-ai sdd-attempt status --cwd %s --change %q` after it commits",
+			"%w: reset the objective, then begin again — `shevanio-ai sdd-attempt reset --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --reason \"<why-the-objective-changed>\" --actor \"<actor>\"`; the reset publishes a new ledger revision, so take the begin's --expected-revision from `shevanio-ai sdd-attempt status --cwd %s --change %q` after it commits",
 			ErrRuntimeObjectiveChange, pathquote.Quote(store.Workspace), store.Change, status.Revision, pathquote.Quote(store.Workspace), store.Change)
 	}
 	if store.runtimeObjectiveRescopeAdmissible(ctx, status) {
 		objective := status.Objective
 		return fmt.Errorf(
-			"%w: this objective's candidate has not drifted, so resetting it is refused as an elective budget reset, but a maintainer may authorize a narrower successor scope instead — `gentle-ai sdd-attempt rescope --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit \"<narrower-work-unit>\" --evidence-goal \"<narrower-evidence-goal>\" --max-attempts \"<n, at most %d>\" --max-changed-lines \"<n, at most %d>\" --reason \"<why-the-objective-is-narrowing>\" --actor \"<actor>\"`; rescope carries cumulative_attempts and cumulative_changed_lines forward unchanged and refuses any max_attempts or max_changed_lines above the current objective's %d and %d",
+			"%w: this objective's candidate has not drifted, so resetting it is refused as an elective budget reset, but a maintainer may authorize a narrower successor scope instead — `shevanio-ai sdd-attempt rescope --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit \"<narrower-work-unit>\" --evidence-goal \"<narrower-evidence-goal>\" --max-attempts \"<n, at most %d>\" --max-changed-lines \"<n, at most %d>\" --reason \"<why-the-objective-is-narrowing>\" --actor \"<actor>\"`; rescope carries cumulative_attempts and cumulative_changed_lines forward unchanged and refuses any max_attempts or max_changed_lines above the current objective's %d and %d",
 			ErrRuntimeObjectiveChange, pathquote.Quote(store.Workspace), store.Change, status.Revision,
 			objective.MaxAttempts, objective.MaxChangedLines, objective.MaxAttempts, objective.MaxChangedLines)
 	}
@@ -1235,7 +1235,7 @@ func (store RuntimeStore) runtimeObjectiveChangeRefusal(ctx context.Context, sta
 		return ErrRuntimeObjectiveChange
 	}
 	return fmt.Errorf(
-		"%w: this objective is still open on its recorded scope and its candidate has not moved, so resetting it is refused as an elective budget reset; begin against the scope the ledger holds — `gentle-ai sdd-attempt begin --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit %q --evidence-goal %q --max-attempts %d --max-changed-lines %d`; `sdd-attempt status` publishes those four as objective.work_unit, objective.evidence_goal, objective.max_attempts, and objective.max_changed_lines",
+		"%w: this objective is still open on its recorded scope and its candidate has not moved, so resetting it is refused as an elective budget reset; begin against the scope the ledger holds — `shevanio-ai sdd-attempt begin --cwd %s --change %q --expected-revision %q --request-id \"<unique-request-id>\" --work-unit %q --evidence-goal %q --max-attempts %d --max-changed-lines %d`; `sdd-attempt status` publishes those four as objective.work_unit, objective.evidence_goal, objective.max_attempts, and objective.max_changed_lines",
 		ErrRuntimeObjectiveChange, pathquote.Quote(store.Workspace), store.Change, status.Revision,
 		objective.WorkUnit, objective.EvidenceGoal, objective.MaxAttempts, objective.MaxChangedLines)
 }
@@ -1327,7 +1327,7 @@ func (store RuntimeStore) Grant(ctx context.Context, request GrantRootsRequest) 
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-grant-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-grant-request/v1", request)
 	grantedAt := runtimeGrantClock()
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(runtimeReplay) (runtimeRecord, error) {
 		return runtimeRecord{Operation: runtimeOperationGrant, Grant: &runtimeGrantEvent{
@@ -1345,7 +1345,7 @@ func (store RuntimeStore) Reset(ctx context.Context, request ResetObjectiveReque
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-reset-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-reset-request/v1", request)
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(replay runtimeReplay) (runtimeRecord, error) {
 		status := replay.Status
 		if status.ActiveAttempt != nil {
@@ -1425,7 +1425,7 @@ func (store RuntimeStore) Rescope(ctx context.Context, request RescopeObjectiveR
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-rescope-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-rescope-request/v1", request)
 	return store.mutate(ctx, request.ExpectedRevision, request.RequestID, digest, func(replay runtimeReplay) (runtimeRecord, error) {
 		status := replay.Status
 		if status.ActiveAttempt != nil {
@@ -1502,7 +1502,7 @@ func (store RuntimeStore) RepairConsecutiveRescope(ctx context.Context, request 
 	if err := ctx.Err(); err != nil {
 		return RuntimeStatus{}, err
 	}
-	digest := runtimeValueHash("gentle-ai.sdd-runtime-repair-consecutive-rescope-request/v1", request)
+	digest := runtimeValueHash("shevanio-ai.sdd-runtime-repair-consecutive-rescope-request/v1", request)
 	lock, err := store.acquireLock()
 	if err != nil {
 		return RuntimeStatus{}, err
@@ -1586,7 +1586,7 @@ func (store RuntimeStore) bindPreparedReview(
 	if err != nil {
 		return RuntimeStatus{}, err
 	}
-	requestDigest := runtimeValueHash("gentle-ai.sdd-runtime-bind-request/v1", request)
+	requestDigest := runtimeValueHash("shevanio-ai.sdd-runtime-bind-request/v1", request)
 	if err := ctx.Err(); err != nil {
 		return RuntimeStatus{}, err
 	}
@@ -2353,7 +2353,7 @@ func validateRuntimeBeginEvent(record runtimeRecord) error {
 		ExpectedRevision: record.PreviousRevision, RequestID: record.RequestID, WorkUnit: event.WorkUnit,
 		EvidenceGoal: event.EvidenceGoal, MaxAttempts: event.MaxAttempts, MaxChangedLines: event.MaxChangedLines,
 	}
-	if runtimeValueHash("gentle-ai.sdd-runtime-begin-request/v1", request) != record.RequestDigest {
+	if runtimeValueHash("shevanio-ai.sdd-runtime-begin-request/v1", request) != record.RequestDigest {
 		return errors.New("SDD runtime begin request digest does not match record")
 	}
 	return nil
@@ -2412,7 +2412,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			CleanupEvidence: event.CleanupEvidence, ProcessEvidence: event.ProcessEvidence,
 			RemediatesEvidenceRevision: event.RemediatesEvidenceRevision,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime finish request digest does not match record")
 		}
 	case runtimeOperationHandoff:
@@ -2429,7 +2429,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			return errors.New("invalid SDD runtime handoff event") // refusal:by-design world-action: a malformed immutable event requires restoring the authority store
 		}
 		request := HandoffAttemptRequest{ExpectedRevision: event.ExpectedRevision, RequestID: record.RequestID, DestinationWorktree: event.DestinationWorktree}
-		if runtimeValueHash("gentle-ai.sdd-runtime-handoff-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-handoff-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime handoff request digest does not match record") // refusal:by-design world-action: a forged immutable record requires restoring the authority store
 		}
 	case runtimeOperationFinishRemediation:
@@ -2469,7 +2469,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			ExpectedBindingRevision: binding.ExpectedRevision, SuccessorLineageID: binding.Current.Lineage,
 			RemediatesEvidenceRevision: finish.RemediatesEvidenceRevision,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", request) != record.RequestDigest {
 			return errors.New("atomic SDD runtime remediation request digest does not match record")
 		}
 	case runtimeOperationReset:
@@ -2485,7 +2485,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 		request := ResetObjectiveRequest{
 			ExpectedRevision: record.PreviousRevision, RequestID: record.RequestID, Reason: event.Reason, Actor: event.Actor,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-reset-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-reset-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime reset request digest does not match record")
 		}
 	case runtimeOperationRescope:
@@ -2516,7 +2516,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			MaxAttempts: event.MaxAttempts, MaxChangedLines: event.MaxChangedLines,
 			Reason: event.Reason, Actor: event.Actor,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-rescope-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-rescope-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime rescope request digest does not match record") // refusal:by-design world-action: the digest is computed from the same request at write time, so a mismatch is a mutated record and the exit is restoring the store
 		}
 	case runtimeOperationRepairConsecutiveRescope:
@@ -2529,7 +2529,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			return errors.New("invalid SDD runtime consecutive-rescope repair event") // refusal:by-design world-action: repair binds exact revisions and audited actor and reason
 		}
 		request := RepairConsecutiveRescopeRequest{ExpectedRevision: event.ReplacedRevision, RequestID: record.RequestID, Reason: event.Reason, Actor: event.Actor}
-		if runtimeValueHash("gentle-ai.sdd-runtime-repair-consecutive-rescope-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-repair-consecutive-rescope-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime consecutive-rescope repair request digest does not match record") // refusal:by-design world-action: altered repair authority must fail replay rather than be reinterpreted
 		}
 	case runtimeOperationBind:
@@ -2556,7 +2556,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 		request := BindReviewRequest{
 			ExpectedBindingRevision: event.ExpectedRevision, RequestID: record.RequestID, LineageID: event.Current.Lineage,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-bind-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-bind-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime binding request digest does not match record")
 		}
 	case runtimeOperationReceipt:
@@ -2584,7 +2584,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 		request := RecordReceiptRequest{
 			ExpectedReceiptRevision: event.ExpectedRevision, RequestID: record.RequestID, Lineage: event.Current.Lineage,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-receipt-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-receipt-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime receipt request digest does not match record") // refusal:by-design world-action: the digest is computed from the same request at write time, so a mismatch is a mutated record and the exit is restoring the store
 		}
 	case runtimeOperationGrant:
@@ -2620,7 +2620,7 @@ func validateRuntimeRecordShape(record runtimeRecord) error {
 			Roots: event.Roots, Reason: event.Reason, Actor: event.Actor,
 			ChangeInstance: event.Instance,
 		}
-		if runtimeValueHash("gentle-ai.sdd-runtime-grant-request/v1", request) != record.RequestDigest {
+		if runtimeValueHash("shevanio-ai.sdd-runtime-grant-request/v1", request) != record.RequestDigest {
 			return errors.New("SDD runtime grant request digest does not match record") // refusal:by-design world-action: the digest binds the granted roots at write time, so a widened or altered record fails this recompute and the exit is restoring the store
 		}
 	default:
@@ -2689,11 +2689,11 @@ func normalizeFinishAttemptRequest(request FinishAttemptRequest) (FinishAttemptR
 		return FinishAttemptRequest{}, errors.New("outcome must be failed, interrupted, or passed")
 	}
 	if request.Outcome == AttemptInterrupted && request.EvidenceRevision != "" && !runtimeRevisionPattern.MatchString(request.EvidenceRevision) {
-		return FinishAttemptRequest{}, errors.New("interrupted evidence_revision must be empty or a canonical legacy sha256 revision; rerun `gentle-ai sdd-attempt finish` or `gentle-ai sdd-attempt settle` with --outcome interrupted and without --evidence-revision")
+		return FinishAttemptRequest{}, errors.New("interrupted evidence_revision must be empty or a canonical legacy sha256 revision; rerun `shevanio-ai sdd-attempt finish` or `shevanio-ai sdd-attempt settle` with --outcome interrupted and without --evidence-revision")
 	}
 	if request.Outcome != AttemptInterrupted && !runtimeRevisionPattern.MatchString(request.EvidenceRevision) {
 		return FinishAttemptRequest{}, fmt.Errorf(
-			"evidence_revision must be sha256:<64-lowercase-hex> (%s); rerun `gentle-ai sdd-attempt finish` or `gentle-ai sdd-attempt settle` with --evidence-revision sha256:<64-lowercase-hex>",
+			"evidence_revision must be sha256:<64-lowercase-hex> (%s); rerun `shevanio-ai sdd-attempt finish` or `shevanio-ai sdd-attempt settle` with --evidence-revision sha256:<64-lowercase-hex>",
 			runtimeRevisionShapeObservation(request.EvidenceRevision),
 		)
 	}
@@ -2724,7 +2724,7 @@ func normalizeFinishAttemptRequest(request FinishAttemptRequest) (FinishAttemptR
 		}
 		if !runtimeRevisionPattern.MatchString(request.ExpectedBindingRevision) {
 			return FinishAttemptRequest{}, fmt.Errorf(
-				"expected_binding_revision must be sha256:<64-lowercase-hex> for atomic remediation (%s); rerun `gentle-ai sdd-attempt finish` with --expected-binding-revision sha256:<64-lowercase-hex> --successor-lineage <lineage> --remediates-evidence-revision sha256:<64-lowercase-hex>",
+				"expected_binding_revision must be sha256:<64-lowercase-hex> for atomic remediation (%s); rerun `shevanio-ai sdd-attempt finish` with --expected-binding-revision sha256:<64-lowercase-hex> --successor-lineage <lineage> --remediates-evidence-revision sha256:<64-lowercase-hex>",
 				runtimeRevisionShapeObservation(request.ExpectedBindingRevision),
 			)
 		}
@@ -2733,7 +2733,7 @@ func normalizeFinishAttemptRequest(request FinishAttemptRequest) (FinishAttemptR
 		}
 		if !runtimeRevisionPattern.MatchString(request.RemediatesEvidenceRevision) {
 			return FinishAttemptRequest{}, fmt.Errorf(
-				"remediates_evidence_revision must be sha256:<64-lowercase-hex> (%s); rerun `gentle-ai sdd-attempt finish` with --expected-binding-revision sha256:<64-lowercase-hex> --successor-lineage <lineage> --remediates-evidence-revision sha256:<64-lowercase-hex>",
+				"remediates_evidence_revision must be sha256:<64-lowercase-hex> (%s); rerun `shevanio-ai sdd-attempt finish` with --expected-binding-revision sha256:<64-lowercase-hex> --successor-lineage <lineage> --remediates-evidence-revision sha256:<64-lowercase-hex>",
 				runtimeRevisionShapeObservation(request.RemediatesEvidenceRevision),
 			)
 		}
@@ -2744,7 +2744,7 @@ func normalizeFinishAttemptRequest(request FinishAttemptRequest) (FinishAttemptR
 		}
 		if !runtimeRevisionPattern.MatchString(request.RemediatesEvidenceRevision) {
 			return FinishAttemptRequest{}, fmt.Errorf(
-				"remediates_evidence_revision must be sha256:<64-lowercase-hex> for unmanaged remediation (%s); rerun `gentle-ai sdd-attempt finish` with --remediates-evidence-revision sha256:<64-lowercase-hex>",
+				"remediates_evidence_revision must be sha256:<64-lowercase-hex> for unmanaged remediation (%s); rerun `shevanio-ai sdd-attempt finish` with --remediates-evidence-revision sha256:<64-lowercase-hex>",
 				runtimeRevisionShapeObservation(request.RemediatesEvidenceRevision),
 			)
 		}
@@ -2932,7 +2932,7 @@ func validatePreparedRuntimeBinding(binding ReviewBinding, change, lineage strin
 // Callers invoke it only while the native runtime binding is absent; replay of
 // a native import never consults the legacy artifact again.
 func (store RuntimeStore) readLegacyBinding() (*ReviewBinding, string, error) {
-	path := filepath.Join(store.commonDir, "gentle-ai", "sdd-review-bindings", "v1", store.Change, "binding.json")
+	path := filepath.Join(store.commonDir, "shevanio-ai", "sdd-review-bindings", "v1", store.Change, "binding.json")
 	payload, err := readBoundedRuntimeFile(path)
 	if os.IsNotExist(err) {
 		return nil, "", nil
@@ -3016,7 +3016,7 @@ func canonicalRuntimeHandoffPath(path string) (string, error) {
 }
 
 func (store RuntimeStore) runtimeHandoffStatusExit() string {
-	return fmt.Sprintf("run `gentle-ai sdd-attempt status --cwd %s --change %q` to read the active attempt and its current execution worktree", pathquote.Quote(store.Workspace), store.Change)
+	return fmt.Sprintf("run `shevanio-ai sdd-attempt status --cwd %s --change %q` to read the active attempt and its current execution worktree", pathquote.Quote(store.Workspace), store.Change)
 }
 
 func (store RuntimeStore) runtimeHandoffSourceRefusal(active RuntimeAttempt) error {
@@ -3238,7 +3238,7 @@ func (store RuntimeStore) consecutiveRescopeRepairContinuation(revision string) 
 	requestID := "repair-" + strings.TrimPrefix(revision, "sha256:")[:16]
 	reason := "repair historical consecutive-rescope publication " + revision
 	return strings.Join([]string{
-		"gentle-ai", "sdd-attempt", "repair",
+		"shevanio-ai", "sdd-attempt", "repair",
 		"--cwd", pathquote.ShellWord(store.Workspace),
 		"--change", pathquote.ShellWord(store.Change),
 		"--expected-revision", pathquote.ShellWord(revision),
@@ -3269,9 +3269,9 @@ func (store RuntimeStore) ensureDirectories() error {
 		info, statErr := os.Lstat(current)
 		if os.IsNotExist(statErr) {
 			mode := os.FileMode(0o700)
-			// The shared gentle-ai container predates this private store and may
+			// The shared shevanio-ai container predates this private store and may
 			// also hold review authority. New SDD runtime descendants remain 0700.
-			if index == 0 && segment == "gentle-ai" {
+			if index == 0 && segment == "shevanio-ai" {
 				mode = 0o755
 			}
 			if err := os.Mkdir(current, mode); err != nil {

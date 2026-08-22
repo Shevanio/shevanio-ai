@@ -29,7 +29,7 @@ Legacy persisted v2 follows only `loaded state -> historical receipt regeneratio
 
 ## Interfaces / Contracts
 
-- Keep `gentle-ai.review-state/v2`, `gentle-ai.review-receipt/v2`, `CompactReceipt`, and JSON fields unchanged.
+- Keep `shevanio-ai.review-state/v2`, `shevanio-ai.review-receipt/v2`, `CompactReceipt`, and JSON fields unchanged.
 - Keep supported `GateKind` values unchanged.
 - Preserve `ReviewValidateResult.action`: `continue`, `explicit-maintainer-action`, or `stop`; remove `create-new-lineage` for `scope-changed`.
 - Golden output is generated from `RenderTriggerRules`, not edited independently.

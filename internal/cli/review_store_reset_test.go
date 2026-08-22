@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // storeResetSeedLineage writes one compact-v2 lineage record straight to disk.
@@ -21,7 +21,7 @@ func storeResetSeedLineage(t *testing.T, repo, lineage string, state reviewtrans
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	payload := `{"schema":"gentle-ai.review-state-record/v2","revision":"sha256:00","state":{"schema":"gentle-ai.review-state/v2","lineage_id":"` +
+	payload := `{"schema":"shevanio-ai.review-state-record/v2","revision":"sha256:00","state":{"schema":"shevanio-ai.review-state/v2","lineage_id":"` +
 		lineage + `","state":"` + string(state) + `"}}` + "\n"
 	if err := os.WriteFile(filepath.Join(dir, "review-state.json"), []byte(payload), 0o644); err != nil {
 		t.Fatal(err)
@@ -313,15 +313,15 @@ func TestReviewStoreResetIsNotOnTheNegotiatedRoute(t *testing.T) {
 func TestReviewStoreResetWithdrawsTheUntouchedPromiseWhenARestoreFailed(t *testing.T) {
 	report := reviewtransaction.StoreResetReport{
 		Schema: reviewtransaction.StoreResetReportSchema, Operation: reviewtransaction.StoreResetApplied,
-		Repository: "/repo", StoreRoot: "/repo/.git/gentle-ai",
+		Repository: "/repo", StoreRoot: "/repo/.git/shevanio-ai",
 		Removable: []reviewtransaction.StoreResetEntry{{
 			Name: "candidate-views", Present: true, Files: 4, Bytes: 2048,
 			Skipped: "simulated staging failure; and the worktree administrative directories moved aside for it could not be restored: simulated restore failure",
 		}},
-		Residue: "/repo/.git/gentle-ai/.store-reset-42",
+		Residue: "/repo/.git/shevanio-ai/.store-reset-42",
 		UnrestoredAdminDirs: []reviewtransaction.StoreResetUnrestoredAdminDir{{
 			Original: "/repo/.git/worktrees/view-a",
-			Staged:   "/repo/.git/gentle-ai/.store-reset-42/worktrees-view-a",
+			Staged:   "/repo/.git/shevanio-ai/.store-reset-42/worktrees-view-a",
 		}},
 		Complete: false,
 	}
@@ -336,7 +336,7 @@ func TestReviewStoreResetWithdrawsTheUntouchedPromiseWhenARestoreFailed(t *testi
 	}
 	for _, want := range []string{
 		"/repo/.git/worktrees/view-a",
-		"/repo/.git/gentle-ai/.store-reset-42/worktrees-view-a",
+		"/repo/.git/shevanio-ai/.store-reset-42/worktrees-view-a",
 	} {
 		if !strings.Contains(rendered, want) {
 			t.Fatalf("the output does not name %q:\n%s", want, rendered)
@@ -350,7 +350,7 @@ func TestReviewStoreResetWithdrawsTheUntouchedPromiseWhenARestoreFailed(t *testi
 func TestReviewStoreResetKeepsTheUntouchedPromiseForAnOrdinaryPartialRun(t *testing.T) {
 	report := reviewtransaction.StoreResetReport{
 		Schema: reviewtransaction.StoreResetReportSchema, Operation: reviewtransaction.StoreResetApplied,
-		Repository: "/repo", StoreRoot: "/repo/.git/gentle-ai",
+		Repository: "/repo", StoreRoot: "/repo/.git/shevanio-ai",
 		Removable: []reviewtransaction.StoreResetEntry{{
 			Name: "review-transactions/v2", Present: true, Files: 4, Bytes: 2048, Skipped: "permission denied",
 		}},

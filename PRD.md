@@ -532,7 +532,7 @@ curl -sL get.gentleman.ai/ai | sh
 For CI, automation, and team provisioning:
 
 ```bash
-gentle-ai install \
+shevanio-ai install \
   --agents claude-code,opencode \
   --preset gentleman \
   --skills full-stack \
@@ -581,7 +581,7 @@ This section describes how all Gentleman ecosystem components interact with each
 graph TB
     subgraph INSTALLER["🔧 GENTLEMAN AI INSTALLER (one-time setup)"]
         direction TB
-        GAI[gentle-ai binary]
+        GAI[shevanio-ai binary]
         GAI --> DEP_ENGINE[Dependency Engine]
         GAI --> AGENT_ENGINE[Agent Configurator]
         GAI --> ECO_ENGINE[Ecosystem Injector]
@@ -727,7 +727,7 @@ graph LR
 
 ```mermaid
 flowchart TD
-    START([gentle-ai install]) --> DETECT
+    START([shevanio-ai install]) --> DETECT
 
     subgraph PHASE_1["Phase 1: System Detection"]
         DETECT[Detect OS / Arch / WSL / Termux]
@@ -748,7 +748,7 @@ flowchart TD
     REVIEW --> BACKUP
 
     subgraph PHASE_3["Phase 3: Backup"]
-        BACKUP[Backup existing configs<br/>~/.gentle-ai-backup-TIMESTAMP/]
+        BACKUP[Backup existing configs<br/>~/.shevanio-ai-backup-TIMESTAMP/]
     end
 
     BACKUP --> DEP_INSTALL
@@ -1056,9 +1056,9 @@ graph TB
 ### 8.2 Package Structure (Proposed)
 
 ```
-gentle-ai/
+shevanio-ai/
 ├── cmd/
-│   └── gentle-ai/
+│   └── shevanio-ai/
 │       └── main.go                 # CLI entrypoint
 ├── internal/
 │   ├── system/
@@ -1184,10 +1184,10 @@ Persona is selected separately on the Persona screen and applied independently o
 | Method | Command | Priority |
 |--------|---------|----------|
 | curl (recommended) | `curl -sL get.gentleman.ai/ai \| sh` | P0 |
-| Homebrew | `brew install Gentleman-Programming/tap/gentle-ai` | P0 |
-| Go install | `go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest` | P1 |
+| Homebrew | Future `brew install shevanio/tap/shevanio-ai` after publication | P0 |
+| Go install | `go install github.com/Shevanio/shevanio-ai/cmd/shevanio-ai@latest` | P1 |
 | Direct binary | Download from GitHub Releases | P1 |
-| winget (Windows) | `winget install gentle-ai` | P2 |
+| winget (Windows) | `winget install shevanio-ai` | P2 |
 
 ### 9.2 Cross-Compilation Targets
 
@@ -1215,9 +1215,9 @@ Persona is selected separately on the Persona screen and applied independently o
 ### 10.1 Self-Update
 
 **Requirements:**
-- R-UPDATE-01: The installer MUST support `gentle-ai update` to check for and install newer versions of itself
-- R-UPDATE-02: The installer MUST support `gentle-ai update --skills` to pull latest skill versions for all configured agents
-- R-UPDATE-03: The installer MUST support `gentle-ai update --engram` to update Engram to the latest version
+- R-UPDATE-01: The installer MUST support `shevanio-ai update` to check for and install newer versions of itself
+- R-UPDATE-02: The installer MUST support `shevanio-ai update --skills` to pull latest skill versions for all configured agents
+- R-UPDATE-03: The installer MUST support `shevanio-ai update --engram` to update Engram to the latest version
 - R-UPDATE-04: The installer SHOULD check for updates on launch and notify (not auto-update)
 
 ### 10.2 Config Sync
@@ -1296,7 +1296,7 @@ The completion screen MUST show:
 ### 12.3 Reliability
 - R-REL-01: Every installation step MUST be idempotent (safe to re-run)
 - R-REL-02: If a step fails, the installer MUST continue with remaining steps and report failures at the end
-- R-REL-03: The installer MUST support `gentle-ai repair` to re-run failed steps
+- R-REL-03: The installer MUST support `shevanio-ai repair` to re-run failed steps
 - R-REL-04: The backup system MUST create timestamped snapshots before any config modification
 
 ### 12.4 Extensibility
@@ -1358,7 +1358,7 @@ These are NOT requirements for v1 but should inform architectural decisions:
 
 ## 16. Open Questions
 
-1. **Naming**: `gentle-ai`, `gentle-ai`, `gai`, or something else? Should it be part of the `Gentleman-Programming` org or standalone?
+1. **Naming**: resolved as `Shevanio AI`, module `github.com/shevanio/shevanio-ai/v2`, and command `shevanio-ai`.
 2. **Skills registry**: Should skills be embedded in the binary, fetched from GitHub at install time, or pulled from a dedicated registry service?
 3. **Windows native**: How much effort to invest in native Windows (not WSL) support for v1? Most AI coding tools have limited Windows support anyway.
 4. **Config format**: Should the installer's own config (what was installed, preferences) be stored as JSON, YAML, or TOML? Where?
@@ -1386,30 +1386,30 @@ These are NOT requirements for v1 but should inform architectural decisions:
 
 ```bash
 # Dev Stack + Polish preset with Claude Code + OpenCode
-gentle-ai install --preset gentleman --agents claude-code,opencode
+shevanio-ai install --preset gentleman --agents claude-code,opencode
 
 # Memory Only setup, just Claude Code with basic security
-gentle-ai install --preset minimal --agents claude-code
+shevanio-ai install --preset minimal --agents claude-code
 
 # Team provisioning from shared profile
-gentle-ai install --profile ./team-ai-config.yaml
+shevanio-ai install --profile ./team-ai-config.yaml
 
 # Update all skills to latest
-gentle-ai update --skills
+shevanio-ai update --skills
 
 # Update Engram
-gentle-ai update --engram
+shevanio-ai update --engram
 
 # Backup current configs
-gentle-ai backup
+shevanio-ai backup
 
 # Restore from backup
-gentle-ai restore --list
-gentle-ai restore --id 2026-02-27-143022
+shevanio-ai restore --list
+shevanio-ai restore --id 2026-02-27-143022
 
 # Repair failed installation
-gentle-ai repair
+shevanio-ai repair
 
 # Show what's installed
-gentle-ai status
+shevanio-ai status
 ```

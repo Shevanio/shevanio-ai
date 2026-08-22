@@ -13,34 +13,34 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewIntegrationContractV1 = "gentle-ai.review-integration/v1"
-const ReviewIntegrationContractV2 = "gentle-ai.review-integration/v2"
-const ReviewIntegrationCapabilitiesSchemaV1 = "gentle-ai.review-integration.capabilities/v1"
-const ReviewIntegrationCapabilitiesSchemaIDV1 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV11 = "gentle-ai.review-integration.capabilities/v1.1"
-const ReviewIntegrationCapabilitiesSchemaIDV11 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.1.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV12 = "gentle-ai.review-integration.capabilities/v1.2"
-const ReviewIntegrationCapabilitiesSchemaIDV12 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.2.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV13 = "gentle-ai.review-integration.capabilities/v1.3"
-const ReviewIntegrationCapabilitiesSchemaIDV13 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.3.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV14 = "gentle-ai.review-integration.capabilities/v1.4"
-const ReviewIntegrationCapabilitiesSchemaIDV14 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.4.schema.json"
-const ReviewIntegrationCapabilitiesSchema = "gentle-ai.review-integration.capabilities/v1.5"
-const ReviewIntegrationCapabilitiesSchemaID = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.5.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV2 = "gentle-ai.review-integration.capabilities/v2"
-const ReviewIntegrationCapabilitiesSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/capabilities.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV21 = "gentle-ai.review-integration.capabilities/v2.1"
-const ReviewIntegrationCapabilitiesSchemaIDV21 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/capabilities-v2.1.schema.json"
-const ReviewIntegrationCapabilitiesSchemaV22 = "gentle-ai.review-integration.capabilities/v2.2"
-const ReviewIntegrationCapabilitiesSchemaIDV22 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/capabilities-v2.2.schema.json"
+const ReviewIntegrationContractV1 = "shevanio-ai.review-integration/v1"
+const ReviewIntegrationContractV2 = "shevanio-ai.review-integration/v2"
+const ReviewIntegrationCapabilitiesSchemaV1 = "shevanio-ai.review-integration.capabilities/v1"
+const ReviewIntegrationCapabilitiesSchemaIDV1 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV11 = "shevanio-ai.review-integration.capabilities/v1.1"
+const ReviewIntegrationCapabilitiesSchemaIDV11 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.1.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV12 = "shevanio-ai.review-integration.capabilities/v1.2"
+const ReviewIntegrationCapabilitiesSchemaIDV12 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.2.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV13 = "shevanio-ai.review-integration.capabilities/v1.3"
+const ReviewIntegrationCapabilitiesSchemaIDV13 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.3.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV14 = "shevanio-ai.review-integration.capabilities/v1.4"
+const ReviewIntegrationCapabilitiesSchemaIDV14 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.4.schema.json"
+const ReviewIntegrationCapabilitiesSchema = "shevanio-ai.review-integration.capabilities/v1.5"
+const ReviewIntegrationCapabilitiesSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/capabilities-v1.5.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV2 = "shevanio-ai.review-integration.capabilities/v2"
+const ReviewIntegrationCapabilitiesSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/capabilities.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV21 = "shevanio-ai.review-integration.capabilities/v2.1"
+const ReviewIntegrationCapabilitiesSchemaIDV21 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/capabilities-v2.1.schema.json"
+const ReviewIntegrationCapabilitiesSchemaV22 = "shevanio-ai.review-integration.capabilities/v2.2"
+const ReviewIntegrationCapabilitiesSchemaIDV22 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/capabilities-v2.2.schema.json"
 
 const (
-	reviewRefuterSchemaID   = "https://gentle-ai.dev/schema/review/refuter/v1"
-	reviewReviewerSchemaID  = "https://gentle-ai.dev/schema/review/reviewer/v1"
-	reviewValidatorSchemaID = "https://gentle-ai.dev/schema/review/validator/v1"
+	reviewRefuterSchemaID   = "https://shevanio-ai.dev/schema/review/refuter/v1"
+	reviewReviewerSchemaID  = "https://shevanio-ai.dev/schema/review/reviewer/v1"
+	reviewValidatorSchemaID = "https://shevanio-ai.dev/schema/review/validator/v1"
 )
 
 // reviewNextTransitionRefreshCommand is the single wording source for the
@@ -49,8 +49,8 @@ const (
 // repository-context capture-binding mismatch refusal in review_artifact.go
 // both name this same runnable command instead of only describing the
 // concept, so they cannot drift from each other.
-const reviewNextTransitionRefreshCommand = "gentle-ai review status --cwd <repo> --contract " + ReviewIntegrationContractV1 + " --next-transition"
-const reviewNextTransitionRefreshCommandV21 = "gentle-ai review status --cwd <repo> --contract " + ReviewIntegrationContractV2 + " --next-transition"
+const reviewNextTransitionRefreshCommand = "shevanio-ai review status --cwd <repo> --contract " + ReviewIntegrationContractV1 + " --next-transition"
+const reviewNextTransitionRefreshCommandV21 = "shevanio-ai review status --cwd <repo> --contract " + ReviewIntegrationContractV2 + " --next-transition"
 
 var reviewCapabilitiesBuildInfoReader = debug.ReadBuildInfo
 var reviewCapabilitiesExecutablePath = os.Executable
@@ -167,7 +167,7 @@ func RunReviewCapabilities(args []string, stdout io.Writer) error {
 
 func validateReviewIntegrationContract(contract string) error {
 	if contract != ReviewIntegrationContractV1 && contract != ReviewIntegrationContractV2 {
-		return fmt.Errorf("unsupported review integration contract %q; retry with gentle-ai review capabilities --contract %s or gentle-ai review capabilities --contract %s", contract, ReviewIntegrationContractV1, ReviewIntegrationContractV2)
+		return fmt.Errorf("unsupported review integration contract %q; retry with shevanio-ai review capabilities --contract %s or shevanio-ai review capabilities --contract %s", contract, ReviewIntegrationContractV1, ReviewIntegrationContractV2)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func buildReviewCapabilities(contracts ...string) (ReviewCapabilitiesResult, err
 	}
 	version := strings.TrimSpace(AppVersion)
 	if version == "" {
-		return ReviewCapabilitiesResult{}, errors.New("gentle-ai package version is unavailable")
+		return ReviewCapabilitiesResult{}, errors.New("shevanio-ai package version is unavailable")
 	}
 	build, err := reviewCapabilitiesBuildIdentity(version)
 	if err != nil {
@@ -190,7 +190,7 @@ func buildReviewCapabilities(contracts ...string) (ReviewCapabilitiesResult, err
 		return ReviewCapabilitiesResult{}, err
 	}
 	result := reviewCapabilitiesStaticSurface(contract)
-	result.Package = ReviewCapabilitiesPackage{Name: "gentle-ai", Version: version, ReleaseChannel: reviewReleaseChannel(version)}
+	result.Package = ReviewCapabilitiesPackage{Name: "shevanio-ai", Version: version, ReleaseChannel: reviewReleaseChannel(version)}
 	result.Build = build
 	result.Executable = ReviewCapabilitiesExecutable{
 		SHA256: executableDigest, Evidence: "self-reported", Verification: "compare-with-published-manifest",
@@ -376,23 +376,23 @@ func reviewCapabilitiesBuildDigest(packageVersion string, build ReviewCapabiliti
 		VCS: build.VCS, VCSRevision: build.VCSRevision, VCSTime: build.VCSTime, VCSModified: build.VCSModified,
 	}
 	payload, _ := json.Marshal(preimage)
-	sum := sha256.Sum256(append([]byte("gentle-ai.review-build-identity/v1\x00"), payload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.review-build-identity/v1\x00"), payload...))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
 func reviewCapabilitiesExecutableDigest() (string, error) {
 	path, err := reviewCapabilitiesExecutablePath()
 	if err != nil {
-		return "", fmt.Errorf("resolve gentle-ai executable: %w", err)
+		return "", fmt.Errorf("resolve shevanio-ai executable: %w", err)
 	}
 	file, err := os.Open(path)
 	if err != nil {
-		return "", fmt.Errorf("open gentle-ai executable: %w", err)
+		return "", fmt.Errorf("open shevanio-ai executable: %w", err)
 	}
 	defer file.Close()
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
-		return "", fmt.Errorf("hash gentle-ai executable: %w", err)
+		return "", fmt.Errorf("hash shevanio-ai executable: %w", err)
 	}
 	return "sha256:" + hex.EncodeToString(hash.Sum(nil)), nil
 }
@@ -418,7 +418,7 @@ func (result ReviewCapabilitiesResult) Validate() error {
 	if result.Bootstrap != nil && !reflect.DeepEqual(result.Bootstrap, static.Bootstrap) {
 		return errors.New("capability bootstrap does not match the negotiated contract") // refusal:by-design world-action: provider-generated bootstrap requires a code fix, not an operator command
 	}
-	if result.Package.Name != "gentle-ai" || strings.TrimSpace(result.Package.Version) == "" || result.Package.ReleaseChannel != reviewReleaseChannel(result.Package.Version) {
+	if result.Package.Name != "shevanio-ai" || strings.TrimSpace(result.Package.Version) == "" || result.Package.ReleaseChannel != reviewReleaseChannel(result.Package.Version) {
 		return errors.New("capability package identity is invalid")
 	}
 	if strings.TrimSpace(result.Build.GoVersion) == "" || (result.Build.VCSModified != "true" && result.Build.VCSModified != "false" && result.Build.VCSModified != "unknown") ||

@@ -11,21 +11,21 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/backup"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/opencodeplugin"
-	componentuninstall "github.com/gentleman-programming/gentle-ai/v2/internal/components/uninstall"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pipeline"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/skillregistry"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/verify"
+	"github.com/shevanio/shevanio-ai/v2/internal/backup"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodeplugin"
+	componentuninstall "github.com/shevanio/shevanio-ai/v2/internal/components/uninstall"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/skillregistry"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
+	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
 
 // Version is set from main via ldflags at build time.
@@ -63,11 +63,11 @@ func Run() error {
 
 func RunArgs(args []string, stdout io.Writer) error {
 	// Propagate the build-time version to the CLI and upgrade layers so backup
-	// manifests record which version of gentle-ai created them.
+	// manifests record which version of shevanio-ai created them.
 	cli.AppVersion = Version
 	upgrade.AppVersion = Version
 
-	// --yes as a global CLI flag for self-update is handled via GENTLE_AI_YES=1.
+	// --yes as a global CLI flag for self-update is handled via SHEVANIO_AI_YES=1.
 	// Per-subcommand --yes flags (e.g. restore --yes) are parsed by each subcommand.
 
 	// Platform-independent commands: no system detection, self-update, or
@@ -75,7 +75,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 	if len(args) > 0 {
 		switch args[0] {
 		case "version", "--version", "-v":
-			_, _ = fmt.Fprintf(stdout, "gentle-ai %s\n", Version)
+			_, _ = fmt.Fprintf(stdout, "shevanio-ai %s\n", Version)
 			return nil
 		case "help", "--help", "-h":
 			printHelp(stdout, Version)
@@ -175,7 +175,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 		return profile
 	}
 
-	// Self-update: check for a newer gentle-ai release and apply it before
+	// Self-update: check for a newer shevanio-ai release and apply it before
 	// CLI/TUI dispatch. Errors are non-fatal — logged and swallowed.
 	// Skip auto-upgrade on TUI entry (len(args) == 0) to avoid silently
 	// replacing the binary while the user expects a clean TUI launch (#696).
@@ -198,7 +198,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 		// back to filesystem detection for first-time installs.
 		installedState, _ := state.Read(homeDir)
 
-		// Deferred sync: if a previous gentle-ai self-upgrade set PendingSync=true,
+		// Deferred sync: if a previous shevanio-ai self-upgrade set PendingSync=true,
 		// run sync now with the new binary before entering the TUI. On success,
 		// clear the flag. On failure, log and leave the flag set for idempotent
 		// retry on the next launch (per spec scenario "deferred sync fails → retry").
@@ -215,7 +215,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 					_, _ = fmt.Fprintf(stdout, "Warning: failed to clear PendingSync flag: %v\n", writeErr)
 				}
 			}
-			// TUI self-update path: the previous launch completed a gentle-ai
+			// TUI self-update path: the previous launch completed a shevanio-ai
 			// self-upgrade under the old binary and set PendingSync=true. We are
 			// now running under the new binary; print the doctor advisory so the
 			// user can verify ecosystem health against the post-upgrade state.
@@ -258,8 +258,8 @@ func RunArgs(args []string, stdout io.Writer) error {
 		if err != nil {
 			return err
 		}
-		if latestVersion, ok := gentleAIUpgradeVersionFromTUI(finalModel); ok {
-			return restartAfterGentleAIUpgrade(latestVersion, stdout)
+		if latestVersion, ok := shevanioAIUpgradeVersionFromTUI(finalModel); ok {
+			return restartAfterShevanioAIUpgrade(latestVersion, stdout)
 		}
 		return nil
 	}
@@ -296,7 +296,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 	case "doctor":
 		return cli.RunDoctor(context.Background(), stdout)
 	default:
-		return fmt.Errorf("unknown command %q — run 'gentle-ai help' for available commands", args[0])
+		return fmt.Errorf("unknown command %q — run 'shevanio-ai help' for available commands", args[0])
 	}
 }
 
@@ -318,15 +318,15 @@ func hasHelpFlag(args []string) bool {
 	return false
 }
 
-func gentleAIUpgradeVersionFromTUI(finalModel tea.Model) (string, bool) {
+func shevanioAIUpgradeVersionFromTUI(finalModel tea.Model) (string, bool) {
 	switch m := finalModel.(type) {
 	case tui.Model:
-		return m.GentleAIUpgradeVersion()
+		return m.ShevanioAIUpgradeVersion()
 	case *tui.Model:
 		if m == nil {
 			return "", false
 		}
-		return m.GentleAIUpgradeVersion()
+		return m.ShevanioAIUpgradeVersion()
 	default:
 		return "", false
 	}
@@ -334,7 +334,7 @@ func gentleAIUpgradeVersionFromTUI(finalModel tea.Model) (string, bool) {
 
 func runSkillRegistry(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: gentle-ai skill-registry <refresh|list> [flags]")
+		return fmt.Errorf("usage: shevanio-ai skill-registry <refresh|list> [flags]")
 	}
 	switch args[0] {
 	case "refresh":
@@ -482,13 +482,13 @@ func runUpdate(ctx context.Context, currentVersion string, profile system.Platfo
 	return updateCheckError(results)
 }
 
-// runUpgrade handles the `gentle-ai upgrade [--dry-run] [tool...]` command.
+// runUpgrade handles the `shevanio-ai upgrade [--dry-run] [tool...]` command.
 //
 // This command:
-//   - Checks for available updates for managed tools (gentle-ai, engram, gga)
+//   - Checks for available updates for managed tools (shevanio-ai, engram, gga)
 //   - Snapshots agent config paths before execution (config preservation by design)
 //   - Executes binary-only upgrades; does NOT invoke install or sync pipelines
-//   - Skips gentle-ai itself when running as a dev build (version="dev")
+//   - Skips shevanio-ai itself when running as a dev build (version="dev")
 //   - Falls back to source-install guidance where official binaries are unavailable
 //
 // Issue #535: runUpgrade consumes a structured upgradeArgs value parsed once
@@ -539,8 +539,8 @@ func runUpgrade(ctx context.Context, args upgradeArgs, detection system.Detectio
 		return err
 	}
 	if !dryRun {
-		if latestVersion, ok := gentleAIUpgradeSucceeded(report); ok {
-			if err := restartAfterGentleAIUpgrade(latestVersion, stdout); err != nil {
+		if latestVersion, ok := shevanioAIUpgradeSucceeded(report); ok {
+			if err := restartAfterShevanioAIUpgrade(latestVersion, stdout); err != nil {
 				return err
 			}
 			// CLI upgrade path: print the doctor advisory so the user can verify
@@ -986,7 +986,7 @@ func claudeAliasesToStrings(m map[string]model.ClaudeModelAlias) map[string]stri
 	out := make(map[string]string, len(m))
 	for k, v := range m {
 		// Claude Code owns the main session/orchestrator model; do not persist it
-		// as a Gentle AI model assignment.
+		// as a Shevanio AI model assignment.
 		if k == "orchestrator" {
 			continue
 		}
@@ -1063,7 +1063,7 @@ func ListBackups() []backup.Manifest {
 		return nil
 	}
 
-	backupRoot := filepath.Join(homeDir, ".gentle-ai", "backups")
+	backupRoot := filepath.Join(homeDir, ".shevanio-ai", "backups")
 	entries, err := os.ReadDir(backupRoot)
 	if err != nil {
 		return nil

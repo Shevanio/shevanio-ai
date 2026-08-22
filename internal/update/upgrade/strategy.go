@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/cli"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/engram"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
 
 // engramDownloadFn is the function used to download the engram binary on the stable channel.
@@ -64,7 +64,7 @@ type strategyOutcome struct {
 //   - brew profile → brewUpgrade (regardless of tool's declared method)
 //   - go-install method + apt/pacman/other → goInstallUpgrade
 //   - binary method + linux/darwin → binaryUpgrade
-//   - binary method + windows → manualFallback (gentle-ai explains the signed-distribution hold)
+//   - binary method + windows → manualFallback (shevanio-ai explains the signed-distribution hold)
 //   - script method + linux/darwin + gga → ggaScriptUpgrade (git clone approach)
 //   - script method + linux/darwin + other → scriptUpgrade (curl | bash install.sh)
 //   - script method + windows → manualFallback
@@ -79,7 +79,7 @@ func runStrategy(ctx context.Context, r update.UpdateResult, profile system.Plat
 			return false, fmt.Errorf("detect Homebrew ownership for %s: %w", r.Tool.Name, err)
 		}
 	}
-	if isBetaGentleAIUpgrade(r) && profile.OS != "windows" && ownership == update.HomebrewNone {
+	if isBetaShevanioAIUpgrade(r) && profile.OS != "windows" && ownership == update.HomebrewNone {
 		return false, goInstallMainUpgrade(r.Tool)
 	}
 
@@ -410,21 +410,21 @@ func openCodePluginRegisteredPendingHint(pkg string) string {
 func brewUpgrade(ctx context.Context, r update.UpdateResult, ownership update.HomebrewOwnership) error {
 	toolName := r.Tool.Name
 	flag := "--" + string(ownership)
-	// Ensure the Gentleman-Programming homebrew tap is present before upgrading.
+	// Ensure the owning Homebrew tap is present before upgrading.
 	// Non-fatal: brew tap is a no-op when already present; if it fails for any other
 	// reason, the subsequent brew upgrade will surface the real error. See issue #455:
 	// without this, a lost tap (untap, machine swap, brew cleanup) makes upgrades fail
-	// with "No available formula" for engram/gga/gentle-ai.
-	tapCmd := execCommand("brew", "tap", "Gentleman-Programming/homebrew-tap")
+	// with "No available formula" for engram/gga/shevanio-ai.
+	tapCmd := execCommand("brew", "tap", homebrewTap(r.Tool.Name))
 	tapCmd.Stdin = nil
 	_ = tapCmd.Run()
 
-	// Trust only the Gentleman Programming artifact being upgraded. Homebrew 6 can
+	// Trust only the artifact being upgraded. Homebrew 6 can
 	// require explicit trust for non-official taps; this is intentionally scoped to
 	// our formula/cask, not the whole tap or third-party taps. Older Homebrew versions
 	// may not support `brew trust`, so this is non-fatal and the upgrade output
 	// below remains the source of truth.
-	trustCmd := execCommand("brew", "trust", flag, gentlemanProgrammingTapRef(toolName))
+	trustCmd := execCommand("brew", "trust", flag, homebrewTapRef(toolName))
 	trustCmd.Stdin = nil
 	_ = trustCmd.Run()
 
@@ -465,7 +465,17 @@ func verifyLegacyCaskTarget(r update.UpdateResult) error {
 	return nil
 }
 
-func gentlemanProgrammingTapRef(toolName string) string {
+func homebrewTap(toolName string) string {
+	if strings.TrimSpace(toolName) == "shevanio-ai" {
+		return "Shevanio/homebrew-tap"
+	}
+	return "Gentleman-Programming/homebrew-tap"
+}
+
+func homebrewTapRef(toolName string) string {
+	if strings.TrimSpace(toolName) == "shevanio-ai" {
+		return "shevanio/tap/shevanio-ai"
+	}
 	return "gentleman-programming/tap/" + strings.TrimSpace(toolName)
 }
 
@@ -477,7 +487,7 @@ func homebrewTrustFlag(toolName string) string {
 }
 
 func legacyCaskMigration(toolName string) string {
-	return fmt.Sprintf("migrate the legacy cask to the current formula:\n  brew uninstall --cask %s\n  brew install --formula %s", strings.TrimSpace(toolName), gentlemanProgrammingTapRef(toolName))
+	return fmt.Sprintf("migrate the legacy cask to the current formula:\n  brew uninstall --cask %s\n  brew install --formula %s", strings.TrimSpace(toolName), homebrewTapRef(toolName))
 }
 
 func formatBrewUpgradeError(toolName string, ownership update.HomebrewOwnership, err error, output string) error {
@@ -493,7 +503,7 @@ func formatBrewUpgradeError(toolName string, ownership update.HomebrewOwnership,
 
 func homebrewFailureAdvice(toolName string, output string, detected ...update.HomebrewOwnership) string {
 	lower := strings.ToLower(output)
-	ref := gentlemanProgrammingTapRef(toolName)
+	ref := homebrewTapRef(toolName)
 	flag := homebrewTrustFlag(toolName)
 	if len(detected) > 0 {
 		flag = "--" + string(detected[0])
@@ -508,7 +518,7 @@ func homebrewFailureAdvice(toolName string, output string, detected ...update.Ho
 			flag = "--formula"
 			artifact = "formula"
 		}
-		return fmt.Sprintf("Homebrew requires explicit trust for external taps. Trust only this Gentle AI %s, then retry:\n  brew trust %s %s\n  brew upgrade %s %s", artifact, flag, ref, flag, toolName)
+		return fmt.Sprintf("Homebrew requires explicit trust for external taps. Trust only this Shevanio AI %s, then retry:\n  brew trust %s %s\n  brew upgrade %s %s", artifact, flag, ref, flag, toolName)
 	}
 
 	if strings.Contains(lower, "bubblewrap is installed but cannot create a rootless sandbox") ||
@@ -523,7 +533,7 @@ func homebrewFailureAdvice(toolName string, output string, detected ...update.Ho
 // goInstallUpgrade runs `go install <importPath>@v<version>`.
 //
 // Generic Go-managed tools retain the post-install warning because the new
-// binary was genuinely written. Windows gentle-ai self-upgrades are different:
+// binary was genuinely written. Windows shevanio-ai self-upgrades are different:
 // they must prove that Go owns the active executable before writing, or skip to
 // a manual recovery instead of creating a second PATH-visible binary.
 func goInstallUpgrade(ctx context.Context, r update.UpdateResult, profile system.PlatformProfile, preflightDestination string) error {
@@ -540,7 +550,7 @@ func goInstallUpgrade(ctx context.Context, r update.UpdateResult, profile system
 	var destErr error
 	if destDir == "" {
 		destDir, destErr = goInstallDestinationDir()
-		if err := preflightWindowsGentleAIGoInstallWithDestination(r, profile, destDir, destErr); err != nil {
+		if err := preflightWindowsShevanioAIGoInstallWithDestination(r, profile, destDir, destErr); err != nil {
 			return err
 		}
 	}
@@ -557,12 +567,12 @@ func goInstallUpgrade(ctx context.Context, r update.UpdateResult, profile system
 	return nil
 }
 
-func preflightWindowsGentleAIGoInstall(r update.UpdateResult, profile system.PlatformProfile) (string, error) {
-	if profile.OS != "windows" || r.Tool.Name != "gentle-ai" {
+func preflightWindowsShevanioAIGoInstall(r update.UpdateResult, profile system.PlatformProfile) (string, error) {
+	if profile.OS != "windows" || r.Tool.Name != "shevanio-ai" {
 		return "", nil
 	}
 	destDir, destErr := goInstallDestinationDir()
-	if err := preflightWindowsGentleAIGoInstallWithDestination(r, profile, destDir, destErr); err != nil {
+	if err := preflightWindowsShevanioAIGoInstallWithDestination(r, profile, destDir, destErr); err != nil {
 		return "", err
 	}
 	return destDir, nil
@@ -575,33 +585,33 @@ func firstString(values []string) string {
 	return values[0]
 }
 
-func preflightWindowsGentleAIGoInstallWithDestination(r update.UpdateResult, profile system.PlatformProfile, destDir string, destErr error) error {
-	if profile.OS != "windows" || r.Tool.Name != "gentle-ai" {
+func preflightWindowsShevanioAIGoInstallWithDestination(r update.UpdateResult, profile system.PlatformProfile, destDir string, destErr error) error {
+	if profile.OS != "windows" || r.Tool.Name != "shevanio-ai" {
 		return nil
 	}
 	if destErr != nil {
-		return &ManualFallbackError{Hint: gentleAIWindowsGoInstallProvenanceHint(r, "", "")}
+		return &ManualFallbackError{Hint: shevanioAIWindowsGoInstallProvenanceHint(r, "", "")}
 	}
 
 	destination := absoluteBinaryPath(filepath.Join(destDir, goInstallBinaryName(r.Tool.Name, profile.OS)))
 	active, err := lookPathFn(r.Tool.Name)
 	if err != nil {
-		return &ManualFallbackError{Hint: gentleAIWindowsGoInstallProvenanceHint(r, destination, "")}
+		return &ManualFallbackError{Hint: shevanioAIWindowsGoInstallProvenanceHint(r, destination, "")}
 	}
 	active = absoluteBinaryPath(active)
 	if !sameBinaryPathForOS(destination, active, profile.OS) {
-		return &ManualFallbackError{Hint: gentleAIWindowsGoInstallProvenanceHint(r, destination, active)}
+		return &ManualFallbackError{Hint: shevanioAIWindowsGoInstallProvenanceHint(r, destination, active)}
 	}
 	return nil
 }
 
-func gentleAIWindowsGoInstallProvenanceHint(r update.UpdateResult, destination, active string) string {
+func shevanioAIWindowsGoInstallProvenanceHint(r update.UpdateResult, destination, active string) string {
 	details := "could not determine the Go installation destination"
 	switch {
 	case destination != "" && active == "":
-		details = fmt.Sprintf("could not resolve the active gentle-ai executable before Go would write to %s", destination)
+		details = fmt.Sprintf("could not resolve the active shevanio-ai executable before Go would write to %s", destination)
 	case destination != "" && active != "":
-		details = fmt.Sprintf("resolves gentle-ai to %s, but Go would write to %s", active, destination)
+		details = fmt.Sprintf("resolves shevanio-ai to %s, but Go would write to %s", active, destination)
 	}
 
 	hint := fmt.Sprintf("Windows self-upgrade %s. No files were changed. ", details)
@@ -610,28 +620,28 @@ func gentleAIWindowsGoInstallProvenanceHint(r update.UpdateResult, destination, 
 	} else {
 		hint += "Confirm the active installation, then intentionally migrate with:\n  "
 	}
-	hint += update.GentleAISourceInstallCommand(r.LatestVersion)
+	hint += update.ShevanioAISourceInstallCommand(r.LatestVersion)
 	if destination != "" {
-		hint += fmt.Sprintf("\nAfter a successful migration, ensure only %s resolves for gentle-ai on PATH.", destination)
+		hint += fmt.Sprintf("\nAfter a successful migration, ensure only %s resolves for shevanio-ai on PATH.", destination)
 	}
 	return hint
 }
 
-func isBetaGentleAIUpgrade(r update.UpdateResult) bool {
-	return r.Tool.Name == "gentle-ai" &&
-		strings.EqualFold(r.Tool.Owner, "Gentleman-Programming") &&
-		r.Tool.Repo == "gentle-ai" &&
+func isBetaShevanioAIUpgrade(r update.UpdateResult) bool {
+	return r.Tool.Name == "shevanio-ai" &&
+		strings.EqualFold(r.Tool.Owner, "Shevanio") &&
+		r.Tool.Repo == "shevanio-ai" &&
 		strings.HasPrefix(strings.TrimSpace(r.LatestVersion), "main@")
 }
 
-// goInstallMainUpgrade installs gentle-ai from HEAD on the beta channel. It runs
+// goInstallMainUpgrade installs shevanio-ai from HEAD on the beta channel. It runs
 // the same `go install` mechanism as goInstallUpgrade and therefore carries the
 // same risk of writing somewhere the shell does not resolve, so it performs the
 // same non-fatal destination verification.
 func goInstallMainUpgrade(tool update.ToolInfo) error {
 	repository := strings.ToLower(fmt.Sprintf("github.com/%s/%s", strings.TrimSpace(tool.Owner), strings.TrimSpace(tool.Repo)))
 	if repository == "github.com//" {
-		repository = "github.com/gentleman-programming/gentle-ai"
+		repository = "github.com/shevanio/shevanio-ai"
 	}
 	// Go derives the module path from the repository plus the major-version
 	// suffix: for major 2 and above the module path must end in /vN or the
@@ -641,7 +651,7 @@ func goInstallMainUpgrade(tool update.ToolInfo) error {
 
 	destDir, destErr := goInstallDestinationDir()
 
-	target := module + "/cmd/gentle-ai@main"
+	target := module + "/cmd/shevanio-ai@main"
 	cmd := execCommand("go", "install", target)
 	cmd.Stdin = nil
 	cmd.Env = goProxyBypassEnv(cmd.Env, module)
@@ -708,8 +718,8 @@ func prependGoPattern(existing, pattern string) string {
 // works on all platforms including Windows. Other Windows binary upgrades return
 // ManualFallbackError so the executor surfaces them as UpgradeSkipped.
 func binaryUpgrade(ctx context.Context, r update.UpdateResult, profile system.PlatformProfile) error {
-	if profile.OS == "windows" && r.Tool.Name == "gentle-ai" {
-		return &ManualFallbackError{Hint: gentleAIWindowsSourceInstallHint(r)}
+	if profile.OS == "windows" && r.Tool.Name == "shevanio-ai" {
+		return &ManualFallbackError{Hint: shevanioAIWindowsSourceInstallHint(r)}
 	}
 
 	// engram: always use its dedicated binary downloader regardless of platform
@@ -735,14 +745,14 @@ func binaryUpgrade(ctx context.Context, r update.UpdateResult, profile system.Pl
 	return downloadAndReplace(ctx, r, profile)
 }
 
-func gentleAIWindowsSourceInstallHint(r update.UpdateResult) string {
+func shevanioAIWindowsSourceInstallHint(r update.UpdateResult) string {
 	return update.WindowsDistributionHoldMessage + " " +
 		"No binary or remote script was downloaded or executed. Install/update from source with Go 1.25.10+:\n  " +
-		update.GentleAISourceInstallCommand(r.LatestVersion)
+		update.ShevanioAISourceInstallCommand(r.LatestVersion)
 }
 
 // engramBinaryUpgrade downloads or installs the latest engram binary.
-// It honors GENTLE_AI_CHANNEL: when the channel is beta, engram is installed
+// It honors SHEVANIO_AI_CHANNEL: when the channel is beta, engram is installed
 // from source via `go install @main`. For stable (the default when the env var
 // is unset or unknown), the pre-built release binary is downloaded via
 // engramDownloadFn. On Windows, PATH changes are persisted to the user registry
@@ -754,7 +764,7 @@ func engramBinaryUpgrade(profile system.PlatformProfile) error {
 	// misrouted).
 	channel, err := cli.ResolveInstallChannel("")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: unrecognized GENTLE_AI_CHANNEL value (%v); defaulting to stable\n", err)
+		fmt.Fprintf(os.Stderr, "WARNING: unrecognized SHEVANIO_AI_CHANNEL value (%v); defaulting to stable\n", err)
 		channel = cli.ChannelStable
 	}
 
@@ -872,7 +882,7 @@ func scriptUpgrade(ctx context.Context, r update.UpdateResult, profile system.Pl
 // ggaMkdirTemp is the function used to create a temporary directory for GGA git clone.
 // Package-level var for testability — swapped in tests to control the temp dir path.
 var ggaMkdirTemp = func() (string, error) {
-	return os.MkdirTemp("", "gentle-ai-gga-*")
+	return os.MkdirTemp("", "shevanio-ai-gga-*")
 }
 
 // ggaScriptUpgrade upgrades GGA by cloning its repository and running install.sh

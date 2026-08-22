@@ -19,7 +19,7 @@ func init() {
 		Title:    "OpenCode custom-agent model-picker runtime proof",
 		BlackBox: false,
 		Properties: []string{
-			"j97 drives the compiled TUI model-picker state through the public gentle-ai binary and checks the persisted opencode.json boundary.",
+			"j97 drives the compiled TUI model-picker state through the public shevanio-ai binary and checks the persisted opencode.json boundary.",
 			"The journey requires a product binary built with -tags bench_fixture; ordinary binaries report unsupported instead of fabricating a pass.",
 			"The fixture uses a fresh HOME and opencode.json containing an unconfigured custom native agent plus a tool-call-capable model provider.",
 		},
@@ -32,7 +32,7 @@ func modelPickerJourneys() []Journey {
 		ID:     "j97-opencode-custom-agent-model-picker-runtime",
 		Review: reviewUntouched,
 		Title:  "Runtime model picker discovers and persists a custom native agent assignment",
-		Source: "https://github.com/Gentleman-Programming/gentle-ai/issues/2098",
+		Source: "https://github.com/Shevanio/shevanio-ai/issues/2098",
 		Steps: []Step{
 			{Name: "fixture: unconfigured custom agent and selectable model", Fixture: modelPickerFixture},
 			{Name: "public model-picker runtime exposes and persists the custom assignment", Requires: modelPickerCapability,

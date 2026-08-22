@@ -1,6 +1,6 @@
 package catalog
 
-import "github.com/gentleman-programming/gentle-ai/v2/internal/model"
+import "github.com/shevanio/shevanio-ai/v2/internal/model"
 
 type Agent struct {
 	ID         model.AgentID

@@ -6,12 +6,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/gemini"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/kilocode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/openclaw"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/qwen"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/gemini"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/kilocode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/openclaw"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/qwen"
 )
 
 // TestMain overrides verifyEngramVersion and probeEngramProtocolFlag with
@@ -29,7 +29,7 @@ import (
 // run_integration_test.go).
 //
 // It does the same for claude/opencode/gemini/qwen/kilocode/openclaw's own
-// LookPathOverride: since gentle-ai now refuses instead of installing a
+// LookPathOverride: since shevanio-ai now refuses instead of installing a
 // missing agent runtime (agentInstallStep in run.go), the many tests in this
 // package whose real target is protocol forwarding, engram provisioning,
 // workspace resolution, or config injection — not install/detection
@@ -48,10 +48,10 @@ func TestMain(m *testing.M) {
 	if code, ok := reviewGitProcessHelperExitCode(); ok {
 		os.Exit(code)
 	}
-	if err := os.Unsetenv("GENTLE_AI_CHANNEL"); err != nil {
+	if err := os.Unsetenv("SHEVANIO_AI_CHANNEL"); err != nil {
 		panic(err)
 	}
-	testHome, err := os.MkdirTemp("", "gentle-ai-cli-test-home-*")
+	testHome, err := os.MkdirTemp("", "shevanio-ai-cli-test-home-*")
 	if err != nil {
 		panic(err)
 	}

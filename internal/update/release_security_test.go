@@ -187,7 +187,7 @@ printf '%s\n' "$*" >>"$GH_CALL_LOG"
 tag=${RELEASE_VERIFICATION_TAG:-$GITHUB_REF_NAME}
 if [[ "$1" == api && "$2" == "repos/$GITHUB_REPOSITORY/releases/tags/$tag" ]]; then
   cat <<JSON
-{"tag_name":"$tag","draft":false,"prerelease":false,"assets":[{"name":"gentle-ai_1.2.3_darwin_amd64.tar.gz"},{"name":"gentle-ai_1.2.3_darwin_arm64.tar.gz"},{"name":"gentle-ai_1.2.3_linux_amd64.tar.gz"},{"name":"gentle-ai_1.2.3_linux_arm64.tar.gz"},{"name":"gentle-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
+{"tag_name":"$tag","draft":false,"prerelease":false,"assets":[{"name":"shevanio-ai_1.2.3_darwin_amd64.tar.gz"},{"name":"shevanio-ai_1.2.3_darwin_arm64.tar.gz"},{"name":"shevanio-ai_1.2.3_linux_amd64.tar.gz"},{"name":"shevanio-ai_1.2.3_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
 JSON
   exit 0
 fi
@@ -203,10 +203,10 @@ if [[ "$1" == release && "$2" == download && "$3" == "$tag" ]]; then
   [[ -n "$directory" ]]
   mkdir -p "$directory"
   for platform in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64; do
-    printf 'archive %s\n' "$platform" >"$directory/gentle-ai_1.2.3_${platform}.tar.gz"
+    printf 'archive %s\n' "$platform" >"$directory/shevanio-ai_1.2.3_${platform}.tar.gz"
   done
-  printf 'provider contract\n' >"$directory/gentle-ai-review-provider-contract-1.1.0.tar.gz"
-  (cd "$directory" && sha256sum gentle-ai_1.2.3_*.tar.gz gentle-ai-review-provider-contract-1.1.0.tar.gz >checksums.txt)
+  printf 'provider contract\n' >"$directory/shevanio-ai-review-provider-contract-1.1.0.tar.gz"
+  (cd "$directory" && sha256sum shevanio-ai_1.2.3_*.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz >checksums.txt)
   printf 'test signature\n' >"$directory/checksums.txt.minisig"
   exit 0
 fi
@@ -273,7 +273,7 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 				"PATH="+fakeBin+string(os.PathListSeparator)+os.Getenv("PATH"),
 				"GH_CALL_LOG="+ghLog,
 				"GH_TOKEN=read-only-test-token",
-				"GITHUB_REPOSITORY=Gentleman-Programming/gentle-ai",
+				"GITHUB_REPOSITORY=Shevanio/shevanio-ai",
 				"GITHUB_REF_NAME="+tc.githubRef,
 				"MINISIGN_PUBLIC_KEYS="+firstKey+","+signingKey,
 				"EXPECTED_SIGNING_KEY="+signingKey,
@@ -352,8 +352,8 @@ func TestGoReleaserSignsBoundManifestAndInjectsTrustAnchors(t *testing.T) {
 		`signature: ${artifact}.minisig`,
 		`- "${artifact}"`,
 		`- "${signature}"`,
-		`repo=Gentleman-Programming/gentle-ai;tag={{ .Tag }}`,
-		`github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys={{ .Env.MINISIGN_PUBLIC_KEYS_CANONICAL }}`,
+		`repo=Shevanio/shevanio-ai;tag={{ .Tag }}`,
+		`github.com/shevanio/shevanio-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys={{ .Env.MINISIGN_PUBLIC_KEYS_CANONICAL }}`,
 		"-trimpath",
 	} {
 		if !strings.Contains(config, required) {
@@ -438,7 +438,7 @@ func TestReleaseSecurityScriptsAreSyntacticallyValidAndFailClosed(t *testing.T) 
 				`canonicalize-release-public-keys.sh`,
 				`MINISIGN_PUBLIC_KEYS`,
 				`sha256sum --check --strict`,
-				`gentle-ai_${version}_linux_amd64.tar.gz`,
+				`shevanio-ai_${version}_linux_amd64.tar.gz`,
 				`checksums.txt.minisig`,
 			},
 		},
@@ -582,7 +582,7 @@ cat "$FAKE_GH_RESPONSE"
 				"HOME="+home,
 				"PATH="+fakeBin+string(os.PathListSeparator)+os.Getenv("PATH"),
 				"GH_TOKEN=test-token",
-				"GITHUB_REPOSITORY=Gentleman-Programming/gentle-ai",
+				"GITHUB_REPOSITORY=Shevanio/shevanio-ai",
 				"GITHUB_SHA="+sha,
 				"FAKE_GH_RESPONSE="+responsePath,
 				"FAKE_GH_LOG="+filepath.Join(root, "gh.log"),
@@ -607,16 +607,16 @@ cat "$FAKE_GH_RESPONSE"
 func TestCanonicalReleasePublicKeysControlRealLinkerBuild(t *testing.T) {
 	repoRoot := filepath.Clean(filepath.Join("..", ".."))
 	publicKey := strings.TrimSpace(readRepositoryFile(t, "internal", "update", "upgrade", "testdata", "minisign-test.pub"))
-	const linkerTarget = "github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys"
+	const linkerTarget = "github.com/shevanio/shevanio-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys"
 	const injectedOverride = "AUDIT_OVERRIDE"
 
 	build := func(t *testing.T, raw string) (string, []byte, error) {
 		t.Helper()
-		outPath := filepath.Join(t.TempDir(), "gentle-ai")
+		outPath := filepath.Join(t.TempDir(), "shevanio-ai")
 		cmd := exec.Command("bash", "-c", `
 set -euo pipefail
 canonical=$(./scripts/canonicalize-release-public-keys.sh)
-go build -trimpath -o "$OUT" -ldflags "-X $LINKER_TARGET=$canonical" ./cmd/gentle-ai
+go build -trimpath -o "$OUT" -ldflags "-X $LINKER_TARGET=$canonical" ./cmd/shevanio-ai
 `)
 		cmd.Dir = repoRoot
 		cmd.Env = append(os.Environ(),
@@ -679,7 +679,7 @@ func TestReleaseDocumentationStatesArchiveDownloadCeiling(t *testing.T) {
 
 func TestIsolatedMinisignTestPublicKeyFixture(t *testing.T) {
 	fixture := strings.TrimSpace(readRepositoryFile(t, "internal", "update", "upgrade", "testdata", "minisign-test.pub"))
-	const expected = "RWS5glvo7U0Evs9J03vF/Lma+BY/2PMol//qa7T4gLxl7+KLNlSIDk0X"
+	const expected = "RWQLA6c1qcxOG2s20mV2lj/m9iY3gaWnIkkBdo9+U6+dkkEeGPJo9x3Y"
 	if fixture != expected {
 		t.Fatalf("isolated Minisign test public key = %q, want %q", fixture, expected)
 	}

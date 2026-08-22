@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -60,6 +62,43 @@ func TestRetiredCompactSnapshotIdentityMatchesVerbatimRetiredFormula(t *testing.
 		if retired == current {
 			t.Fatalf("snapshot %d: retired formula reproduced the current identity %q; the domains would be indistinguishable", index, retired)
 		}
+	}
+}
+
+func TestGentlePriorSchemaRecordClassifiesOutdated(t *testing.T) {
+	repo := initSnapshotRepo(t)
+	state := newCompactTestState(t, repo, "gentle-prior-schema")
+	for _, snapshot := range []*Snapshot{&state.InitialSnapshot, &state.CurrentSnapshot} {
+		hash := sha256.New()
+		hash.Write([]byte("gentle-ai.paths/v1\x00"))
+		for _, logicalPath := range snapshot.Paths {
+			writeLengthPrefixed(hash, []byte(logicalPath))
+		}
+		snapshot.PathsDigest = "sha256:" + hex.EncodeToString(hash.Sum(nil))
+		snapshot.Identity = retiredSnapshotIdentity(*snapshot)
+	}
+	statePayload, err := json.Marshal(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	statePayload = []byte(strings.ReplaceAll(string(statePayload), `"shevanio-ai.`, `"gentle-ai.`))
+	sum := sha256.Sum256(append([]byte("gentle-ai.review-state/v2\x00"), statePayload...))
+	payload, err := json.MarshalIndent(struct {
+		Schema   string          `json:"schema"`
+		Revision string          `json:"revision"`
+		State    json.RawMessage `json:"state"`
+	}{
+		Schema:   "gentle-ai.review-state-record/v2",
+		Revision: "sha256:" + hex.EncodeToString(sum[:]),
+		State:    statePayload,
+	}, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, loadErr := parseCompactRecord(append(payload, '\n'), state.LineageID)
+	var semantic *CompactSemanticStateError
+	if loadErr == nil || !errors.As(loadErr, &semantic) || !semantic.OutdatedIdentity {
+		t.Fatalf("Gentle prior-schema load error = %v, want outdated compact identity", loadErr)
 	}
 }
 

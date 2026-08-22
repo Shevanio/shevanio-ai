@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // reviewNarrationTier classifies every registered human-facing emission into
@@ -96,12 +96,12 @@ const reviewtransactionEscalationCauseSample = "budget_exceeded"
 // reviewModeDisableCloneCommand is the scoped form of the self-service
 // delivery exit named throughout this registry (adversarial finding F6):
 // `--scope` defaults to `global` (review_mode.go's own flag default), so
-// naming the bare `gentle-ai review mode disable` would let a reader
+// naming the bare `shevanio-ai review mode disable` would let a reader
 // silently disable receipt-driven development for every repository on the
 // machine instead of just the one they meant. Verified by execution: the
-// bare form writes ~/.gentle-ai/state.json; this scoped form writes only
-// under the named repository's own .git/gentle-ai directory.
-const reviewModeDisableCloneCommand = "gentle-ai review mode disable --scope clone --cwd <repo>"
+// bare form writes ~/.shevanio-ai/state.json; this scoped form writes only
+// under the named repository's own .git/shevanio-ai directory.
+const reviewModeDisableCloneCommand = "shevanio-ai review mode disable --scope clone --cwd <repo>"
 
 // reviewModeDisableCloneCaveat is appended everywhere
 // reviewModeDisableCloneCommand is named, so a reader of just one narration
@@ -121,20 +121,20 @@ var reviewStopReasonNarration = map[string]string{
 		"This is a product defect, not something to retry. If you just want your work delivered, run `" + reviewModeDisableCloneCommand + "` " +
 		reviewModeDisableCloneCaveat + " so ordinary repository policy (hooks, tests, CI) decides instead; nothing is silently approved. To get this review itself fixed, report the defect with this run's details.",
 	"corrected_candidate_unavailable": "Change the candidate content so it differs from the frozen original, then re-run " +
-		"`gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition` " +
-		"(or `gentle-ai review finalize --lineage <id>`). " +
+		"`shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition` " +
+		"(or `shevanio-ai review finalize --lineage <id>`). " +
 		"That is the right path when the review found real defects. If instead the reviewers were given the wrong input " +
 		"and their findings describe content that was never the candidate, a maintainer can quarantine those results and " +
-		"reopen their lenses over the same frozen content: run `gentle-ai review reopen-results --prepare --cwd <repo> --lineage <id> " +
+		"reopen their lenses over the same frozen content: run `shevanio-ai review reopen-results --prepare --cwd <repo> --lineage <id> " +
 		"--expected-revision <revision> --target <target> --reason <reason> --actor <actor> --quarantine-lens <lens>` " +
 		"(repeat `--quarantine-lens` per affected lens) and follow its output.",
 	"empty_base_diff_bootstrap_required": "This selected committed base has no changes to review. " +
 		"If you are following the authorized first-publication bootstrap, a maintainer must first insert an empty root below the content commit. " +
-		"Then run `gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition --base-ref <empty-root> --committed-only`.",
+		"Then run `shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition --base-ref <empty-root> --committed-only`.",
 	"lens_context_budget_exceeded": "This frozen candidate cannot fit complete reviewer evidence without truncation, so this review stops before an inspection result. " +
-		"Reduce the candidate scope or target identity, then run `gentle-ai review start` for that new candidate; or run `" + reviewModeDisableCloneCommand + "` " + reviewModeDisableCloneCaveat + " to deliver under ordinary repository policy instead.",
+		"Reduce the candidate scope or target identity, then run `shevanio-ai review start` for that new candidate; or run `" + reviewModeDisableCloneCommand + "` " + reviewModeDisableCloneCaveat + " to deliver under ordinary repository policy instead.",
 	"correction_repository_verification_failed": "Repository verification failed for this correction candidate. Change the candidate within the open correction, then re-run " +
-		"`gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition` " +
+		"`shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --next-transition` " +
 		"to capture evidence for the new candidate.",
 	"corrupted_or_unverifiable_authority": "This review's stored record cannot be trusted as-is, and it cannot be repaired automatically. " +
 		"Ask a maintainer to inspect it directly, or run `" + reviewModeDisableCloneCommand + "` " +
@@ -142,7 +142,7 @@ var reviewStopReasonNarration = map[string]string{
 	"final_verification_retry_unavailable": "This run reached a state that should never happen: it was routed to retry a final verification it was not eligible to retry. " +
 		"This is a product defect, not something to retry. If you just want your work delivered, run `" + reviewModeDisableCloneCommand + "` " +
 		reviewModeDisableCloneCaveat + " so ordinary repository policy (hooks, tests, CI) decides instead; nothing is silently approved. To get this review itself fixed, report the defect with this run's details.",
-	"manual_intervention_required": "This review reached a state Gentle AI does not recognize. " +
+	"manual_intervention_required": "This review reached a state Shevanio AI does not recognize. " +
 		"This is a product defect. If you just want your work delivered, run `" + reviewModeDisableCloneCommand + "` " +
 		reviewModeDisableCloneCaveat + " so ordinary repository policy (hooks, tests, CI) decides instead; nothing is silently approved. To get this review itself fixed, ask a maintainer to review it and report the defect.",
 	"missing_authority_binding": "This run reached a state that should never happen: it lost track of the record it needs to continue. " +
@@ -151,17 +151,17 @@ var reviewStopReasonNarration = map[string]string{
 	"native_stop_required": "This review is stuck at an escalated state that is not yet eligible to continue. " +
 		"Ask a maintainer to review it before doing anything else, or run `" + reviewModeDisableCloneCommand + "` " +
 		reviewModeDisableCloneCaveat + " to deliver under ordinary repository policy instead.",
-	"original_finalize_request_required": "Re-run `gentle-ai review finalize` with the exact same results or evidence you submitted before.",
+	"original_finalize_request_required": "Re-run `shevanio-ai review finalize` with the exact same results or evidence you submitted before.",
 	"recovery_scope_unchanged": "Change the candidate so it targets something different from what is already on record, then retry the recovery, " +
 		"or run `" + reviewModeDisableCloneCommand + "` " + reviewModeDisableCloneCaveat + " to deliver under ordinary repository policy instead.",
-	"rdd_disabled": "Review mode is disabled. Run `gentle-ai review mode status --cwd <repo> --json` to inspect the deciding scope; STATUS renders the exact scoped enable command for this request.",
+	"rdd_disabled": "Review mode is disabled. Run `shevanio-ai review mode status --cwd <repo> --json` to inspect the deciding scope; STATUS renders the exact scoped enable command for this request.",
 	"staged_delivery_candidate_required": "Stage every reviewed path exactly as it was reviewed, then re-run " +
-		"`gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --lineage <id> --projection staged --gate pre-commit --next-transition`.",
+		"`shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --agent " + reviewUndeclaredRuntimeIdentitySlot + " --lineage <id> --projection staged --gate pre-commit --next-transition`.",
 	"staged_workspace_overlay_recovery_unavailable": "Pass `--lineage <id>` to continue the review you already started, " +
-		"or drop `--workspace-overlay` and run `gentle-ai review start --projection staged` to start fresh.",
+		"or drop `--workspace-overlay` and run `shevanio-ai review start --projection staged` to start fresh.",
 	"unchanged_or_unverified_authority": "This review already used its one correction attempt without a verified change. " +
-		"`gentle-ai review start` on this exact unchanged candidate only resumes this same review, not a fresh one -- change the " +
-		"candidate content first, then run `gentle-ai review start` to begin a genuinely new one, or run `" +
+		"`shevanio-ai review start` on this exact unchanged candidate only resumes this same review, not a fresh one -- change the " +
+		"candidate content first, then run `shevanio-ai review start` to begin a genuinely new one, or run `" +
 		reviewModeDisableCloneCommand + "` " + reviewModeDisableCloneCaveat + " to deliver under ordinary repository policy instead.",
 }
 
@@ -199,7 +199,7 @@ var reviewNarrationCodeSpanRegexp = regexp.MustCompile("`[^`]*`")
 // reviewNarrationStripCodeSpans removes every backtick-quoted command/flag
 // literal before the vocabulary ban runs. A flag like `--lineage <id>` is an
 // unavoidable, literal public CLI contract token a caller must type; the ban
-// exists so narration never asks a human to understand gentle-ai's internal
+// exists so narration never asks a human to understand shevanio-ai's internal
 // architecture in prose, not so a copy-pasteable command can never contain
 // one of those words as its flag name.
 func reviewNarrationStripCodeSpans(text string) string {

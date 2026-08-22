@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // WU2 (Wave 7 S6, design decision 4): byte-equivalence exit evidence, Commit
-// A. Before the GENTLE_AI_RDD_NEW_LINEAGE switch and its legacy start branch
+// A. Before the SHEVANIO_AI_RDD_NEW_LINEAGE switch and its legacy start branch
 // are deleted (WU18, Commit B), the wave must prove a switch-ON build and a
 // switch-free build produce byte-identical goldens/envelopes/receipts across
 // the full journey set. This file records Commit A's baseline: the switch-ON
@@ -112,8 +112,8 @@ func byteEquivalenceCommitAFixture(t *testing.T) (string, string) {
 	}
 	runReviewCLIGit(t, repo, "add", "docs/byte-equivalence-commit-a.md")
 
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
-	t.Cleanup(func() { os.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "") })
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
+	t.Cleanup(func() { os.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "") })
 
 	var startOut bytes.Buffer
 	if err := RunReviewFacadeStart([]string{"--cwd", repo, "--lineage", byteEquivalenceCommitALineage}, &startOut); err != nil {

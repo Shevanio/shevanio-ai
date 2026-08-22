@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
-const CompactReclaimRecordSchema = "gentle-ai.review-reclaim-record/v1"
+const CompactReclaimRecordSchema = "shevanio-ai.review-reclaim-record/v1"
 
 const (
-	ClassifiedAuthorityRepairAuditSchema = "gentle-ai.review-classified-authority-repair-audit/v1"
+	ClassifiedAuthorityRepairAuditSchema = "shevanio-ai.review-classified-authority-repair-audit/v1"
 	ClassifiedAuthorityRepairRoute       = "classified_authority_repair"
 )
 
@@ -202,21 +202,21 @@ func compactReclaimAuthorityRefusal(ctx context.Context, repo, dir, lineageID, a
 	if loadErr != nil {
 		if os.IsNotExist(loadErr) {
 			return fmt.Errorf("%s The entry holds no readable review-state.json beside that artifact, so nothing can prove the artifact never carried authority, and no advertised operation admits this shape today."+
-				" Capture the complete machine-readable diagnosis with `gentle-ai review inspect-authority --cwd %s` and escalate that report", refused, pathquote.Quote(repo))
+				" Capture the complete machine-readable diagnosis with `shevanio-ai review inspect-authority --cwd %s` and escalate that report", refused, pathquote.Quote(repo))
 		}
 		return fmt.Errorf("%s Its record cannot be loaded (%v) — inspection classifies it %s — and no advertised operation admits an unreadable record:"+
 			" reconciliation re-derives its proof from readable state, and admitting bytes that can prove nothing is a maintainer policy decision, not a repair."+
-			" Capture the complete machine-readable diagnosis with `gentle-ai review inspect-authority --cwd %s` and escalate that report",
+			" Capture the complete machine-readable diagnosis with `shevanio-ai review inspect-authority --cwd %s` and escalate that report",
 			refused, loadErr, compactRecoveryEntryProblem(loadErr), pathquote.Quote(repo))
 	}
 	eligibility, eligibilityErr := InspectCompactPristineAbandonment(ctx, repo, lineageID)
 	if eligibilityErr == nil && eligibility.Eligible {
-		return fmt.Errorf("%s The entry is eligible for abandonment, so `gentle-ai review abandon` quarantines it whole: %s",
+		return fmt.Errorf("%s The entry is eligible for abandonment, so `shevanio-ai review abandon` quarantines it whole: %s",
 			refused, compactAbandonCommandText(repo, lineageID, eligibility))
 	}
 	return fmt.Errorf("%s No advertised operation admits it: %s."+
 		" Nothing quarantines this shape today; the entry stays exactly as persisted."+
-		" Capture the complete machine-readable diagnosis with `gentle-ai review inspect-authority --cwd %s` and escalate that report",
+		" Capture the complete machine-readable diagnosis with `shevanio-ai review inspect-authority --cwd %s` and escalate that report",
 		refused, compactAbandonBlockerText(record.State), pathquote.Quote(repo))
 }
 
@@ -292,11 +292,11 @@ func quarantineCompactStoreEntry(ctx context.Context, base, dir string, record C
 // before a quarantine operation can create, inspect, or rename inside them.
 func ensureCanonicalReviewQuarantineRoot(base, quarantineRoot string) error {
 	commonDir := filepath.Dir(filepath.Dir(base))
-	if filepath.Clean(base) != filepath.Join(commonDir, "gentle-ai", "review-transactions") ||
+	if filepath.Clean(base) != filepath.Join(commonDir, "shevanio-ai", "review-transactions") ||
 		filepath.Clean(quarantineRoot) != filepath.Join(base, "quarantine") {
 		return errors.New("review quarantine refused noncanonical authority root")
 	}
-	for _, component := range []string{"gentle-ai", "review-transactions", "quarantine"} {
+	for _, component := range []string{"shevanio-ai", "review-transactions", "quarantine"} {
 		path := filepath.Join(commonDir, component)
 		if component == "review-transactions" {
 			path = base
@@ -335,7 +335,7 @@ func persistCompactReclaimRecord(record CompactReclaimRecord) error {
 
 // AuthorityDispositionClosureManifestSchema identifies
 // AuthorityDispositionClosureManifest's shape.
-const AuthorityDispositionClosureManifestSchema = "gentle-ai.review-authority-disposition-closure-manifest/v1"
+const AuthorityDispositionClosureManifestSchema = "shevanio-ai.review-authority-disposition-closure-manifest/v1"
 
 // AuthorityDispositionClosureManifest is Wave 6's forensic-only record of an
 // N-node closure disposition (design decision D5): written once, inside the

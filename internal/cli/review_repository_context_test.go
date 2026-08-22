@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestRepositoryContextCaptureFromUnrelatedCWDProducesFinalizeArtifact(t *testing.T) {
@@ -173,7 +173,7 @@ func TestOpaqueContextErrorsDoNotExposeProviderPaths(t *testing.T) {
 			writeReviewStartCandidate(t, repo, "candidate.go", "package candidate\n\nfunc opaqueFailure() {}\n", 0o644)
 			started := runNegotiatedReviewStart(t, repo, "opaque-error-"+damage)
 			if damage == "locator" {
-				if err := os.RemoveAll(filepath.Join(home, ".gentle-ai", "review-contexts")); err != nil {
+				if err := os.RemoveAll(filepath.Join(home, ".shevanio-ai", "review-contexts")); err != nil {
 					t.Fatal(err)
 				}
 			} else {
@@ -368,7 +368,7 @@ func TestNegotiatedFinalizeReturnsProviderOwnedTargetedValidationRequest(t *test
 	if err := changedEnvelope.Validate(); err == nil {
 		t.Fatal("FINALIZE accepted a transition request without the provider-owned top-level request")
 	}
-	if bytes.Contains(output.Bytes(), []byte(filepath.Join(repo, ".git", "gentle-ai"))) || bytes.Contains(output.Bytes(), []byte(repo)) {
+	if bytes.Contains(output.Bytes(), []byte(filepath.Join(repo, ".git", "shevanio-ai"))) || bytes.Contains(output.Bytes(), []byte(repo)) {
 		t.Fatalf("validation request leaked provider internals: %s", output.String())
 	}
 }

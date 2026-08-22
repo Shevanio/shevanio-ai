@@ -15,7 +15,7 @@ import (
 
 // Clone-scoped review store reset.
 //
-// Review authority accumulates without bound under <git-common-dir>/gentle-ai:
+// Review authority accumulates without bound under <git-common-dir>/shevanio-ai:
 // every candidate leaves a lineage behind, every lineage stays after delivery,
 // and nothing removes a delivered one. `review abandon` refuses terminal
 // states and `review reclaim` refuses any entry holding authoritative
@@ -34,7 +34,7 @@ import (
 //
 // The kill switch is not lineage state. It lives in two places, and one of them
 // (review-transactions/rar-authority/v1/rdd-mode) is *inside* the authority
-// tree, still written for gentle-ai builds installed before #2882 that read
+// tree, still written for shevanio-ai builds installed before #2882 that read
 // only that location. A reset that removed review-transactions/ wholesale would
 // switch reviews back on for a user who had turned them off, which is the worst
 // thing this command could possibly do.
@@ -45,7 +45,7 @@ import (
 //
 // A fourth rule follows from the third. The safety this command advertises --
 // the exclusive maintenance lease and the in-flight refusal -- only covers the
-// state gentle-ai itself writes. A category outside that coverage cannot be
+// state shevanio-ai itself writes. A category outside that coverage cannot be
 // removed by a default run no matter how dead it looks, because "we could not
 // find a live writer" is not the same claim as "there is no live writer". Such
 // a category is spared, reported under Preserved with the coverage it lacks,
@@ -53,7 +53,7 @@ import (
 
 // StoreResetReportSchema identifies the clone-scoped review store reset
 // projection.
-const StoreResetReportSchema = "gentle-ai.review-store-reset/v1"
+const StoreResetReportSchema = "shevanio-ai.review-store-reset/v1"
 
 const (
 	// StoreResetPreview names a read-only survey that removes nothing.
@@ -107,7 +107,7 @@ var storeResetRemoveTree = os.RemoveAll
 // after the lease is held.
 var storeResetAcquireLease = AcquireReviewMaintenanceExclusive
 
-// storeResetTarget names one path under <git-common-dir>/gentle-ai and why it
+// storeResetTarget names one path under <git-common-dir>/shevanio-ai and why it
 // is in the list it is in. The reason is not decoration: this command destroys
 // data, and every entry it touches or spares has to be able to justify itself
 // to the person reading the preview.
@@ -169,7 +169,7 @@ var storeResetRemovableTargets = []storeResetTarget{
 
 // storeResetPreservedTargets is the complete exclusion list. Two of these are
 // the kill switch, two are state another component owns, and two are paths no
-// gentle-ai code has ever written -- which is itself the reason.
+// shevanio-ai code has ever written -- which is itself the reason.
 var storeResetPreservedTargets = []storeResetTarget{
 	{
 		name: "review-mode", parts: []string{"review-mode"},
@@ -189,7 +189,7 @@ var storeResetPreservedTargets = []storeResetTarget{
 	},
 	{
 		name: "review-artifacts", parts: []string{"review-artifacts"},
-		reason: "no gentle-ai code writes or reads this path, so its contents were placed by hand; a reset never removes what the product did not create",
+		reason: "no shevanio-ai code writes or reads this path, so its contents were placed by hand; a reset never removes what the product did not create",
 	},
 	{
 		name: "incidents", parts: []string{"incidents"},
@@ -301,7 +301,7 @@ func (err *StoreResetInFlightError) Error() string {
 		names = append(names, fmt.Sprintf("%s (%s)", lineage.LineageID, lineage.State))
 	}
 	return fmt.Sprintf(
-		"review store reset refused: %d review(s) have not reached a terminal state: %s; finish or abandon them, or run `gentle-ai review store-reset --cwd %s --confirm --include-in-flight` to remove them anyway",
+		"review store reset refused: %d review(s) have not reached a terminal state: %s; finish or abandon them, or run `shevanio-ai review store-reset --cwd %s --confirm --include-in-flight` to remove them anyway",
 		len(err.Lineages), strings.Join(names, ", "), err.Repository,
 	)
 }
@@ -329,7 +329,7 @@ func (err *StoreResetIncompleteError) Error() string {
 	return message
 }
 
-// storeResetRoot resolves <git-common-dir>/gentle-ai for one clone.
+// storeResetRoot resolves <git-common-dir>/shevanio-ai for one clone.
 //
 // It deliberately does not apply the receipt-driven-development gate. The kill
 // switch decides whether reviews happen; it does not decide whether a user may
@@ -343,7 +343,7 @@ func storeResetRoot(ctx context.Context, repo string) (root, repository string, 
 		return "", "", err
 	}
 	identity := lease.Identity()
-	return filepath.Join(identity.GitCommonDir, "gentle-ai"), identity.RepositoryRoot, nil
+	return filepath.Join(identity.GitCommonDir, "shevanio-ai"), identity.RepositoryRoot, nil
 }
 
 // SurveyReviewStore reports what a reset would remove without touching

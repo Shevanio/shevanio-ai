@@ -22,7 +22,7 @@ const (
 	statusFail = "FAIL"
 	statusSkip = "SKIP"
 
-	reviewContract = "gentle-ai.review-integration/v2"
+	reviewContract = "shevanio-ai.review-integration/v2"
 )
 
 type check struct {
@@ -132,7 +132,7 @@ func (b *battery) status(repo, agent string, extra ...string) (map[string]any, s
 // verbatim through the binary under test, from the given directory.
 func (b *battery) runCommandLine(source, dir, command string) (map[string]any, string, int) {
 	fields := strings.Fields(command)
-	if len(fields) < 2 || fields[0] != "gentle-ai" {
+	if len(fields) < 2 || fields[0] != "shevanio-ai" {
 		return nil, fmt.Sprintf("unexpected provider command %q", command), 1
 	}
 	return b.runJSON(source, dir, fields[1:]...)

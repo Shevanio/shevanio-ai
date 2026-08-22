@@ -28,7 +28,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	testHome, err := os.MkdirTemp("", "gentle-ai-reviewtransaction-test-home-*")
+	testHome, err := os.MkdirTemp("", "shevanio-ai-reviewtransaction-test-home-*")
 	if err != nil {
 		panic(err)
 	}
@@ -434,11 +434,11 @@ func TestLegacyFrozenSnapshotIdentityFailsValidationClosed(t *testing.T) {
 func legacyPreCutSnapshotIdentityForTest(kind TargetKind, projection Projection, baseTree, candidateTree, pathsDigest, proof string, intended, ledgerIDs []string) string {
 	hash := sha256.New()
 	if kind == TargetBaseWorkspaceOverlay {
-		hash.Write([]byte("gentle-ai.review-snapshot/base-workspace-overlay/v1\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/base-workspace-overlay/v1\x00"))
 	} else if projection == ProjectionStaged {
-		hash.Write([]byte("gentle-ai.review-snapshot/v2\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/v2\x00"))
 	} else {
-		hash.Write([]byte("gentle-ai.review-snapshot/v1\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/v1\x00"))
 	}
 	values := []string{string(kind), baseTree, candidateTree, pathsDigest, proof}
 	if projection == ProjectionStaged {
@@ -892,7 +892,7 @@ func TestSnapshotTempIndexesAreRemovedAfterGitAddErrors(t *testing.T) {
 			writeSnapshotFile(t, repo, ".gitattributes", "unsupported.txt filter=snapshotfail\n")
 			gitSnapshot(t, repo, "add", ".gitattributes")
 			gitSnapshot(t, repo, "commit", "-m", "failing filter fixture")
-			gitSnapshot(t, repo, "config", "filter.snapshotfail.clean", "git rev-parse --verify refs/heads/gentle-ai-filter-must-fail")
+			gitSnapshot(t, repo, "config", "filter.snapshotfail.clean", "git rev-parse --verify refs/heads/shevanio-ai-filter-must-fail")
 			gitSnapshot(t, repo, "config", "filter.snapshotfail.required", "true")
 			writeSnapshotFile(t, repo, "unsupported.txt", "cannot clean\n")
 			target := Target{Kind: kind, IntendedUntracked: []string{"unsupported.txt"}}
@@ -902,7 +902,7 @@ func TestSnapshotTempIndexesAreRemovedAfterGitAddErrors(t *testing.T) {
 			if _, err := (SnapshotBuilder{Repo: repo}).Build(context.Background(), target); err == nil {
 				t.Fatal("Build() accepted an unsupported worktree entry")
 			}
-			matches, err := filepath.Glob(filepath.Join(tempDir, "gentle-ai-review-index-*"))
+			matches, err := filepath.Glob(filepath.Join(tempDir, "shevanio-ai-review-index-*"))
 			if err != nil || len(matches) != 0 {
 				t.Fatalf("temporary indexes remain: %v, err=%v", matches, err)
 			}
@@ -1271,7 +1271,7 @@ func TestBaseWorkspaceOverlayPropagatesTemporaryIndexInventoryErrors(t *testing.
 	if !filepath.IsAbs(realIndex) {
 		realIndex = filepath.Join(repo, realIndex)
 	}
-	t.Setenv("GENTLE_AI_TEST_REAL_INDEX", realIndex)
+	t.Setenv("SHEVANIO_AI_TEST_REAL_INDEX", realIndex)
 
 	originalCommand := gitCommandContext
 	gitCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
@@ -1293,7 +1293,7 @@ func TestBaseWorkspaceOverlayPropagatesTemporaryIndexInventoryErrors(t *testing.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv("GENTLE_AI_EMPTY_INDEX_INVENTORY_HELPER", tt.mode)
+			t.Setenv("SHEVANIO_AI_EMPTY_INDEX_INVENTORY_HELPER", tt.mode)
 			_, err := (SnapshotBuilder{Repo: repo}).Build(context.Background(), Target{
 				Kind: TargetBaseWorkspaceOverlay, BaseRef: "HEAD", IntendedUntracked: []string{"new.txt"},
 			})
@@ -1312,12 +1312,12 @@ func TestBaseWorkspaceOverlayPropagatesTemporaryIndexInventoryErrors(t *testing.
 }
 
 func TestEmptyIndexInventoryHelperProcess(t *testing.T) {
-	mode := os.Getenv("GENTLE_AI_EMPTY_INDEX_INVENTORY_HELPER")
+	mode := os.Getenv("SHEVANIO_AI_EMPTY_INDEX_INVENTORY_HELPER")
 	if mode == "" {
 		return
 	}
 	index := os.Getenv("GIT_INDEX_FILE")
-	if index == "" || filepath.Clean(index) == filepath.Clean(os.Getenv("GENTLE_AI_TEST_REAL_INDEX")) {
+	if index == "" || filepath.Clean(index) == filepath.Clean(os.Getenv("SHEVANIO_AI_TEST_REAL_INDEX")) {
 		_, _ = fmt.Fprint(os.Stderr, "temporary index environment missing")
 		os.Exit(72)
 	}
@@ -1639,7 +1639,7 @@ func TestUntrackedProofBatchedListingMatchesPerPathReference(t *testing.T) {
 		t.Fatal(err)
 	}
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.intended-untracked/v1\x00"))
+	hash.Write([]byte("shevanio-ai.intended-untracked/v1\x00"))
 	for _, logicalPath := range snapshot.IntendedUntracked {
 		entry, err := runGit(context.Background(), repo, nil, nil, "ls-tree", "-z", snapshot.CandidateTree, "--", literalPathspec(logicalPath))
 		if err != nil || len(entry) == 0 {
@@ -1724,7 +1724,7 @@ func TestNulSeparatedGitParsersPreserveUnusualPaths(t *testing.T) {
 }
 
 func TestBatchGitProtocolReadersRejectDiagnostics(t *testing.T) {
-	t.Setenv("GENTLE_AI_TEST_GIT_PROTOCOL_DIAGNOSTIC", "1")
+	t.Setenv("SHEVANIO_AI_TEST_GIT_PROTOCOL_DIAGNOSTIC", "1")
 	originalCommand := gitCommandContext
 	gitCommandContext = func(ctx context.Context, _ string, _ ...string) *exec.Cmd {
 		return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestBatchGitProtocolDiagnosticHelperProcess$")
@@ -1756,7 +1756,7 @@ func TestBatchGitProtocolReadersRejectDiagnostics(t *testing.T) {
 }
 
 func TestBatchGitProtocolDiagnosticHelperProcess(t *testing.T) {
-	if os.Getenv("GENTLE_AI_TEST_GIT_PROTOCOL_DIAGNOSTIC") != "1" {
+	if os.Getenv("SHEVANIO_AI_TEST_GIT_PROTOCOL_DIAGNOSTIC") != "1" {
 		return
 	}
 	_, _ = fmt.Fprint(os.Stderr, "protocol diagnostic")
@@ -1797,7 +1797,7 @@ func initSnapshotRepo(t *testing.T) string {
 
 func snapshotRepoTemplate() (string, error) {
 	snapshotRepoTemplateOnce.Do(func() {
-		template, err := os.MkdirTemp("", "gentle-ai-snapshot-repo-*")
+		template, err := os.MkdirTemp("", "shevanio-ai-snapshot-repo-*")
 		if err != nil {
 			snapshotRepoTemplateErr = fmt.Errorf("create template directory: %w", err)
 			return
@@ -1913,7 +1913,7 @@ func TestClassifyMergeTreeWriteTreeProbe(t *testing.T) {
 			err := tt.err
 			if tt.exitCode != "" {
 				cmd := exec.Command(os.Args[0], "-test.run=^TestMergeTreeProbeExitHelper$")
-				cmd.Env = append(os.Environ(), "GENTLE_AI_TEST_MERGE_TREE_EXIT="+tt.exitCode)
+				cmd.Env = append(os.Environ(), "SHEVANIO_AI_TEST_MERGE_TREE_EXIT="+tt.exitCode)
 				err = cmd.Run()
 			}
 			got, err := classifyMergeTreeWriteTreeProbe([]byte(tt.output), err)
@@ -1925,7 +1925,7 @@ func TestClassifyMergeTreeWriteTreeProbe(t *testing.T) {
 }
 
 func TestMergeTreeProbeExitHelper(t *testing.T) {
-	switch os.Getenv("GENTLE_AI_TEST_MERGE_TREE_EXIT") {
+	switch os.Getenv("SHEVANIO_AI_TEST_MERGE_TREE_EXIT") {
 	case "129":
 		os.Exit(129)
 	case "23":

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/skills"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/tui/styles"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/tui/styles"
 )
 
 // skillLabels maps each SkillID to a human-readable display label.
@@ -37,7 +37,7 @@ var additionalSkillLabels = map[model.SkillID]string{
 	model.SkillWorkUnitCommits:     "Work Unit Commits",
 	model.SkillRDDDefectWorkflow:   "RDD Defect Workflow",
 	model.SkillSystemicIssueTriage: "Systemic Issue Triage",
-	model.SkillGentleAIBench:       "Gentle AI Bench",
+	model.SkillShevanioAIBench:     "Shevanio AI Bench",
 }
 
 // SkillPickerOptions returns the action buttons shown after the skill checkboxes.

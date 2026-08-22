@@ -80,6 +80,54 @@ func TestCompactStoreRecoverCreatesAuditableSuccessorWithoutChangingPredecessor(
 	}
 }
 
+func TestCompactAuthoritativeStoreReadsGentleAINamespaceWithoutWritingIt(t *testing.T) {
+	repo := initSnapshotRepo(t)
+	state := newCompactTestState(t, repo, "gentle-namespace")
+	_, payload, err := makeCompactRecord(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyBase, _, err := legacyReviewAuthorityRoot(context.Background(), repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyDir := filepath.Join(legacyBase, "v2", state.LineageID)
+	if err := os.MkdirAll(legacyDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	legacyPayload := bytes.ReplaceAll(payload, []byte(`"shevanio-ai.`), []byte(`"gentle-ai.`))
+	legacyPath := filepath.Join(legacyDir, compactStateFileName)
+	if err := os.WriteFile(legacyPath, legacyPayload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := CompactAuthoritativeStore(context.Background(), repo, state.LineageID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.HistoricalCompat || loaded.Schema != compactRecordSchema || loaded.State.Schema != CompactStateSchema {
+		t.Fatalf("legacy record = %#v", loaded)
+	}
+	if _, err := store.Replace(loaded.Revision, "review/invalidate", loaded.State); !errors.Is(err, ErrHistoricalCompatReadOnly) {
+		t.Fatalf("legacy Replace() error = %v, want %v", err, ErrHistoricalCompatReadOnly)
+	}
+	legacyAfter, err := os.ReadFile(legacyPath)
+	if err != nil || !bytes.Equal(legacyAfter, legacyPayload) {
+		t.Fatalf("legacy authority changed: err=%v", err)
+	}
+	canonicalBase, _, err := reviewAuthorityRoot(context.Background(), repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(canonicalBase, "v2", state.LineageID, compactStateFileName)); !os.IsNotExist(err) {
+		t.Fatalf("legacy read created canonical authority: %v", err)
+	}
+}
+
 func TestCompactStoreReloadsLegacyV2ReceiptWithoutRewritingItsIdentity(t *testing.T) {
 	repo := initSnapshotRepo(t)
 	state := correctedCompactTestState(t, repo, "legacy-v2-receipt")
@@ -1585,7 +1633,7 @@ func TestCompactRecordEffectIntentIdentity(t *testing.T) {
 	forgedIntent := &forged.EffectIntents[0]
 	forgedIntent.BindingRevision = hash("f")
 	forgedEventPayload, _ := json.Marshal([]string{forged.State.LineageID, forgedIntent.BindingRevision, forgedIntent.Class, forgedIntent.Destination, forgedIntent.PayloadHash})
-	forgedEventSum := sha256.Sum256(append([]byte("gentle-ai.review-effect-event/v1\x00"), forgedEventPayload...))
+	forgedEventSum := sha256.Sum256(append([]byte("shevanio-ai.review-effect-event/v1\x00"), forgedEventPayload...))
 	forgedIntent.EventID = "sha256:" + hex.EncodeToString(forgedEventSum[:])
 	forgedPayload, _ := json.Marshal(forged)
 	parsedForged, err := parseCompactRecord(forgedPayload, state.LineageID)
@@ -1616,7 +1664,7 @@ func hashPayload(payload []byte) string {
 func TestCompactRecordWithoutIntentsRetainsHistoricalIdentityAndBytes(t *testing.T) {
 	state := newCompactTestState(t, initSnapshotRepo(t), "intent-free-history")
 	statePayload, _ := json.Marshal(state)
-	sum := sha256.Sum256(append([]byte("gentle-ai.review-state/v2\x00"), statePayload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.review-state/v2\x00"), statePayload...))
 	wantRevision := "sha256:" + hex.EncodeToString(sum[:])
 	wantBytes, _ := json.MarshalIndent(struct {
 		Schema   string       `json:"schema"`
@@ -1673,7 +1721,7 @@ func TestCompactStartReturnsCommittedRecordWhenRepositoryContextReconciliationFa
 	t.Setenv("USERPROFILE", home)
 	repo := initSnapshotRepo(t)
 	state := newCompactTestState(t, repo, "start-post-commit-effect-failure")
-	if err := os.WriteFile(filepath.Join(home, ".gentle-ai"), []byte("blocked"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(home, ".shevanio-ai"), []byte("blocked"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

@@ -5,7 +5,7 @@
 // (docs/architecture/rdd-root-simplification-design.md). Promotion means it
 // now serves the live ReviewCore (Wave 3 Slice 3+) directly — the Wave 1
 // shadow observer that also called it (shadow_observer.go,
-// GENTLE_AI_RDD_SHADOW) retired in Wave 7 S2a; this file's algebra is
+// SHEVANIO_AI_RDD_SHADOW) retired in Wave 7 S2a; this file's algebra is
 // unaffected. It compares a frozen CandidateIdentity with a live one and
 // returns exactly one of seven target-architecture relations, in a fixed
 // fail-closed order (design decision 5). It must still never mutate

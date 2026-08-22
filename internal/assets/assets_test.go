@@ -25,9 +25,9 @@ var retiredWorkRunCeremonyTokens = []string{
 	"authorizedTransition",
 	"Capability stop rule",
 	"connectorSessionRef",
-	"GENTLE_AI_PRODUCTIVE_RUNTIME",
-	"{{GENTLE_AI_RUNTIME_AGENT_ID}}",
-	"--contract gentle-ai.work-",
+	"SHEVANIO_AI_PRODUCTIVE_RUNTIME",
+	"{{SHEVANIO_AI_RUNTIME_AGENT_ID}}",
+	"--contract shevanio-ai.work-",
 }
 
 func TestSDDOrchestratorsCarryNoRetiredWorkRunCeremony(t *testing.T) {
@@ -77,7 +77,7 @@ func TestOrchestratorsProjectOrganicRouting(t *testing.T) {
 		}
 		for _, retired := range []string{
 			"#### Review Lens Selection", "run exactly ONE lens", "run the full 4R set",
-			"review/start(target)", "gentle-ai.review-integration/v1 --next-transition",
+			"review/start(target)", "shevanio-ai.review-integration/v1 --next-transition",
 		} {
 			if strings.Contains(content, retired) {
 				t.Fatalf("%s retained prompt-owned review ceremony %q", path, retired)
@@ -349,7 +349,7 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 		"skills/chained-pr/references/chaining-details.md",
 		"skills/rdd-defect-workflow/SKILL.md",
 		"skills/systemic-issue-triage/SKILL.md",
-		"skills/gentle-ai-bench/SKILL.md",
+		"skills/shevanio-ai-bench/SKILL.md",
 	}
 
 	for _, path := range expectedFiles {
@@ -472,8 +472,8 @@ func TestOpenCodeEmbeddedAssetLayout(t *testing.T) {
 func TestOpenCodeBackgroundPolicyMarkersAreBalanced(t *testing.T) {
 	content := MustRead("opencode/background-subagents.md")
 	const (
-		start = "<!-- gentle-ai:opencode-background-subagents -->"
-		end   = "<!-- /gentle-ai:opencode-background-subagents -->"
+		start = "<!-- shevanio-ai:opencode-background-subagents -->"
+		end   = "<!-- /shevanio-ai:opencode-background-subagents -->"
 	)
 	trimmed := strings.TrimSpace(content)
 	if strings.Count(trimmed, start) != 1 || strings.Count(trimmed, end) != 1 {
@@ -492,7 +492,7 @@ func TestOpenCodeReviewTransportPluginContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{`gentle-ai.provider-transport/v1`, `"review", "opencode-transport"`, `RELAY_REGISTRY_KEY`, `reviewRelayRegistry()`, `output.args.prompt = (await relay.prompt).prompt`, `output.output = await registration.relay.complete(output.output)`, `"tool.execute.before"`, `"tool.execute.after"`,
+	for _, want := range []string{`shevanio-ai.provider-transport/v1`, `"review", "opencode-transport"`, `RELAY_REGISTRY_KEY`, `reviewRelayRegistry()`, `output.args.prompt = (await relay.prompt).prompt`, `output.output = await registration.relay.complete(output.output)`, `"tool.execute.before"`, `"tool.execute.after"`,
 		// A refused relay start must fail the Task loudly and never launch an
 		// unbound child: the before hook poisons the Task prompt and the after
 		// hook replaces child output with the typed refusal, so a host runtime
@@ -503,7 +503,7 @@ func TestOpenCodeReviewTransportPluginContract(t *testing.T) {
 			t.Fatalf("transport plugin missing %q", want)
 		}
 	}
-	for _, forbidden := range []string{"GENTLE_AI_REVIEW_BINDING", "repository_context", "review lens-context", "capture-result", "preserve-result", "opencode_runtime_provenance", "JSON.parse(output.output)", "writeFile", "link(", "chmod("} {
+	for _, forbidden := range []string{"SHEVANIO_AI_REVIEW_BINDING", "repository_context", "review lens-context", "capture-result", "preserve-result", "opencode_runtime_provenance", "JSON.parse(output.output)", "writeFile", "link(", "chmod("} {
 		if strings.Contains(source, forbidden) {
 			t.Fatalf("transport plugin retains Go-owned behavior %q", forbidden)
 		}
@@ -520,7 +520,7 @@ func TestSDDTaskResultArtifactsPluginContract(t *testing.T) {
 			t.Fatalf("SDD task plugin missing %q", want)
 		}
 	}
-	for _, forbidden := range []string{"GENTLE_AI_REVIEW_BINDING", "opencode-transport", "review lens-context", "capture-result"} {
+	for _, forbidden := range []string{"SHEVANIO_AI_REVIEW_BINDING", "opencode-transport", "review lens-context", "capture-result"} {
 		if strings.Contains(source, forbidden) {
 			t.Fatalf("SDD task plugin retains reviewer transport %q", forbidden)
 		}
@@ -843,7 +843,7 @@ func TestOpenCodeSDDOrchestratorDelegationVisibility(t *testing.T) {
 	content := MustRead("opencode/sdd-orchestrator.md")
 
 	for _, required := range []string{
-		"<!-- gentle-ai:opencode-desktop-delegation-progress -->",
+		"<!-- shevanio-ai:opencode-desktop-delegation-progress -->",
 		"#### Delegation Visibility (OpenCode Desktop)",
 		"`delegate` or `task`",
 		"assistant-visible status line immediately before the call",
@@ -854,7 +854,7 @@ func TestOpenCodeSDDOrchestratorDelegationVisibility(t *testing.T) {
 		"15 tokens or fewer",
 		"25 tokens or fewer",
 		"executor prompts",
-		"<!-- /gentle-ai:opencode-desktop-delegation-progress -->",
+		"<!-- /shevanio-ai:opencode-desktop-delegation-progress -->",
 	} {
 		if !strings.Contains(content, required) {
 			t.Fatalf("opencode/sdd-orchestrator.md missing delegation visibility wording %q", required)
@@ -1096,7 +1096,7 @@ func TestClaudeSDDOrchestratorChainStrategy(t *testing.T) {
 		"When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.",
 		"Claude Code's native Agent/Task mechanism",
 		"results are not persisted by OpenCode's background-agent plugin",
-		"treat `chained-pr` (registry skill `gentle-ai-chained-pr`) as a required skill match",
+		"treat `chained-pr` (registry skill `shevanio-ai-chained-pr`) as a required skill match",
 	} {
 		if !strings.Contains(content, required) {
 			t.Fatalf("claude/sdd-orchestrator.md missing required SDD chain/delegation wording %q", required)
@@ -1145,7 +1145,7 @@ func TestNonClaudeSDDOrchestratorChainStrategyParity(t *testing.T) {
 				"sdd-tasks",
 				"sdd-apply",
 				tc.propagationScope,
-				"treat `chained-pr` (registry skill `gentle-ai-chained-pr`) as a required skill match",
+				"treat `chained-pr` (registry skill `shevanio-ai-chained-pr`) as a required skill match",
 			} {
 				if !strings.Contains(content, required) {
 					t.Fatalf("%s missing required chain strategy wording %q", tc.path, required)
@@ -1681,7 +1681,7 @@ func TestSDDStatusContractPreservesFrozenExternalV1Projection(t *testing.T) {
 
 	for _, want := range []string{
 		"exact frozen external `StatusV1Projection`",
-		"schemaName: gentle-ai.sdd-status",
+		"schemaName: shevanio-ai.sdd-status",
 		"schemaVersion: 1",
 		"changeName: <change-name-or-null>",
 		"artifactStore: openspec | engram | none",
@@ -1723,7 +1723,7 @@ func TestSDDStatusContractPreservesFrozenExternalV1Projection(t *testing.T) {
 		"fixBatch: 0",
 		"reviewGate:",
 		"result: allow | scope-changed | invalidated | escalated",
-		"reviewTransaction: <optional exact gentle-ai.review-transaction/v1 object>",
+		"reviewTransaction: <optional exact shevanio-ai.review-transaction/v1 object>",
 		"phaseInstructions:",
 		"apply: [<instruction strings>]",
 		"verify: [<instruction strings>]",
@@ -1731,7 +1731,7 @@ func TestSDDStatusContractPreservesFrozenExternalV1Projection(t *testing.T) {
 		"archive: [<instruction strings>]",
 		"nextRecommended: propose | spec | design | tasks | apply | review | verify | remediate | archive | sdd-new | select-change | resolve-blockers | resolve-review",
 		"blockedReasons: []",
-		"Manual fallback status MUST stay shape-compatible with native `gentle-ai.sdd-status` JSON",
+		"Manual fallback status MUST stay shape-compatible with native `shevanio-ai.sdd-status` JSON",
 	} {
 		if !strings.Contains(content, want) {
 			t.Fatalf("sdd-status-contract missing frozen SDD v1 field or token %q", want)
@@ -1748,8 +1748,8 @@ func TestSDDStatusContractPreservesFrozenExternalV1Projection(t *testing.T) {
 		"verification:",
 		"deliveryIntentRef:",
 		"authorizedTransition:",
-		"gentle-ai.work-status/v1",
-		"gentle-ai.work-transition/v1",
+		"shevanio-ai.work-status/v1",
+		"shevanio-ai.work-transition/v1",
 		"schemaName: spec-driven",
 		"root: <project-or-openspec-root>",
 		"changesDir: <openspec/changes or engram topic prefix>",
@@ -2003,8 +2003,8 @@ func TestSDDOrchestratorsUseNativeRuntimeAttemptAuthority(t *testing.T) {
 	}
 	required := []string{
 		"Native Runtime Attempt Authority",
-		"gentle-ai sdd-attempt acquire",
-		"gentle-ai sdd-attempt settle",
+		"shevanio-ai sdd-attempt acquire",
+		"shevanio-ai sdd-attempt settle",
 		"state: proceed",
 		"opaque `token`",
 		"successor-lineage",
@@ -2025,13 +2025,13 @@ func TestSDDOrchestratorsUseNativeRuntimeAttemptAuthority(t *testing.T) {
 			}
 		}
 		for _, forbidden := range []string{
-			"gentle-ai.sdd-attempt-ledger/v1",
+			"shevanio-ai.sdd-attempt-ledger/v1",
 			"attempt-ledger-{work-unit}.json",
 			"sdd/{change-name}/attempt-ledger",
-			"gentle-ai sdd-attempt status",
-			"gentle-ai sdd-attempt begin",
-			"gentle-ai sdd-attempt finish",
-			"gentle-ai sdd-attempt reset",
+			"shevanio-ai sdd-attempt status",
+			"shevanio-ai sdd-attempt begin",
+			"shevanio-ai sdd-attempt finish",
+			"shevanio-ai sdd-attempt reset",
 		} {
 			if strings.Contains(section, forbidden) {
 				t.Fatalf("%s still delegates native authority to mutable artifact %q", path, forbidden)

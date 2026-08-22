@@ -316,7 +316,7 @@ func isolatedImmutableTreeGitWithAttributesFile(ctx context.Context, repo string
 	}
 	// The repository Git directory is the reliable writable location when a
 	// sandboxed caller does not expose an accessible process temp directory.
-	gitDir, err := os.MkdirTemp(identity.GitDir, ".gentle-ai-frozen-git-*")
+	gitDir, err := os.MkdirTemp(identity.GitDir, ".shevanio-ai-frozen-git-*")
 	if err != nil {
 		return nil, "", func() error { return nil }, err
 	}

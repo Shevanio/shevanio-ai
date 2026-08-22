@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
 )
 
 const (
-	bundleSchema             = "gentle-ai.review-provider-contract-bundle/v1"
+	bundleSchema             = "shevanio-ai.review-provider-contract-bundle/v1"
 	contractSemverFile       = "contracts/review-provider-contract/CONTRACT_SEMVER"
 	maxArchiveBytes    int64 = 8 << 20
 	maxFileBytes       int64 = 4 << 20
@@ -69,9 +69,9 @@ type manifest struct {
 	Roles               []roleManifest `json:"roles"`
 }
 
-var bundleREADME = []byte(`# Gentle AI review provider contract
+var bundleREADME = []byte(`# Shevanio AI review provider contract
 
-This data-only bundle describes the provider result contracts admitted by Gentle AI.
+This data-only bundle describes the provider result contracts admitted by Shevanio AI.
 
 ## Activation
 

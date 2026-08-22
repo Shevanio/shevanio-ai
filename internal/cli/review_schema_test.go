@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestFinalVerificationIncidentSchemaIsClosedToProceduralToolingFailure(t *testing.T) {
@@ -22,11 +22,11 @@ func TestFinalVerificationIncidentSchemaIsClosedToProceduralToolingFailure(t *te
 	if err := json.Unmarshal(output.Bytes(), &schema); err != nil {
 		t.Fatal(err)
 	}
-	if schema["additionalProperties"] != false || schema["$id"] != "https://gentle-ai.dev/contracts/review-integration/v1/schemas/final-verification-incident.schema.json" {
+	if schema["additionalProperties"] != false || schema["$id"] != "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/final-verification-incident.schema.json" {
 		t.Fatalf("incident schema header = %#v", schema)
 	}
 	properties := schema["properties"].(map[string]any)
-	if properties["schema"].(map[string]any)["const"] != "gentle-ai.review-final-verification-incident/v1" ||
+	if properties["schema"].(map[string]any)["const"] != "shevanio-ai.review-final-verification-incident/v1" ||
 		properties["class"].(map[string]any)["const"] != "procedural_tooling_failure" {
 		t.Fatalf("incident identity = %#v", properties)
 	}
@@ -106,7 +106,7 @@ func TestReviewSchemaVerificationEvidenceEntry(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &schema); err != nil {
 		t.Fatal(err)
 	}
-	if schema["$id"] != "https://gentle-ai.dev/schema/review/verification-evidence/v1" || schema["type"] != "string" {
+	if schema["$id"] != "https://shevanio-ai.dev/schema/review/verification-evidence/v1" || schema["type"] != "string" {
 		t.Fatalf("verification-evidence schema header = %#v", schema)
 	}
 	minLength, ok := schema["minLength"].(float64)

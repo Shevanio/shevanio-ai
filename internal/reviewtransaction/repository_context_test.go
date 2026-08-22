@@ -194,7 +194,7 @@ func TestReviewRepositoryContextRejectsMissingMalformedOversizedAndTerminalRecor
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(`{"schema":"gentle-ai.review-repository-context/v1","unknown":true}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"schema":"shevanio-ai.review-repository-context/v1","unknown":true}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := ResolveReviewRepositoryContext(context.Background(), handle, binding); err == nil {
@@ -238,7 +238,7 @@ func TestReviewRepositoryContextRejectsSymlinkedProviderDirectory(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := filepath.Join(home, ".gentle-ai")
+	root := filepath.Join(home, ".shevanio-ai")
 	if err := os.Mkdir(root, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -354,9 +354,9 @@ func TestReviewRepositoryContextPublicationSyncFailureIsRetrySafe(t *testing.T) 
 	}
 	wantSyncs := []string{
 		home,
-		filepath.Join(home, ".gentle-ai"),
-		filepath.Join(home, ".gentle-ai", "review-contexts"),
-		filepath.Join(home, ".gentle-ai", "review-contexts", "v1"),
+		filepath.Join(home, ".shevanio-ai"),
+		filepath.Join(home, ".shevanio-ai", "review-contexts"),
+		filepath.Join(home, ".shevanio-ai", "review-contexts", "v1"),
 	}
 	for _, want := range wantSyncs {
 		if !slices.Contains(synced, filepath.Clean(want)) {
@@ -374,7 +374,7 @@ func TestReviewRepositoryContextRejectsBroadProviderDirectoryWithoutChmod(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := filepath.Join(home, ".gentle-ai")
+	root := filepath.Join(home, ".shevanio-ai")
 	if err := os.Mkdir(root, 0o700); err != nil {
 		t.Fatal(err)
 	}

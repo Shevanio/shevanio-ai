@@ -396,10 +396,10 @@ func TestDefaultVariantsCachePath(t *testing.T) {
 	if got == "" {
 		t.Fatal("DefaultVariantsCachePath() returned empty string")
 	}
-	if !strings.HasSuffix(got, filepath.Join(".gentle-ai", "cache", "model-variants.json")) {
-		t.Fatalf("expected path suffix .gentle-ai/cache/model-variants.json, got %q", got)
+	if !strings.HasSuffix(got, filepath.Join(".shevanio-ai", "cache", "model-variants.json")) {
+		t.Fatalf("expected path suffix .shevanio-ai/cache/model-variants.json, got %q", got)
 	}
-	legacy := filepath.Join(".cache", "gentle-ai")
+	legacy := filepath.Join(".cache", "shevanio-ai")
 	if strings.Contains(got, legacy) {
 		t.Fatalf("path must not contain legacy %s, got %q", legacy, got)
 	}
@@ -989,7 +989,7 @@ func TestEnrichWithVariantsFallbackProviderMismatch(t *testing.T) {
 		t.Fatalf("write variants fixture: %v", err)
 	}
 
-	// Cached providers in gentle-ai has both "openai" (exact match) and "opencode" (built-in/custom alias)
+	// Cached providers in shevanio-ai has both "openai" (exact match) and "opencode" (built-in/custom alias)
 	cached := map[string]Provider{
 		"openai": {
 			ID:   "openai",

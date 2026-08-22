@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // TestRuntimeLedgerRefusesFinishFromADifferentLinkedWorktreeThanBegin is the
@@ -334,7 +334,7 @@ func TestRuntimeLedgerLegacyBeginRecordReplaysWithoutWorktreeEnforcement(t *test
 	}
 	record := runtimeRecord{
 		Schema: runtimeRecordSchema, Change: store.Change, Operation: runtimeOperationBegin,
-		RequestID: request.RequestID, RequestDigest: runtimeValueHash("gentle-ai.sdd-runtime-begin-request/v1", request),
+		RequestID: request.RequestID, RequestDigest: runtimeValueHash("shevanio-ai.sdd-runtime-begin-request/v1", request),
 		Begin: &runtimeBeginEvent{
 			ObjectiveID: legacyRuntimeObjectiveID(store.Change, request.EvidenceGoal), WorkUnit: request.WorkUnit,
 			EvidenceGoal: request.EvidenceGoal, MaxAttempts: request.MaxAttempts, MaxChangedLines: request.MaxChangedLines,
@@ -405,7 +405,7 @@ func TestRuntimeLedgerRejectsGarbageBeginWorktreeShape(t *testing.T) {
 	}
 	record := runtimeRecord{
 		Schema: runtimeRecordSchema, Change: "shape-check-change", Operation: runtimeOperationBegin,
-		RequestID: request.RequestID, RequestDigest: runtimeValueHash("gentle-ai.sdd-runtime-begin-request/v1", request),
+		RequestID: request.RequestID, RequestDigest: runtimeValueHash("shevanio-ai.sdd-runtime-begin-request/v1", request),
 		Begin: &runtimeBeginEvent{
 			ObjectiveID: legacyRuntimeObjectiveID("shape-check-change", request.EvidenceGoal), WorkUnit: request.WorkUnit,
 			EvidenceGoal: request.EvidenceGoal, MaxAttempts: request.MaxAttempts, MaxChangedLines: request.MaxChangedLines,

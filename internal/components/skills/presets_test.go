@@ -3,7 +3,7 @@ package skills
 import (
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 func TestSkillsForPresetMinimalReturnsSDDOnly(t *testing.T) {
@@ -83,7 +83,7 @@ func TestAllSkillIDsIncludesEveryKnownSkill(t *testing.T) {
 		model.SkillImprover,
 		model.SkillGoTesting,
 		model.SkillSystemicIssueTriage,
-		model.SkillGentleAIBench,
+		model.SkillShevanioAIBench,
 	}
 
 	skillSet := make(map[model.SkillID]struct{}, len(all))
@@ -109,7 +109,7 @@ func TestRequestedBundledSkillsAreInPresetSkillSets(t *testing.T) {
 		model.SkillImprover,
 		model.SkillRDDDefectWorkflow,
 		model.SkillSystemicIssueTriage,
-		model.SkillGentleAIBench,
+		model.SkillShevanioAIBench,
 	}
 
 	for _, preset := range []model.PresetID{model.PresetEcosystemOnly, model.PresetFullGentleman} {

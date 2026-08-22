@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestReviewRetryFinalVerificationOperationAndStatusCompleteNormally(t *testing.T) {
@@ -399,7 +399,7 @@ func validateStatusV2FinalVerificationRetrySchema(t *testing.T, payload []byte) 
 	definitions := document["$defs"].(map[string]any)
 	properties := document["properties"].(map[string]any)
 	retry := properties["final_verification_retry"].(map[string]any)
-	const location = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/_test-final-verification-retry.schema.json"
+	const location = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/_test-final-verification-retry.schema.json"
 	synthetic := map[string]any{
 		"$schema": document["$schema"],
 		"$id":     location,
@@ -448,12 +448,12 @@ func validateFinalVerificationContractSchema(t *testing.T, name string, payload 
 		if err := json.Unmarshal(schemaPayload, &document); err != nil {
 			t.Fatalf("decode %s: %v", entry.Name(), err)
 		}
-		location := "https://gentle-ai.dev/contracts/review-integration/v1/schemas/" + entry.Name()
+		location := "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/" + entry.Name()
 		if err := compiler.AddResource(location, document); err != nil {
 			t.Fatalf("add %s: %v", entry.Name(), err)
 		}
 	}
-	schema, err := compiler.Compile("https://gentle-ai.dev/contracts/review-integration/v1/schemas/" + name)
+	schema, err := compiler.Compile("https://shevanio-ai.dev/contracts/review-integration/v1/schemas/" + name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -689,7 +689,7 @@ func cliReviewAuthoritySnapshot(t *testing.T, repo string) map[string]string {
 	if !filepath.IsAbs(gitDir) {
 		gitDir = filepath.Join(repo, gitDir)
 	}
-	root := filepath.Join(gitDir, "gentle-ai", "review-transactions")
+	root := filepath.Join(gitDir, "shevanio-ai", "review-transactions")
 	result := map[string]string{}
 	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil || entry.IsDir() || entry.Name() == "LOCK" || strings.HasPrefix(entry.Name(), ".atomic-") {

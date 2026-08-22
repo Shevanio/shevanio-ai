@@ -6,15 +6,15 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewIntegrationStartSchemaV1 = "gentle-ai.review-integration.start/v1"
-const ReviewIntegrationStartSchemaIDV1 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/start.schema.json"
-const ReviewIntegrationStartSchemaV2 = "gentle-ai.review-integration.start/v2"
-const ReviewIntegrationStartSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/start-v2.schema.json"
-const ReviewIntegrationStartSchema = "gentle-ai.review-integration.start/v3"
-const ReviewIntegrationStartSchemaID = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/start.schema.json"
+const ReviewIntegrationStartSchemaV1 = "shevanio-ai.review-integration.start/v1"
+const ReviewIntegrationStartSchemaIDV1 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/start.schema.json"
+const ReviewIntegrationStartSchemaV2 = "shevanio-ai.review-integration.start/v2"
+const ReviewIntegrationStartSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/start-v2.schema.json"
+const ReviewIntegrationStartSchema = "shevanio-ai.review-integration.start/v3"
+const ReviewIntegrationStartSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/start.schema.json"
 
 // ReviewIntegrationStartResult is the explicitly negotiated START response.
 // The legacy ReviewFacadeStartResult remains byte- and schema-compatible.

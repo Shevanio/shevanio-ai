@@ -11,17 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/antigravity"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/codex"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/hermes"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/kilocode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/kimi"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/openclaw"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/vscode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/antigravity"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/hermes"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/kilocode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/kimi"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/openclaw"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/vscode"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 func cursorAdapter(t *testing.T) agents.Adapter {
@@ -560,7 +560,7 @@ func TestInjectClaudeWritesUserConfigAndIsIdempotent(t *testing.T) {
 
 // TestInjectClaudeSettingsInertBlockCleanup: the inert settings.json block is
 // removed when it only holds the managed context7 entry, and left untouched
-// when it carries servers gentle-ai does not manage.
+// when it carries servers shevanio-ai does not manage.
 func TestInjectClaudeSettingsInertBlockCleanup(t *testing.T) {
 	cases := []struct {
 		name           string

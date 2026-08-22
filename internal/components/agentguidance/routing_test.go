@@ -7,9 +7,9 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 // supportedAgentCount guards the catalog itself: routing is unconditional for
@@ -31,7 +31,7 @@ var retiredRemoteControlPlaneVocabulary = []string{
 	"work-verification-decide",
 	"workrun",
 	"connector",
-	"GENTLE_AI_PRODUCTIVE_RUNTIME",
+	"SHEVANIO_AI_PRODUCTIVE_RUNTIME",
 	"dormant",
 	"advertised",
 	"exposure",
@@ -136,7 +136,7 @@ func TestRenderRoutingMakesTheReviewKillSwitchDiscoverable(t *testing.T) {
 			}
 
 			for _, want := range []string{
-				"gentle-ai review mode enable|disable|status",
+				"shevanio-ai review mode enable|disable|status",
 				"`status` is read-only",
 				"deciding source and the effective mode",
 			} {

@@ -123,14 +123,14 @@ func consentInstanceToken(t *testing.T, invocation string) string {
 	return ""
 }
 
-// consentShellEnvironment prepends a directory holding a `gentle-ai` shim for
+// consentShellEnvironment prepends a directory holding a `shevanio-ai` shim for
 // the built binary, so the envelope's invocation runs VERBATIM through a
 // POSIX shell exactly as the agent would run it (the invocation's paths are
 // pathquote-quoted shell tokens, not pre-split argv).
 func consentShellEnvironment(t *testing.T, home string) []string {
 	t.Helper()
 	binDir := t.TempDir()
-	if err := os.Symlink(organicBinary, filepath.Join(binDir, "gentle-ai")); err != nil {
+	if err := os.Symlink(organicBinary, filepath.Join(binDir, "shevanio-ai")); err != nil {
 		t.Fatal(err)
 	}
 	environment := organicEnvironment(home)
@@ -144,8 +144,8 @@ func consentShellEnvironment(t *testing.T, home string) []string {
 
 func runConsentInvocation(t *testing.T, environment []string, dir, invocation string) {
 	t.Helper()
-	if !strings.HasPrefix(invocation, "gentle-ai ") {
-		t.Fatalf("invocation is not a gentle-ai command: %q", invocation)
+	if !strings.HasPrefix(invocation, "shevanio-ai ") {
+		t.Fatalf("invocation is not a shevanio-ai command: %q", invocation)
 	}
 	if stdout, stderr, err := runOrganicCommand(t, "sh", dir, environment, "-c", invocation); err != nil {
 		t.Fatalf("invocation %q failed: %v\nstdout:\n%s\nstderr:\n%s", invocation, err, stdout, stderr)
@@ -180,7 +180,7 @@ func TestSDDEditAuthorityConsentGrantLoop(t *testing.T) {
 	if blocked.Consent == nil {
 		t.Fatalf("blocked(edit_authority_missing) status carries no consent envelope: %s", blockedPayload)
 	}
-	if blocked.Consent.Schema != "gentle-ai.sdd-integration.consent/v1" || blocked.Consent.Change != change ||
+	if blocked.Consent.Schema != "shevanio-ai.sdd-integration.consent/v1" || blocked.Consent.Change != change ||
 		len(blocked.Consent.Choices) != 2 || blocked.Consent.Choices[0].Answer != "granted" ||
 		blocked.Consent.Choices[1].Answer != "declined" {
 		t.Fatalf("consent envelope identity is wrong: %s", blockedPayload)
@@ -260,7 +260,7 @@ func TestSDDSameParentRepositoryConsentGrantLoop(t *testing.T) {
 		!strings.Contains(strings.Join(blocked.BlockedReasons, "\n"), "blocked(edit_authority_missing)") {
 		t.Fatalf("same-parent fixture is not blocked on edit authority: %s", blockedPayload)
 	}
-	if blocked.Consent == nil || blocked.Consent.Schema != "gentle-ai.sdd-integration.consent/v1" ||
+	if blocked.Consent == nil || blocked.Consent.Schema != "shevanio-ai.sdd-integration.consent/v1" ||
 		blocked.Consent.Change != change || len(blocked.Consent.MissingRoots) != 1 ||
 		blocked.Consent.MissingRoots[0] != service {
 		t.Fatalf("same-parent consent envelope = %#v, want one missing root %s: %s", blocked.Consent, service, blockedPayload)
@@ -302,7 +302,7 @@ func TestSDDSingleRepoStatusStaysByteIdenticalWithZeroConsentFootprint(t *testin
 	if strings.Contains(first, "\"consent\"") || strings.Contains(first, "edit_authority_missing") {
 		t.Fatalf("single-repo status carries a consent footprint: %s", first)
 	}
-	if _, err := os.Lstat(filepath.Join(planning, "openspec", "changes", change, ".gentle-ai-instance")); !os.IsNotExist(err) {
+	if _, err := os.Lstat(filepath.Join(planning, "openspec", "changes", change, ".shevanio-ai-instance")); !os.IsNotExist(err) {
 		t.Fatalf("single-repo status minted an instance marker: %v", err)
 	}
 }

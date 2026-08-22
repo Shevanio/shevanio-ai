@@ -14,7 +14,7 @@ func findingIDPrefixJourneys() []Journey {
 			ID:     "j78-lens-finding-id-prefix-discovery",
 			Review: reviewOptedIn,
 			Title:  "Reviewer discovers lens finding-ID prefixes before native admission",
-			Source: "https://github.com/Gentleman-Programming/gentle-ai/issues/1844",
+			Source: "https://github.com/Shevanio/shevanio-ai/issues/1844",
 			Steps: []Step{
 				{Name: "fixture: repo", Fixture: baseRepo},
 				{Name: "fixture: stage high-risk code", Fixture: stageAuthCode},

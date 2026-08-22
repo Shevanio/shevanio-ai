@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 // This file mirrors internal/cli's review-mode home fixtures for the SDD
 // status surface. internal/sddstatus resolves the kill switch from the
 // user's real home directory, so without these helpers a test's verdict
-// depends on whatever Gentle AI install state the machine running it happens
+// depends on whatever Shevanio AI install state the machine running it happens
 // to carry: green on a developer box that once enabled reviews, red on a
 // clean CI runner. Pinning the home directory makes the precondition part of
 // the fixture instead of part of the environment.
@@ -29,7 +29,7 @@ func reviewModeHome(t *testing.T) string {
 // subject is the review lifecycle -- rather than the switch itself -- has to
 // opt in the way a real user does before an offer, a gate, or a review will
 // exist at all. It writes the same explicit global "on" that
-// `gentle-ai review mode enable` persists, rather than reaching past the
+// `shevanio-ai review mode enable` persists, rather than reaching past the
 // switch, so these fixtures keep exercising the resolution path they are
 // meant to run through.
 //

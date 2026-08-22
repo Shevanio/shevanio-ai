@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // The maintainer's rule for this file is the same one RuntimeStore.ReviewDisabled
@@ -425,7 +425,7 @@ func TestDisabledReviewModeDoesNotBlockPreVerifyRouting(t *testing.T) {
 // validation/blocking branch -- were still ungated by reviewDisabled, so a
 // stale-verify-totals fixture (evidence report claims more requirements
 // than the spec actually has) reached resolveReviewAuthority's discovery
-// walk and appended a blocked reason naming `gentle-ai review start`, a
+// walk and appended a blocked reason naming `shevanio-ai review start`, a
 // command the kill switch itself refuses, while the switch was OFF.
 
 // staleTotalsVerifyEnvelope claims one more requirement/scenario than
@@ -466,7 +466,7 @@ func TestEnabledStaleEvidenceWithNoReceiptRestartsVerification(t *testing.T) {
 	if status.Dependencies.Verify != DependencyReady || status.Dependencies.Archive != DependencyBlocked || status.NextRecommended != "verify" {
 		t.Fatalf("enabled stale-evidence verify=%q archive=%q next=%q, want ready/blocked/verify", status.Dependencies.Verify, status.Dependencies.Archive, status.NextRecommended)
 	}
-	if reasons := strings.Join(status.BlockedReasons, "\n"); strings.Contains(reasons, "gentle-ai review start") || strings.Contains(reasons, "bounded review transaction is missing") {
+	if reasons := strings.Join(status.BlockedReasons, "\n"); strings.Contains(reasons, "shevanio-ai review start") || strings.Contains(reasons, "bounded review transaction is missing") {
 		t.Fatalf("enabled stale-evidence BlockedReasons = %v, want no review-start or missing-transaction demand", status.BlockedReasons)
 	}
 }
@@ -474,7 +474,7 @@ func TestEnabledStaleEvidenceWithNoReceiptRestartsVerification(t *testing.T) {
 // TestDisabledStaleEvidenceNeverConsultsReviewAuthority is the fix: the same
 // fixture, with the switch off, grants the same "please re-verify" leniency
 // with zero review consultation and zero blocked reasons -- never naming
-// gentle-ai review start, a command the switch itself refuses to run.
+// shevanio-ai review start, a command the switch itself refuses to run.
 func TestDisabledStaleEvidenceNeverConsultsReviewAuthority(t *testing.T) {
 	root := t.TempDir()
 	seedStaleEvidenceReadyChange(t, root)

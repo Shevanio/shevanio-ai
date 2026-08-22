@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const reviewProviderRoleCaptureSchema = "gentle-ai.review-provider-role-capture/v1"
+const reviewProviderRoleCaptureSchema = "shevanio-ai.review-provider-role-capture/v1"
 
 // reviewProviderRoleCaptureArtifact is the strict submission acknowledgement
 // for a captured provider role result. The immutable bytes live in the compact
@@ -73,7 +73,7 @@ func parseReviewProviderRoleCapture(command string, args []string, stdout io.Wri
 	if withRequestHash {
 		requestHash = flags.String("request-hash", "", "provider-issued frozen targeted validation request hash")
 	}
-	runtimeAgent := flags.String("agent", "", "host-relay runtime identity, required for both --materialize and --execute; compiled runtimes materialize this role internally through `gentle-ai review finalize --agent`")
+	runtimeAgent := flags.String("agent", "", "host-relay runtime identity, required for both --materialize and --execute; compiled runtimes materialize this role internally through `shevanio-ai review finalize --agent`")
 	materialize := flags.Bool("materialize", false, "print the exact Go-materialized opaque provider role task without capturing anything; mutually exclusive with --execute")
 	execute := flags.Bool("execute", false, "run the Go-owned locked-down pi process on the Go-materialized role request and capture its raw result")
 	if err := parseReviewFlags(flags, args); err != nil {
@@ -95,7 +95,7 @@ func parseReviewProviderRoleCapture(command string, args []string, stdout io.Wri
 	}
 	if flags.NArg() != 0 || binding.lineage == "" || binding.target == "" || binding.revision == "" ||
 		(!binding.materialize && !binding.execute) {
-		return nil, reviewPreflightError(fmt.Errorf("review %s requires --lineage, --target, --expected-revision, --agent, and either --materialize or --execute; `gentle-ai review status --contract %s --next-transition` prints the exact bindings", command, ReviewIntegrationContractV2))
+		return nil, reviewPreflightError(fmt.Errorf("review %s requires --lineage, --target, --expected-revision, --agent, and either --materialize or --execute; `shevanio-ai review status --contract %s --next-transition` prints the exact bindings", command, ReviewIntegrationContractV2))
 	}
 	if binding.runtime == "" {
 		// Both modes require the identified host-relay runtime: a raw provider
@@ -119,7 +119,7 @@ func parseReviewProviderRoleCapture(command string, args []string, stdout io.Wri
 		return nil, reviewPreflightError(err)
 	}
 	if reviewProviderCaptureRuntime(binding.runtime) {
-		return nil, reviewPreflightError(fmt.Errorf("review %s is unavailable for %q: a compiled runtime materializes internally through `gentle-ai review finalize --agent`", command, binding.runtime))
+		return nil, reviewPreflightError(fmt.Errorf("review %s is unavailable for %q: a compiled runtime materializes internally through `shevanio-ai review finalize --agent`", command, binding.runtime))
 	}
 	if !reviewProviderHostRelayMaterializeRuntime(binding.runtime) {
 		return nil, reviewPreflightError(fmt.Errorf("review %s provider runtime %q is host-mediated; use its live transport collection", command, binding.runtime)) // refusal:by-design world-action: only the Pi host relay collects a printed provider task and returns its raw result
@@ -158,7 +158,7 @@ func (binding *reviewProviderRoleCaptureBinding) discover(ctx context.Context) (
 		return store, record, reviewPreflightError(fmt.Errorf("resolve review authority for lineage %q under repository %q: %w", binding.lineage, binding.root, err))
 	}
 	if record.State.LineageID != binding.lineage || record.Revision != binding.revision {
-		return store, record, reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, fmt.Errorf("review %s binding does not match the current compact authority; refresh the binding with gentle-ai review status --cwd <repo> --contract %s --next-transition", binding.command, ReviewIntegrationContractV2))
+		return store, record, reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, fmt.Errorf("review %s binding does not match the current compact authority; refresh the binding with shevanio-ai review status --cwd <repo> --contract %s --next-transition", binding.command, ReviewIntegrationContractV2))
 	}
 	return store, record, nil
 }
@@ -181,7 +181,7 @@ func RunReviewCaptureRefuter(args []string, stdout io.Writer) error {
 	}
 	state := record.State
 	if state.State != reviewtransaction.StateReviewing || state.InitialSnapshot.Identity != binding.target {
-		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-refuter requires the exact reviewing authority target; refresh the binding with gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition"))
+		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-refuter requires the exact reviewing authority target; refresh the binding with shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition"))
 	}
 	request, err := reviewProviderNewRefuterRequest(ctx, binding.root, store.Dir, state, record.Revision)
 	if err != nil {
@@ -231,10 +231,10 @@ func RunReviewCaptureValidation(args []string, stdout io.Writer) error {
 		return reviewPreflightError(err)
 	}
 	if request.ValidationRequest.CorrectionTargetIdentity != binding.target {
-		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-validation target does not match the frozen correction target identity; refresh the binding with gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition"))
+		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-validation target does not match the frozen correction target identity; refresh the binding with shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition"))
 	}
 	if request.ValidationRequest.RequestHash != binding.requestHash {
-		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-validation request hash does not match the frozen targeted validation request; refresh the binding with gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition"))
+		return reviewPreflightRefusal(reviewPreflightCaptureBindingMismatchReason, errors.New("review capture-validation request hash does not match the frozen targeted validation request; refresh the binding with shevanio-ai review status --cwd <repo> --contract shevanio-ai.review-integration/v2 --next-transition"))
 	}
 	if binding.materialize {
 		// Raw prompt bytes, exactly as for the refuter above.

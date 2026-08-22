@@ -51,7 +51,7 @@ func RestoreTreeBlob(ctx context.Context, repo, currentTree, sourceTree, logical
 	if err != nil {
 		return "", err
 	}
-	index, err := os.CreateTemp(gitDir, ".gentle-ai-tree-restore-*")
+	index, err := os.CreateTemp(gitDir, ".shevanio-ai-tree-restore-*")
 	if err != nil {
 		return "", err
 	}

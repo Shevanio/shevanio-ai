@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/consentenvelope"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/consentenvelope"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
-const SDDBudgetConsentSchema = "gentle-ai.sdd-integration.consent/v1"
+const SDDBudgetConsentSchema = "shevanio-ai.sdd-integration.consent/v1"
 
 // BudgetConsentInput is everything the exhausted-budget question is built
 // from. Every field is already on the ledger; nothing here is inferred.
@@ -116,7 +116,7 @@ func BudgetConsentEnvelope(in BudgetConsentInput) (BudgetConsentResult, error) {
 				Label:  "Open a fresh budget and keep going",
 				Effect: "Resets this objective to a fresh bounded budget. Every attempt already recorded stays in the immutable chain, nothing is erased, and no verification, review or receipt is fabricated.",
 				Invocation: fmt.Sprintf(
-					"gentle-ai sdd-attempt reset --cwd %s --change %s --expected-revision %q --request-id %s --reason %q --actor %s",
+					"shevanio-ai sdd-attempt reset --cwd %s --change %s --expected-revision %q --request-id %s --reason %q --actor %s",
 					pathquote.Quote(in.Repo), in.Change, in.Revision,
 					sddBudgetConsentResetRequestID(in), sddBudgetConsentReason(in), sddRuntimeAuditActor),
 			},
@@ -125,13 +125,13 @@ func BudgetConsentEnvelope(in BudgetConsentInput) (BudgetConsentResult, error) {
 				Label:  "Stop here",
 				Effect: "Leaves the objective exhausted and every attempt preserved. Nothing is reset and nothing is lost; the change simply does not continue until someone decides otherwise.",
 				Invocation: fmt.Sprintf(
-					"gentle-ai sdd-attempt status --cwd %s --change %s",
+					"shevanio-ai sdd-attempt status --cwd %s --change %s",
 					pathquote.Quote(in.Repo), in.Change),
 			},
 		},
 		OffPath: consentenvelope.OffPath{
 			Note:    "Receipt-driven review is a separate switch and turning it off does NOT clear this: the attempt budget is SDD's own accounting, and review has no say in whether a work unit may open.",
-			Command: fmt.Sprintf("gentle-ai review mode status --cwd %s", pathquote.Quote(in.Repo)),
+			Command: fmt.Sprintf("shevanio-ai review mode status --cwd %s", pathquote.Quote(in.Repo)),
 		},
 	}
 	if err := core.ValidateCompleteness(sddBudgetConsentGranted, sddBudgetConsentDeclined); err != nil {
@@ -155,7 +155,7 @@ func BudgetConsentEnvelope(in BudgetConsentInput) (BudgetConsentResult, error) {
 // stop. A transparent fixed literal is honest about what the field is and
 // keeps the invocation executable exactly as returned. The human decision
 // itself is recorded by --reason, which still says a maintainer authorized it.
-const sddRuntimeAuditActor = "gentle-ai-runtime"
+const sddRuntimeAuditActor = "shevanio-ai-runtime"
 
 // sddBudgetConsentResetRequestID derives the reset's request ID from the exact
 // objective it resets: the change, the expected revision, and the operation.
@@ -169,7 +169,7 @@ const sddRuntimeAuditActor = "gentle-ai-runtime"
 // the current one. Hashed rather than composed from the change name, so the
 // result satisfies runtimeRequestIDPattern for every change name that exists.
 func sddBudgetConsentResetRequestID(in BudgetConsentInput) string {
-	sum := sha256.Sum256([]byte("gentle-ai.sdd-budget-consent-reset/v1\x00" + in.Change + "\x00" + in.Revision))
+	sum := sha256.Sum256([]byte("shevanio-ai.sdd-budget-consent-reset/v1\x00" + in.Change + "\x00" + in.Revision))
 	return "reset-" + hex.EncodeToString(sum[:16])
 }
 

@@ -239,13 +239,13 @@ func TestEngramTasksTextBlocksApplyOnUnauthorizedTargets(t *testing.T) {
 	initEditAuthorityGitRepo(t, planning, true)
 	initEditAuthorityGitRepo(t, serviceA, false)
 	mkdir(t, filepath.Join(planning, ".engram"))
-	runRuntimeLedgerGit(t, planning, "remote", "add", "origin", "git@github.com:Gentleman-Programming/gentle-ai.git")
+	runRuntimeLedgerGit(t, planning, "remote", "add", "origin", "git@github.com:Shevanio/shevanio-ai.git")
 
 	restore := stubEngramExport(t, []engramObservation{
-		{Title: "sdd/cross-repo/proposal", Content: "## Proposal\nRoll out the header", Project: "gentle-ai", Scope: "project"},
-		{Title: "sdd/cross-repo/spec", Content: "## Requirements\n- SHALL forward the header", Project: "gentle-ai", Scope: "project"},
-		{Title: "sdd/cross-repo/design", Content: "## Design\nSequential rollout", Project: "gentle-ai", Scope: "project"},
-		{Title: "sdd/cross-repo/tasks", Content: "- [ ] 1.1 Update `../service-a/internal/api/handler.go` first\n", Project: "gentle-ai", Scope: "project"},
+		{Title: "sdd/cross-repo/proposal", Content: "## Proposal\nRoll out the header", Project: "shevanio-ai", Scope: "project"},
+		{Title: "sdd/cross-repo/spec", Content: "## Requirements\n- SHALL forward the header", Project: "shevanio-ai", Scope: "project"},
+		{Title: "sdd/cross-repo/design", Content: "## Design\nSequential rollout", Project: "shevanio-ai", Scope: "project"},
+		{Title: "sdd/cross-repo/tasks", Content: "- [ ] 1.1 Update `../service-a/internal/api/handler.go` first\n", Project: "shevanio-ai", Scope: "project"},
 	})
 	defer restore()
 
@@ -271,7 +271,7 @@ func TestEngramTasksTextBlocksApplyOnUnauthorizedTargets(t *testing.T) {
 // TestBlockedEditAuthorityStatusCarriesConsentEnvelope is #2563's (S4b of
 // #2540) end-to-end fixture at the status layer: when a multi-repository
 // change reports blocked(edit_authority_missing), the projected v1 status
-// carries the typed gentle-ai.sdd-integration.consent/v1 envelope whose
+// carries the typed shevanio-ai.sdd-integration.consent/v1 envelope whose
 // granted choice names the EXACT runnable grant invocation — including the
 // change-instance token that the status layer itself derives, persists in the
 // change's own directory (so it dies with archive and a recreated change
@@ -333,7 +333,7 @@ func TestBlockedEditAuthorityStatusCarriesConsentEnvelope(t *testing.T) {
 	// The derivation rule: the embedded change-instance token IS the marker
 	// persisted in the change's own directory, so the grant the human
 	// consents to binds exactly the identity a later status read projects.
-	marker, err := os.ReadFile(filepath.Join(changeRoot, ".gentle-ai-instance"))
+	marker, err := os.ReadFile(filepath.Join(changeRoot, ".shevanio-ai-instance"))
 	if err != nil {
 		t.Fatalf("blocked status persisted no change-instance marker: %v", err)
 	}

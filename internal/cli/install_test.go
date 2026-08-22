@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestParseInstallFlagsSupportsCSVAndRepeated(t *testing.T) {
@@ -96,13 +96,13 @@ func TestNormalizeInstallFlagsDefaults(t *testing.T) {
 func TestNormalizeInstallFlagsAcceptsBundledSkills(t *testing.T) {
 	input, err := NormalizeInstallFlags(InstallFlags{Skills: []string{
 		string(model.SkillSystemicIssueTriage),
-		string(model.SkillGentleAIBench),
+		string(model.SkillShevanioAIBench),
 	}}, system.DetectionResult{})
 	if err != nil {
 		t.Fatalf("NormalizeInstallFlags() error = %v", err)
 	}
 
-	want := []model.SkillID{model.SkillSystemicIssueTriage, model.SkillGentleAIBench}
+	want := []model.SkillID{model.SkillSystemicIssueTriage, model.SkillShevanioAIBench}
 	if !reflect.DeepEqual(input.Selection.Skills, want) {
 		t.Fatalf("skills = %v, want %v", input.Selection.Skills, want)
 	}

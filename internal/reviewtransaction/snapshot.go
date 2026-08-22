@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathidentity"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathidentity"
 )
 
 type TargetKind string
@@ -181,7 +181,7 @@ func (builder SnapshotBuilder) build(ctx context.Context, target Target, allowSt
 		}
 	case TargetExactRevision:
 		baseTree, candidateTree, err = builder.resolveExactRevision(ctx, target.Revision)
-		untrackedProof = hashCanonical("gentle-ai.intended-untracked/v1")
+		untrackedProof = hashCanonical("shevanio-ai.intended-untracked/v1")
 	case TargetFixDiff:
 		if strings.TrimSpace(target.BaseRef) == "" || len(ledgerIDs) == 0 {
 			return Snapshot{}, errors.New("fix-diff requires base_ref and ledger_ids")
@@ -250,7 +250,7 @@ func (builder SnapshotBuilder) buildHeadWithIntended(ctx context.Context, intend
 	}
 	// Keep the private index beside Git's writable control files. A restricted
 	// integration environment may not provide an accessible process temp dir.
-	temp, err := os.CreateTemp(gitDir, ".gentle-ai-review-index-*")
+	temp, err := os.CreateTemp(gitDir, ".shevanio-ai-review-index-*")
 	if err != nil {
 		return "", "", err
 	}
@@ -701,7 +701,7 @@ func (builder SnapshotBuilder) ValidateIntendedUntrackedSelection(ctx context.Co
 		return nil, err
 	}
 	if expectedDigest != digest {
-		return nil, errors.New("untracked inventory changed; rerun `gentle-ai review status --next-transition` before selecting paths")
+		return nil, errors.New("untracked inventory changed; rerun `shevanio-ai review status --next-transition` before selecting paths")
 	}
 	selected, err = canonicalPaths(selected)
 	if err != nil {
@@ -713,7 +713,7 @@ func (builder SnapshotBuilder) ValidateIntendedUntrackedSelection(ctx context.Co
 	}
 	for _, path := range selected {
 		if _, ok := eligible[path]; !ok {
-			return nil, fmt.Errorf("intended-untracked path %q is not in the current eligible inventory; rerun `gentle-ai review status --next-transition`", path)
+			return nil, fmt.Errorf("intended-untracked path %q is not in the current eligible inventory; rerun `shevanio-ai review status --next-transition`", path)
 		}
 	}
 	return selected, nil
@@ -721,7 +721,7 @@ func (builder SnapshotBuilder) ValidateIntendedUntrackedSelection(ctx context.Co
 
 func intendedUntrackedInventoryDigest(paths []string) string {
 	hash := sha256.New()
-	writeLengthPrefixed(hash, []byte("gentle-ai.intended-untracked-inventory/v1"))
+	writeLengthPrefixed(hash, []byte("shevanio-ai.intended-untracked-inventory/v1"))
 	for _, path := range paths {
 		writeLengthPrefixed(hash, []byte(path))
 	}
@@ -1116,7 +1116,7 @@ func (builder *SnapshotBuilder) buildCurrentChanges(ctx context.Context, intende
 	}
 	// Keep the private index beside Git's writable control files. A restricted
 	// integration environment may not provide an accessible process temp dir.
-	temp, err := os.CreateTemp(filepath.Dir(indexPath), ".gentle-ai-review-index-*")
+	temp, err := os.CreateTemp(filepath.Dir(indexPath), ".shevanio-ai-review-index-*")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -1320,7 +1320,7 @@ func (builder SnapshotBuilder) rejectIgnoredIntended(ctx context.Context, intend
 
 func (builder SnapshotBuilder) untrackedProof(ctx context.Context, candidateTree string, intended []string) (string, error) {
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.intended-untracked/v1\x00"))
+	hash.Write([]byte("shevanio-ai.intended-untracked/v1\x00"))
 	if len(intended) == 0 {
 		return "sha256:" + hex.EncodeToString(hash.Sum(nil)), nil
 	}
@@ -1483,7 +1483,7 @@ func canonicalStrings(values []string, label string) ([]string, error) {
 
 func digestPaths(paths []string) string {
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.paths/v1\x00"))
+	hash.Write([]byte("shevanio-ai.paths/v1\x00"))
 	for _, logicalPath := range paths {
 		writeLengthPrefixed(hash, []byte(logicalPath))
 	}
@@ -1524,11 +1524,11 @@ func snapshotIdentity(kind TargetKind, baseTree, candidateTree, pathsDigest, pro
 func snapshotIdentityForProjection(kind TargetKind, projection Projection, baseTree, candidateTree, pathsDigest, proof string, intended, ledgerIDs []string) string {
 	hash := sha256.New()
 	if kind == TargetBaseWorkspaceOverlay {
-		hash.Write([]byte("gentle-ai.review-snapshot/base-workspace-overlay/v2\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/base-workspace-overlay/v2\x00"))
 	} else if projection == ProjectionStaged {
-		hash.Write([]byte("gentle-ai.review-snapshot/v4\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/v4\x00"))
 	} else {
-		hash.Write([]byte("gentle-ai.review-snapshot/v3\x00"))
+		hash.Write([]byte("shevanio-ai.review-snapshot/v3\x00"))
 	}
 	values := []string{string(kind), baseTree, candidateTree, pathsDigest}
 	if projection == ProjectionStaged {
@@ -1620,7 +1620,7 @@ func (err *GitCommandError) Unwrap() error { return err.Cause }
 
 var ErrGitOutputLimit = errors.New("git output exceeded deterministic byte limit")
 
-// refusal:by-design world-action: unexpected Git diagnostics require repairing the repository or its environment; no Gentle AI command can safely infer that repair.
+// refusal:by-design world-action: unexpected Git diagnostics require repairing the repository or its environment; no Shevanio AI command can safely infer that repair.
 var ErrGitInventoryDiagnostics = errors.New("git inventory produced diagnostics")
 
 // GitInventoryDiagnosticsError reports unexpected diagnostics from a Git

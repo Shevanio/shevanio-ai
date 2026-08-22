@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestNegotiatedReviewStatusReportsFreshStartAndPreservesGlobalStatus(t *testing.T) {
@@ -168,7 +168,7 @@ func transitionArgumentValue(t *testing.T, transition *ReviewNextTransition, nam
 func TestNegotiatedReviewStatusContractAndSchemasAreStrict(t *testing.T) {
 	repo := initReviewCLIRepo(t)
 	var output bytes.Buffer
-	err := RunReview([]string{"status", "--contract", "gentle-ai.review-integration/v3", "--cwd", repo}, &output)
+	err := RunReview([]string{"status", "--contract", "shevanio-ai.review-integration/v3", "--cwd", repo}, &output)
 	if err == nil {
 		t.Fatalf("unsupported status contract = %q, %v", output.String(), err)
 	}
@@ -240,7 +240,7 @@ func TestNegotiatedReviewStatusContractAndSchemasAreStrict(t *testing.T) {
 func TestReviewStatusContractRequirementNamesAllAcceptedContracts(t *testing.T) {
 	var output bytes.Buffer
 	err := RunReview([]string{"status", "--next-transition"}, &output)
-	if err == nil || err.Error() != "--action-eligibility and --next-transition require --contract gentle-ai.review-integration/v1 or gentle-ai.review-integration/v2" {
+	if err == nil || err.Error() != "--action-eligibility and --next-transition require --contract shevanio-ai.review-integration/v1 or shevanio-ai.review-integration/v2" {
 		t.Fatalf("unnegotiated next-transition refusal = %q, want both accepted contracts", err)
 	}
 }
@@ -603,6 +603,13 @@ func TestNegotiatedStatusAcceptsHistoricalApprovedOrdinary4RWithoutCompactFrozen
 func TestNegotiatedRuntimeReplaysPublishedV149AuthorityReadOnly(t *testing.T) {
 	reviewEnabledHome(t)
 	repo, authorityRoot, receiptPath := newPublishedV149CLIRepo(t)
+	legacy, err := reviewtransaction.AuthoritativeStore(context.Background(), repo, "legacy-valid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := legacy.LoadChain(); err != nil {
+		t.Fatalf("load published v1.49 authority: %v", err)
+	}
 	before := readLegacyAuthorityTree(t, authorityRoot)
 	args := []string{"status", "--contract", ReviewIntegrationContractV1, "--cwd", repo, "--lineage", "legacy-valid"}
 	var first, second bytes.Buffer
@@ -1196,9 +1203,9 @@ func writeNegotiatedStatusHistory(t *testing.T, repo string, count int) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		sum := sha256.Sum256(append([]byte("gentle-ai.review-state/v2\x00"), statePayload...))
+		sum := sha256.Sum256(append([]byte("shevanio-ai.review-state/v2\x00"), statePayload...))
 		record := reviewtransaction.CompactRecord{
-			Schema: "gentle-ai.review-state-record/v2", Revision: "sha256:" + hex.EncodeToString(sum[:]), State: state,
+			Schema: "shevanio-ai.review-state-record/v2", Revision: "sha256:" + hex.EncodeToString(sum[:]), State: state,
 		}
 		payload, err := json.MarshalIndent(record, "", "  ")
 		if err != nil {

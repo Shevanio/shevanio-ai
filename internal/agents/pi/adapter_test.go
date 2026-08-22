@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func TestAdapterIdentityAndCapabilities(t *testing.T) {
@@ -90,7 +90,7 @@ func TestCodeGraphPathsResolveConfiguredAgentDirectory(t *testing.T) {
 	if paths.MCPConfig != filepath.Join(configured, "mcp.json") {
 		t.Fatalf("MCPConfig = %q", paths.MCPConfig)
 	}
-	if paths.Manifest != filepath.Join(home, ".gentle-ai", "pi-codegraph.json") {
+	if paths.Manifest != filepath.Join(home, ".shevanio-ai", "pi-codegraph.json") {
 		t.Fatalf("Manifest = %q", paths.Manifest)
 	}
 }

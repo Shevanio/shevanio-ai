@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/catalog"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
 )
 
 // runtimeIdentityBindingRegexp captures the runtime identity an embedded asset
@@ -72,7 +72,7 @@ func TestEmbeddedAssetsBindNoLiteralRuntimeIdentity(t *testing.T) {
 // internal/components/sdd.runtimeAgentIDPlaceholder, which is unexported and in
 // another package. TestAssetPlaceholderMatchesTheRenderer keeps the two from
 // drifting apart.
-const runtimeAgentIDPlaceholderForAssets = "{{GENTLE_AI_RUNTIME_AGENT_ID}}"
+const runtimeAgentIDPlaceholderForAssets = "{{SHEVANIO_AI_RUNTIME_AGENT_ID}}"
 
 // TestSharedReviewLedgerContractBindsTheRuntimePlaceholder pins the specific
 // file issue #2440 reported. It is the single shared source every runtime's

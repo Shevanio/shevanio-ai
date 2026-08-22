@@ -5,18 +5,18 @@ repo_root="$(git rev-parse --show-toplevel)"
 tmp_root="$(mktemp -d)"
 trap 'rm -rf "$tmp_root"' EXIT
 
-binary="$tmp_root/gentle-ai"
+binary="$tmp_root/shevanio-ai"
 outside="$tmp_root/outside-repository"
 result="$tmp_root/capabilities.json"
 mkdir -p "$outside"
 
 (
   cd "$repo_root"
-  go build -o "$binary" ./cmd/gentle-ai
+  go build -o "$binary" ./cmd/shevanio-ai
 )
 (
   cd "$outside"
-  "$binary" review capabilities --contract gentle-ai.review-integration/v1 >"$result"
+  "$binary" review capabilities --contract shevanio-ai.review-integration/v1 >"$result"
 )
 
 python3 - "$result" "$outside" <<'PY'
@@ -29,8 +29,8 @@ result_path = pathlib.Path(sys.argv[1])
 outside = pathlib.Path(sys.argv[2])
 document = json.loads(result_path.read_text(encoding="utf-8"))
 
-assert document["schema"] == "gentle-ai.review-integration.capabilities/v1.4"
-assert document["contract"] == "gentle-ai.review-integration/v1"
+assert document["schema"] == "shevanio-ai.review-integration.capabilities/v1.4"
+assert document["contract"] == "shevanio-ai.review-integration/v1"
 assert document["protocol"] == {"major": 1, "minor": 4}
 assert document["gates"] == ["post-apply", "pre-commit", "pre-push", "pre-pr", "release"]
 assert document["projections"] == ["staged", "workspace"]
@@ -78,12 +78,12 @@ assert features["validating_result_reopen"] == {
     "supported": True,
     "requires": ["compact_v2_authority", "provider_artifact_admission"],
 }
-assert "gentle-ai.review-artifact-subject/v1" in document["schemas"]
-assert "gentle-ai.review-admitted-result/v1" in document["schemas"]
-assert "gentle-ai.review-targeted-validation-request/v1" in document["schemas"]
-assert "gentle-ai.review-authority-repair-assessment/v1" in document["schemas"]
-assert "gentle-ai.review-integration.repair/v1" in document["schemas"]
-assert "gentle-ai.review-final-verification-incident/v1" in document["schemas"]
+assert "shevanio-ai.review-artifact-subject/v1" in document["schemas"]
+assert "shevanio-ai.review-admitted-result/v1" in document["schemas"]
+assert "shevanio-ai.review-targeted-validation-request/v1" in document["schemas"]
+assert "shevanio-ai.review-authority-repair-assessment/v1" in document["schemas"]
+assert "shevanio-ai.review-integration.repair/v1" in document["schemas"]
+assert "shevanio-ai.review-final-verification-incident/v1" in document["schemas"]
 assert "review.repair" in document["operations"]
 assert "review.retry_final_verification" in document["operations"]
 assert list(outside.iterdir()) == []

@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 const (
@@ -22,9 +22,9 @@ const (
 	// launcher only supplies the value when this variable is absent.
 	BackgroundSubagentsEnv = "OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS"
 
-	// OwnershipMarker is embedded in every launcher written by Gentle AI.
+	// OwnershipMarker is embedded in every launcher written by Shevanio AI.
 	// It is intentionally stable so deactivation can refuse to remove user files.
-	OwnershipMarker = "gentle-ai:managed-opencode-launcher/v1"
+	OwnershipMarker = "shevanio-ai:managed-opencode-launcher/v1"
 
 	minimumMajor = 1
 	minimumMinor = 15
@@ -328,7 +328,7 @@ func (o ActivationOptions) normalized() ActivationOptions {
 }
 
 // BinDir returns the Gentle-owned launcher directory.
-func BinDir(homeDir string) string { return filepath.Join(homeDir, ".gentle-ai", "bin") }
+func BinDir(homeDir string) string { return filepath.Join(homeDir, ".shevanio-ai", "bin") }
 
 // POSIXLauncherPath returns the POSIX launcher path.
 func POSIXLauncherPath(homeDir string) string { return filepath.Join(BinDir(homeDir), "opencode") }

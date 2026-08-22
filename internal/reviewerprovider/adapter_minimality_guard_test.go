@@ -44,7 +44,7 @@ func TestReviewerAdapterGuardDetectsSemanticOwnership(t *testing.T) {
 	violations := reviewerAdapterSourceViolations("bad_adapter.go", []byte("package reviewerprovider\n"+`
 import (
   "encoding/json"
-  "github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+  "github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 type binding struct { SubjectHash string `+"`json:\"subject_hash\"`"+` }
 func (adapter *BadAdapter) Review(ctx context.Context, invocation Invocation) ([]byte, error) {
@@ -53,7 +53,7 @@ func (adapter *BadAdapter) Review(ctx context.Context, invocation Invocation) ([
   _ = AdmitArtifact
   _ = CaptureAdmittedReviewerResult
   _ = CorrectionPlan
-  _ = NewInvocation([]byte("GENTLE_AI_REVIEW_CONTEXT"))
+  _ = NewInvocation([]byte("SHEVANIO_AI_REVIEW_CONTEXT"))
   prompt := invocation.Prompt()
   if len(prompt) > 0 { return nil, nil }
   for retry := 0; retry < 1; retry++ {}
@@ -256,7 +256,7 @@ func reviewerAdapterSourceViolations(file string, source []byte) []string {
 		case *ast.BasicLit:
 			if value.Kind == token.STRING {
 				literal, unquoteErr := strconv.Unquote(value.Value)
-				if unquoteErr == nil && (strings.Contains(literal, "GENTLE_AI_REVIEW_") || strings.Contains(literal, "subject_hash")) {
+				if unquoteErr == nil && (strings.Contains(literal, "SHEVANIO_AI_REVIEW_") || strings.Contains(literal, "subject_hash")) {
 					add("contains provider prompt text")
 				}
 			}

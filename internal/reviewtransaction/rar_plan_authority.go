@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	RARPlanAuthoritySchema = "gentle-ai.rar-plan-authority/v1"
+	RARPlanAuthoritySchema = "shevanio-ai.rar-plan-authority/v1"
 
-	VerificationFrozenPlanConsentSchema   = "gentle-ai.verification-frozen-plan-consent/v1"
-	VerificationEffectAuthorizationSchema = "gentle-ai.verification-effect-authorization/v1"
+	VerificationFrozenPlanConsentSchema   = "shevanio-ai.verification-frozen-plan-consent/v1"
+	VerificationEffectAuthorizationSchema = "shevanio-ai.verification-effect-authorization/v1"
 
-	rarPlanAuthorityDigestDomain              = "gentle-ai.rar-plan-authority-digest/v1"
-	verificationFrozenPlanConsentDigestDomain = "gentle-ai.verification-frozen-plan-consent-digest/v1"
-	verificationEffectAuthorizationDomain     = "gentle-ai.verification-effect-authorization-digest/v1"
+	rarPlanAuthorityDigestDomain              = "shevanio-ai.rar-plan-authority-digest/v1"
+	verificationFrozenPlanConsentDigestDomain = "shevanio-ai.verification-frozen-plan-consent-digest/v1"
+	verificationEffectAuthorizationDomain     = "shevanio-ai.verification-effect-authorization-digest/v1"
 )
 
 // RARPlanAuthority is the complete RAR-owned pre-execution plan preimage.

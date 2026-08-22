@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestFlatReviewStartRejectsBeforeCreatingLegacyAuthority(t *testing.T) {
@@ -27,7 +27,7 @@ func TestFlatReviewStartRejectsBeforeCreatingLegacyAuthority(t *testing.T) {
 		"--cwd", repo, "--lineage", "flat-start-read-only", "--policy-file", policy,
 		"--machine-transaction-out", mirror,
 	}, io.Discard)
-	if !errors.Is(err, reviewtransaction.ErrLegacyReadOnly) || !strings.Contains(err.Error(), "gentle-ai review start") {
+	if !errors.Is(err, reviewtransaction.ErrLegacyReadOnly) || !strings.Contains(err.Error(), "shevanio-ai review start") {
 		t.Fatalf("flat review-start error = %v", err)
 	}
 	store, storeErr := reviewtransaction.AuthoritativeStore(context.Background(), repo, "flat-start-read-only")
@@ -44,7 +44,7 @@ func TestFlatReviewStartRejectsBeforeCreatingLegacyAuthority(t *testing.T) {
 
 // TestReviewFacadeStartRefusesOverExistingV1Authority is Wave 7 S7a's (WU18a)
 // end-to-end proof for the v1 collision guard added to the switch-ON v3
-// start path in runReviewFacadeStart: with GENTLE_AI_RDD_NEW_LINEAGE set, a
+// start path in runReviewFacadeStart: with SHEVANIO_AI_RDD_NEW_LINEAGE set, a
 // v3 start over an existing v1 chain must still refuse -- with the exact
 // same, pre-existing "choose a new lineage for compact authority" wording
 // every other legacy-read-only collision in this codebase shares (see
@@ -57,7 +57,7 @@ func TestReviewFacadeStartRefusesOverExistingV1Authority(t *testing.T) {
 	reviewEnabledHome(t)
 	fixture := newLegacyCLIFixture(t, "v1-blocks-v3-start")
 	runReviewCLIGit(t, fixture.repo, "add", "-A")
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 
 	var output bytes.Buffer
 	err := RunReviewFacadeStart([]string{"--cwd", fixture.repo, "--lineage", fixture.lineage}, &output)
@@ -146,7 +146,7 @@ func TestReviewFacadeStartRefusesOverExistingV2AuthorityAndNamesRecover(t *testi
 	if err := os.WriteFile(filepath.Join(repo, "tracked.txt"), []byte("v2 collision fixture, now with different content\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 
 	var output bytes.Buffer
 	startErr := RunReviewFacadeStart([]string{"--cwd", repo, "--lineage", lineage}, &output)
@@ -530,7 +530,7 @@ func writeReviewCLIJSON(t *testing.T, path string, value any) {
 func reviewCLIAuthorityRoot(t *testing.T, repo string) string {
 	t.Helper()
 	commonDir := filepath.Clean(strings.TrimSpace(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir")))
-	return filepath.Join(commonDir, "gentle-ai", "review-transactions")
+	return filepath.Join(commonDir, "shevanio-ai", "review-transactions")
 }
 
 // writeReconcileCLIRecord persists one compact-v2 record directly to disk
@@ -542,7 +542,7 @@ func writeReconcileCLIRecord(t *testing.T, repo string, state reviewtransaction.
 	if err != nil {
 		t.Fatal(err)
 	}
-	record := reviewtransaction.CompactRecord{Schema: "gentle-ai.review-state-record/v2", Revision: revision, State: state}
+	record := reviewtransaction.CompactRecord{Schema: "shevanio-ai.review-state-record/v2", Revision: revision, State: state}
 	payload, err := json.MarshalIndent(record, "", "  ")
 	if err != nil {
 		t.Fatal(err)

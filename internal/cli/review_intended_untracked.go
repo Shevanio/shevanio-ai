@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const reviewIntendedUntrackedSelectionSchema = "gentle-ai.review-intended-untracked-selection/v1"
+const reviewIntendedUntrackedSelectionSchema = "shevanio-ai.review-intended-untracked-selection/v1"
 
 type reviewRepeatedPathFlag []string
 
@@ -28,7 +28,7 @@ type reviewSingleValueFlag struct {
 func (flag *reviewSingleValueFlag) String() string { return flag.value }
 func (flag *reviewSingleValueFlag) Set(value string) error {
 	if flag.set {
-		return errors.New("untracked scope flags may only be specified once; rerun gentle-ai review start with one declaration")
+		return errors.New("untracked scope flags may only be specified once; rerun shevanio-ai review start with one declaration")
 	}
 	flag.value, flag.set = value, true
 	return nil
@@ -58,19 +58,19 @@ func reviewIntendedUntrackedScopeForTarget(ctx context.Context, builder reviewtr
 		return scope, nil
 	}
 	if !mode.set || !expectedDigest.set {
-		return reviewIntendedUntrackedScope{}, errors.New("untracked selection requires --untracked-scope and --expected-untracked-inventory; rerun `gentle-ai review status --next-transition`")
+		return reviewIntendedUntrackedScope{}, errors.New("untracked selection requires --untracked-scope and --expected-untracked-inventory; rerun `shevanio-ai review status --next-transition`")
 	}
 	switch mode.value {
 	case "exclude":
 		if len(selected) != 0 {
-			return reviewIntendedUntrackedScope{}, errors.New("--untracked-scope=exclude does not accept --intended-untracked; rerun `gentle-ai review start --untracked-scope=select`")
+			return reviewIntendedUntrackedScope{}, errors.New("--untracked-scope=exclude does not accept --intended-untracked; rerun `shevanio-ai review start --untracked-scope=select`")
 		}
 	case "select":
 		if len(selected) == 0 {
-			return reviewIntendedUntrackedScope{}, errors.New("--untracked-scope=select requires at least one --intended-untracked; rerun `gentle-ai review start --untracked-scope=exclude`")
+			return reviewIntendedUntrackedScope{}, errors.New("--untracked-scope=select requires at least one --intended-untracked; rerun `shevanio-ai review start --untracked-scope=exclude`")
 		}
 	default:
-		return reviewIntendedUntrackedScope{}, fmt.Errorf("--untracked-scope must be exclude or select, got %q; rerun `gentle-ai review status --next-transition`", mode.value)
+		return reviewIntendedUntrackedScope{}, fmt.Errorf("--untracked-scope must be exclude or select, got %q; rerun `shevanio-ai review status --next-transition`", mode.value)
 	}
 	intended, err := builder.ValidateIntendedUntrackedSelection(ctx, expectedDigest.value, selected)
 	if err != nil {
@@ -81,7 +81,7 @@ func reviewIntendedUntrackedScopeForTarget(ctx context.Context, builder reviewtr
 }
 
 func reviewIntendedUntrackedSelectionRequired(scope reviewIntendedUntrackedScope) error {
-	return fmt.Errorf("untracked files require an explicit declaration; run `gentle-ai review status --next-transition`, then rerun with --untracked-scope=exclude --expected-untracked-inventory=%s or --untracked-scope=select --intended-untracked=<repo-relative-path> --expected-untracked-inventory=%s", scope.Digest, scope.Digest)
+	return fmt.Errorf("untracked files require an explicit declaration; run `shevanio-ai review status --next-transition`, then rerun with --untracked-scope=exclude --expected-untracked-inventory=%s or --untracked-scope=select --intended-untracked=<repo-relative-path> --expected-untracked-inventory=%s", scope.Digest, scope.Digest)
 }
 
 func reviewIntendedUntrackedCollection(status ReviewTargetStatusResult, scope reviewIntendedUntrackedScope) ReviewNextTransition {

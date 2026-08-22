@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/versions"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/versions"
 )
 
 // cmdLookPath, osStat, osGetenv, and cmdGoVersion are package-level vars for testability.
@@ -53,15 +53,15 @@ func (profileResolver) ResolveAgentInstall(profile system.PlatformProfile, agent
 	}
 }
 
-// resolveClaudeCodeInstall returns the npm install command sequence gentle-ai
-// shows for Claude Code — display text only, never executed by gentle-ai
+// resolveClaudeCodeInstall returns the npm install command sequence shevanio-ai
+// shows for Claude Code — display text only, never executed by shevanio-ai
 // (see agentInstallStep in internal/cli/run.go). On Linux with system npm,
 // sudo is required. With nvm/fnm/volta, it is not. On Windows and macOS,
 // sudo is never needed.
 //
 // --ignore-scripts blocks postinstall hooks, the primary supply-chain attack
 // vector for npm packages. The version advises "latest" rather than a pin:
-// a pin only guarded against a tampered "latest" tag when gentle-ai itself
+// a pin only guarded against a tampered "latest" tag when shevanio-ai itself
 // ran the command unattended. Now a human reads and runs it, and a stale
 // hardcoded version goes wrong the moment a newer release ships (the same
 // drift this shape fixed for Codex's GPT-5.6 update advice).
@@ -73,8 +73,8 @@ func resolveClaudeCodeInstall(profile system.PlatformProfile) CommandSequence {
 	return CommandSequence{{"npm", "install", "-g", "--ignore-scripts", pkg}}
 }
 
-// resolveKilocodeInstall returns the npm install command sequence gentle-ai
-// shows for Kilocode — display text only, never executed by gentle-ai. On
+// resolveKilocodeInstall returns the npm install command sequence shevanio-ai
+// shows for Kilocode — display text only, never executed by shevanio-ai. On
 // Linux with system npm, sudo is required. With nvm/fnm/volta, it is not.
 // On Windows and macOS, sudo is never needed.
 func resolveKilocodeInstall(profile system.PlatformProfile) CommandSequence {
@@ -136,7 +136,7 @@ func ValidateAgentInstallPreflight(profile system.PlatformProfile, agent model.A
 
 func validatePiInstallPreflight() error {
 	if _, err := cmdLookPath("pi"); err != nil {
-		return fmt.Errorf("Pi requires the `pi` executable in PATH before installing Gentle AI Pi packages")
+		return fmt.Errorf("Pi requires the `pi` executable in PATH before installing Shevanio AI Pi packages")
 	}
 
 	return nil
@@ -231,7 +231,7 @@ func (profileResolver) ResolveDependencyInstall(profile system.PlatformProfile, 
 }
 
 // resolveOpenCodeInstall returns the display-only install command sequence
-// gentle-ai shows for OpenCode per platform — never executed by gentle-ai.
+// shevanio-ai shows for OpenCode per platform — never executed by shevanio-ai.
 // - darwin: brew install anomalyco/tap/opencode (official OpenCode tap)
 // - linux: npm install -g opencode-ai (official npm package)
 // See https://opencode.ai/docs for official install methods.

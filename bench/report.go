@@ -77,7 +77,7 @@ func deadEndUnexercised(results Results) bool {
 }
 
 func writeRunReport(out io.Writer, results Results) {
-	fmt.Fprintf(out, "gentle-ai-bench — %s mode\n", results.Mode)
+	fmt.Fprintf(out, "shevanio-ai-bench — %s mode\n", results.Mode)
 	fmt.Fprintf(out, "binary : %s\n", results.Binary)
 	if results.BinaryVersion != "" {
 		fmt.Fprintf(out, "version: %s\n", results.BinaryVersion)
@@ -450,7 +450,7 @@ type CompareJourney struct {
 
 func buildComparison(before, after Results) CompareReport {
 	report := CompareReport{
-		Schema: "gentle-ai-bench.comparison/v1",
+		Schema: "shevanio-ai-bench.comparison/v1",
 		Mode:   before.Mode,
 		Before: before.Binary,
 		After:  after.Binary,
@@ -544,7 +544,7 @@ func journeyCell(index map[string]JourneyResult, id string, row dimensionRow) st
 }
 
 func writeCompareReport(out io.Writer, report CompareReport) {
-	fmt.Fprintf(out, "gentle-ai-bench comparison — %s mode\n", report.Mode)
+	fmt.Fprintf(out, "shevanio-ai-bench comparison — %s mode\n", report.Mode)
 	fmt.Fprintf(out, "before: %s\nafter : %s\n", report.Before, report.After)
 	fmt.Fprintf(out, "comparable journeys (completed in both): %d\n", len(report.ComparableJourneys))
 	if len(report.ExcludedJourneys) > 0 {

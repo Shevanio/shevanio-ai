@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/antigravity"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/codex"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/cursor"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/gemini"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/hermes"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/opencode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/vscode"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/antigravity"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/cursor"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/gemini"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/hermes"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/vscode"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 func claudeAdapter() agents.Adapter      { return claude.NewAdapter() }
@@ -365,7 +365,7 @@ func TestInjectAntigravitySkipsPermissions(t *testing.T) {
 	}
 }
 
-// TestInjectCodexNeverWritesConfig pins the decision that gentle-ai writes
+// TestInjectCodexNeverWritesConfig pins the decision that shevanio-ai writes
 // nothing to Codex's permissions configuration — neither a profile nor the
 // legacy migration that used to strip one. Codex refuses to load a config that
 // defines a [permissions.*] profile without default_permissions, so a cleanup

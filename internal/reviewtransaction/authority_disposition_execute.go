@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 // AuthorityDispositionProofSchema identifies AuthorityDispositionProof's shape.
-const AuthorityDispositionProofSchema = "gentle-ai.review-authority-disposition-proof/v1"
+const AuthorityDispositionProofSchema = "shevanio-ai.review-authority-disposition-proof/v1"
 
 // errAuthorityDispositionShape is returned whenever a plan's closure does
 // not have the one shape this executor admits: exactly one seed, at least
@@ -545,7 +545,7 @@ func discoverAuthorityDispositionRecord(ctx context.Context, base, seed, planDig
 			continue
 		}
 		if matched != nil {
-			return CompactReclaimRecord{}, false, errors.New("authority disposition execution refused: duplicate quarantine records for the same plan digest; run `gentle-ai review inspect-authority` and escalate the report")
+			return CompactReclaimRecord{}, false, errors.New("authority disposition execution refused: duplicate quarantine records for the same plan digest; run `shevanio-ai review inspect-authority` and escalate the report")
 		}
 		found := record
 		matched = &found
@@ -575,7 +575,7 @@ func resumeAuthorityDispositionRecord(ctx context.Context, record CompactReclaim
 		return record, err
 	}
 	if sourceExists == residueExists {
-		return record, errors.New("authority disposition execution refused: ambiguous prepared residue state; run `gentle-ai review inspect-authority` and escalate the report")
+		return record, errors.New("authority disposition execution refused: ambiguous prepared residue state; run `shevanio-ai review inspect-authority` and escalate the report")
 	}
 	if sourceExists {
 		if err := reclaimQuarantineResidue(record.SourcePath, residuePath); err != nil {
@@ -614,22 +614,22 @@ func resumeAuthorityDispositionRecord(ctx context.Context, record CompactReclaim
 // evidence disposition did not fully remove it.
 func readBackAuthorityDisposition(ctx context.Context, root string, record CompactReclaimRecord) (CompactReclaimRecord, error) {
 	if record.Status != CompactReclaimCommitted {
-		return record, fmt.Errorf("authority disposition execution refused: readback observed a non-committed record; run `gentle-ai review inspect-authority --cwd %s` and escalate the report", pathquote.Quote(root))
+		return record, fmt.Errorf("authority disposition execution refused: readback observed a non-committed record; run `shevanio-ai review inspect-authority --cwd %s` and escalate the report", pathquote.Quote(root))
 	}
 	report, err := InspectCompactRecoveryEdges(ctx, root)
 	if err != nil {
 		return record, fmt.Errorf("authority disposition readback: %w", err)
 	}
 	if !report.Complete {
-		return record, fmt.Errorf("authority disposition execution refused: retained-graph readback is incomplete; run `gentle-ai review inspect-authority --cwd %s` and escalate the report", pathquote.Quote(root))
+		return record, fmt.Errorf("authority disposition execution refused: retained-graph readback is incomplete; run `shevanio-ai review inspect-authority --cwd %s` and escalate the report", pathquote.Quote(root))
 	}
 	closureMembers := authorityDispositionClosureMembers(record)
 	for _, edge := range report.Edges {
 		if member := edge.PredecessorLineageID; closureMembers[member] {
-			return record, fmt.Errorf("authority disposition execution refused: retained graph still references quarantined closure member %q; run `gentle-ai review inspect-authority --cwd %s` and escalate the report", member, pathquote.Quote(root))
+			return record, fmt.Errorf("authority disposition execution refused: retained graph still references quarantined closure member %q; run `shevanio-ai review inspect-authority --cwd %s` and escalate the report", member, pathquote.Quote(root))
 		}
 		if member := edge.SuccessorLineageID; closureMembers[member] {
-			return record, fmt.Errorf("authority disposition execution refused: retained graph still references quarantined closure member %q; run `gentle-ai review inspect-authority --cwd %s` and escalate the report", member, pathquote.Quote(root))
+			return record, fmt.Errorf("authority disposition execution refused: retained graph still references quarantined closure member %q; run `shevanio-ai review inspect-authority --cwd %s` and escalate the report", member, pathquote.Quote(root))
 		}
 	}
 	return record, nil

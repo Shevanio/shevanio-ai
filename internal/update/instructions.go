@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 const WindowsDistributionHoldMessage = "Windows binary distribution and Scoop are temporarily unavailable until publicly trusted Authenticode signing is enforced."
 
-// GentleAISourceInstallCommand returns the safe source-install fallback for an
+// ShevanioAISourceInstallCommand returns the safe source-install fallback for an
 // exact release, beta main build, or the latest release when version is empty.
-func GentleAISourceInstallCommand(version string) string {
+func ShevanioAISourceInstallCommand(version string) string {
 	target := "latest"
 	version = strings.TrimSpace(version)
 	if strings.HasPrefix(version, "main@") {
@@ -19,20 +19,20 @@ func GentleAISourceInstallCommand(version string) string {
 	} else if version != "" {
 		target = "v" + strings.TrimPrefix(version, "v")
 	}
-	return "go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@" + target
+	return "go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@" + target
 }
 
 // updateHint returns a platform-specific instruction string for updating the given tool.
 func updateHint(tool ToolInfo, profile system.PlatformProfile) string {
 	switch tool.Name {
-	case "gentle-ai":
-		return gentleAIHint(profile)
+	case "shevanio-ai":
+		return shevanioAIHint(profile)
 	case "engram":
 		return engramHint(profile)
 	case "gga":
 		return ggaHint(profile)
 	case "opencode-subagent-statusline", "opencode-sdd-engram-manage":
-		return "gentle-ai upgrade updates ~/.config/opencode npm deps, clears this plugin's @latest cache, then requires OpenCode restart/reload"
+		return "shevanio-ai upgrade updates ~/.config/opencode npm deps, clears this plugin's @latest cache, then requires OpenCode restart/reload"
 	default:
 		return ""
 	}
@@ -50,25 +50,25 @@ func openCodeRegisteredNotMaterializedHint(tool ToolInfo) string {
 	if pkg == "" {
 		pkg = tool.Name
 	}
-	return fmt.Sprintf("registered in ~/.config/opencode/tui.json; pending npm dependency materialization for %s. Run gentle-ai upgrade to install/update ~/.config/opencode dependencies, then restart or reload OpenCode; if it stays pending, check OpenCode logs for package or peer dependency errors.", pkg)
+	return fmt.Sprintf("registered in ~/.config/opencode/tui.json; pending npm dependency materialization for %s. Run shevanio-ai upgrade to install/update ~/.config/opencode dependencies, then restart or reload OpenCode; if it stays pending, check OpenCode logs for package or peer dependency errors.", pkg)
 }
 
-// gentleAIHint is the stable-channel instruction only. When the checker
+// shevanioAIHint is the stable-channel instruction only. When the checker
 // resolves a main-head beta target, applyBetaMainHeadStatus overrides this
-// hint with GentleAISourceInstallCommand so the printed instruction installs
+// hint with ShevanioAISourceInstallCommand so the printed instruction installs
 // the advertised target instead of the latest stable release.
-func gentleAIHint(profile system.PlatformProfile) string {
-	if profile.PackageManager == "brew" && homebrewPackageInstalled("gentle-ai") {
-		return "brew upgrade gentle-ai"
+func shevanioAIHint(profile system.PlatformProfile) string {
+	if profile.PackageManager == "brew" && homebrewPackageInstalled("shevanio-ai") {
+		return "brew upgrade shevanio-ai"
 	}
 
 	switch profile.OS {
 	case "linux":
-		return "curl -fsSL https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/scripts/install.sh | bash"
+		return "curl -fsSL https://raw.githubusercontent.com/Shevanio/shevanio-ai/main/scripts/install.sh | bash"
 	case "darwin":
-		return "gentle-ai upgrade (downloads pre-built binary)"
+		return "shevanio-ai upgrade (downloads pre-built binary)"
 	case "windows":
-		return WindowsDistributionHoldMessage + " Install/update from source with Go 1.25.10+: " + GentleAISourceInstallCommand("")
+		return WindowsDistributionHoldMessage + " Install/update from source with Go 1.25.10+: " + ShevanioAISourceInstallCommand("")
 	default:
 		return ""
 	}
@@ -78,7 +78,7 @@ func engramHint(profile system.PlatformProfile) string {
 	if profile.PackageManager == "brew" && homebrewPackageInstalled("engram") {
 		return "brew upgrade engram"
 	}
-	return "gentle-ai upgrade (downloads pre-built binary)"
+	return "shevanio-ai upgrade (downloads pre-built binary)"
 }
 
 func ggaHint(profile system.PlatformProfile) string {

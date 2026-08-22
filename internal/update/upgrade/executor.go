@@ -3,9 +3,9 @@
 // isolated from install, pipeline, planner, and config-sync code paths.
 //
 // Import boundary: this package MUST NOT import:
-//   - github.com/gentleman-programming/gentle-ai/v2/internal/pipeline
-//   - github.com/gentleman-programming/gentle-ai/v2/internal/planner
-//   - github.com/gentleman-programming/gentle-ai/v2/internal/cli
+//   - github.com/shevanio/shevanio-ai/v2/internal/pipeline
+//   - github.com/shevanio/shevanio-ai/v2/internal/planner
+//   - github.com/shevanio/shevanio-ai/v2/internal/cli
 package upgrade
 
 import (
@@ -20,17 +20,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/claude"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/backup"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/gga"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/sdd"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/skills"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/backup"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
 
 // Package-level vars for testability — same pattern as internal/update/detect.go.
@@ -45,7 +45,7 @@ var snapshotCreator = func(snapshotDir string, paths []string) (backup.Manifest,
 	return backup.NewSnapshotter().Create(snapshotDir, paths)
 }
 
-// AppVersion is the gentle-ai version written into backup manifests created by
+// AppVersion is the shevanio-ai version written into backup manifests created by
 // the upgrade executor. Set by app.go before calling Execute so that upgrade
 // backups record the version that created them.
 // Default "dev" matches the ldflags default in app.Version.
@@ -121,11 +121,11 @@ var backupExcludeSubdirs = map[string]bool{
 	"tmp":                         true, // Antigravity temporary runtime artifacts
 }
 
-// configPathsForBackup returns the explicit Gentle AI-managed file paths that
+// configPathsForBackup returns the explicit Shevanio AI-managed file paths that
 // the backup snapshot must include before any upgrade execution.
 //
 // This is intentionally NOT a recursive backup of agent config directories.
-// Upgrade backups are rollback artifacts for files Gentle AI may create or
+// Upgrade backups are rollback artifacts for files Shevanio AI may create or
 // modify, not general-purpose backups of conversations, sessions, caches,
 // sockets, package installs, or other runtime state.
 //
@@ -133,7 +133,7 @@ var backupExcludeSubdirs = map[string]bool{
 // only those agents' config paths are backed up — this is the canonical source
 // of truth established at install time. Filesystem detection is used only as a
 // fallback for fresh installs (no state.json yet). This prevents snapshot bloat
-// from agent config dirs that the user never actually installed via gentle-ai
+// from agent config dirs that the user never actually installed via shevanio-ai
 // (issue #354: snapshots could reach ~25 GiB from unmanaged config dirs).
 func configPathsForBackup(homeDir string, diagnostics ...io.Writer) []string {
 	dw := firstWriter(diagnostics...)
@@ -419,7 +419,7 @@ func writeBackupDiagnostic(w io.Writer, format string, args ...any) {
 //
 // The backup snapshot is created before any executable upgrade — this is the
 // architectural guarantee that config is safe even if an upgrade fails mid-way.
-// Windows gentle-ai provenance is preflighted first because its manual fallback
+// Windows shevanio-ai provenance is preflighted first because its manual fallback
 // must remain a true zero-mutation outcome.
 func Execute(ctx context.Context, results []update.UpdateResult, profile system.PlatformProfile, homeDir string, dryRun bool, progress ...io.Writer) UpgradeReport {
 	options := ExecuteOptions{}
@@ -458,7 +458,7 @@ func ExecuteWithOptions(ctx context.Context, results []update.UpdateResult, prof
 
 	var preflightSkips []ToolUpgradeResult
 	if !dryRun {
-		executable, preflightSkips = preflightWindowsGentleAIUpgrades(executable, profile)
+		executable, preflightSkips = preflightWindowsShevanioAIUpgrades(executable, profile)
 	}
 
 	// Create backup snapshot BEFORE any execution (only when there are executables).
@@ -468,7 +468,7 @@ func ExecuteWithOptions(ctx context.Context, results []update.UpdateResult, prof
 	backupWarning := ""
 	if !dryRun && len(executable) > 0 && !options.SkipBackup {
 		sp := NewSpinner(pw, "Creating pre-upgrade backup")
-		snapshotDir := filepath.Join(homeDir, ".gentle-ai", "backups",
+		snapshotDir := filepath.Join(homeDir, ".shevanio-ai", "backups",
 			fmt.Sprintf("upgrade-%s", time.Now().UTC().Format("20060102T150405Z")))
 		manifest, err := snapshotCreator(snapshotDir, configPathsForBackup(homeDir, options.BackupDiagnostics))
 		if err != nil {
@@ -494,7 +494,7 @@ func ExecuteWithOptions(ctx context.Context, results []update.UpdateResult, prof
 		// snapshot fails due to disk pressure caused by prior accumulated
 		// backups, pruning is the recovery path. Non-fatal: a prune failure
 		// must not prevent the upgrade from completing.
-		backupRoot := filepath.Join(homeDir, ".gentle-ai", "backups")
+		backupRoot := filepath.Join(homeDir, ".shevanio-ai", "backups")
 		if _, pruneErr := backup.Prune(backupRoot, backup.DefaultRetentionCount); pruneErr != nil {
 			log.Printf("backup: prune: %v", pruneErr)
 		}
@@ -574,20 +574,20 @@ func ExecuteWithOptions(ctx context.Context, results []update.UpdateResult, prof
 	}
 }
 
-// preflightWindowsGentleAIUpgrades removes unsafe Windows self-upgrades before
+// preflightWindowsShevanioAIUpgrades removes unsafe Windows self-upgrades before
 // the backup phase. A manual fallback must not create or prune a backup because
 // no upgrade will be attempted.
-func preflightWindowsGentleAIUpgrades(executable []executableUpdate, profile system.PlatformProfile) ([]executableUpdate, []ToolUpgradeResult) {
+func preflightWindowsShevanioAIUpgrades(executable []executableUpdate, profile system.PlatformProfile) ([]executableUpdate, []ToolUpgradeResult) {
 	remaining := make([]executableUpdate, 0, len(executable))
 	skipped := make([]ToolUpgradeResult, 0)
 	for _, candidate := range executable {
 		r := candidate.result
-		if profile.OS != "windows" || r.Tool.Name != "gentle-ai" || effectiveMethod(r.Tool, profile) != update.InstallGoInstall {
+		if profile.OS != "windows" || r.Tool.Name != "shevanio-ai" || effectiveMethod(r.Tool, profile) != update.InstallGoInstall {
 			remaining = append(remaining, candidate)
 			continue
 		}
 
-		destination, err := preflightWindowsGentleAIGoInstall(r, profile)
+		destination, err := preflightWindowsShevanioAIGoInstall(r, profile)
 		if err != nil {
 			if hint, ok := AsManualFallback(err); ok {
 				skipped = append(skipped, ToolUpgradeResult{
@@ -657,13 +657,13 @@ func executeOne(ctx context.Context, r update.UpdateResult, profile system.Platf
 }
 
 // effectiveMethod resolves the actual upgrade strategy for a tool on a given platform.
-// Priority order: plugin → brew-owned package → gentle-ai self-upgrade policy →
+// Priority order: plugin → brew-owned package → shevanio-ai self-upgrade policy →
 // go-install → declared method.
 //
 //  1. OpenCode plugins are always handled by their own method — never overridden.
 //  2. Homebrew is used only when Homebrew confirms it owns this specific tool.
-//  3. gentle-ai's own upgrade never falls through to the generic rules below; it
-//     is resolved entirely by gentleAISelfUpgradeMethod, which is what keeps
+//  3. shevanio-ai's own upgrade never falls through to the generic rules below; it
+//     is resolved entirely by shevanioAISelfUpgradeMethod, which is what keeps
 //     Linux and macOS on the signed release download.
 //  4. For every other tool: when Go is available on PATH and the tool declares a
 //     GoImportPath, go-install is preferred over a direct binary download.
@@ -675,8 +675,8 @@ func effectiveMethod(tool update.ToolInfo, profile system.PlatformProfile) updat
 	if profile.PackageManager == "brew" && homebrewPackageInstalled(tool.Name) {
 		return update.InstallBrew
 	}
-	if tool.Name == "gentle-ai" {
-		return gentleAISelfUpgradeMethod(tool, profile)
+	if tool.Name == "shevanio-ai" {
+		return shevanioAISelfUpgradeMethod(tool, profile)
 	}
 	if profile.GoAvailable && tool.GoImportPath != "" {
 		return update.InstallGoInstall
@@ -684,7 +684,7 @@ func effectiveMethod(tool update.ToolInfo, profile system.PlatformProfile) updat
 	return tool.InstallMethod
 }
 
-// gentleAISelfUpgradeMethod resolves how gentle-ai upgrades itself, once
+// shevanioAISelfUpgradeMethod resolves how shevanio-ai upgrades itself, once
 // Homebrew ownership has already been ruled out.
 //
 // Trust anchors differ by platform, and that is the whole point of this
@@ -692,13 +692,13 @@ func effectiveMethod(tool update.ToolInfo, profile system.PlatformProfile) updat
 //
 //   - Linux and macOS publish signed release binaries. Those are downloaded over
 //     an authenticated connection and verified with minisign, so they always
-//     return InstallBinary. This function is the ONLY place gentle-ai's method is
+//     return InstallBinary. This function is the ONLY place shevanio-ai's method is
 //     decided, which is what makes that guarantee structural rather than
-//     incidental: gentle-ai never reaches the generic
+//     incidental: shevanio-ai never reaches the generic
 //     `GoAvailable && GoImportPath != ""` rule, so declaring a GoImportPath for
 //     the Windows path below cannot silently move Linux or macOS off minisign.
-//     Regression guards: TestGentleAIOnLinuxNeverRoutesToGoInstall and
-//     TestGentleAIOnMacOSNeverRoutesToGoInstall.
+//     Regression guards: TestShevanioAIOnLinuxNeverRoutesToGoInstall and
+//     TestShevanioAIOnMacOSNeverRoutesToGoInstall.
 //
 //   - Windows publishes no official binary and no Scoop manifest while publicly
 //     trusted Authenticode signing is pending, so there is no signed asset to
@@ -720,7 +720,7 @@ func effectiveMethod(tool update.ToolInfo, profile system.PlatformProfile) updat
 // Returning InstallBinary in every non-go-install case is also what disables a
 // legacy InstallScript declaration on Windows, where scriptUpgrade has no bash
 // and would point the user at a releases page that publishes no Windows assets.
-func gentleAISelfUpgradeMethod(tool update.ToolInfo, profile system.PlatformProfile) update.InstallMethod {
+func shevanioAISelfUpgradeMethod(tool update.ToolInfo, profile system.PlatformProfile) update.InstallMethod {
 	if profile.OS == "windows" && profile.GoAvailable && tool.GoImportPath != "" {
 		return update.InstallGoInstall
 	}

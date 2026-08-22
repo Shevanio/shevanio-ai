@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
 )
 
 // ─── RenderUpgradeSync states ──────────────────────────────────────────────
@@ -98,9 +98,9 @@ func TestRenderUpgradeSync_CombinedResult(t *testing.T) {
 }
 
 func TestRenderUpgradeSync_LongManualHintUsesWidth(t *testing.T) {
-	longHint := "Windows binary distribution is temporarily unavailable. Install/update from source with Go 1.25.10+:\n  go install github.com/gentleman-programming/gentle-ai/v2/cmd/gentle-ai@v1.1.0"
+	longHint := "Windows binary distribution is temporarily unavailable. Install/update from source with Go 1.25.10+:\n  go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@v1.1.0"
 	report := &upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
-		{ToolName: "gentle-ai", Status: upgrade.UpgradeSkipped, ManualHint: longHint},
+		{ToolName: "shevanio-ai", Status: upgrade.UpgradeSkipped, ManualHint: longHint},
 	}}
 
 	out := stripANSI(RenderUpgradeSyncWithWidth(nil, report, nil, nil, nil, false, true, 0, 0, 80))
@@ -109,7 +109,7 @@ func TestRenderUpgradeSync_LongManualHintUsesWidth(t *testing.T) {
 		if !strings.Contains(line, "Go 1.25.10+:") {
 			continue
 		}
-		if !strings.Contains(out, "go install") || !strings.Contains(out, "gentle-ai/v2/cmd/gentle-ai@v1.1.0") {
+		if !strings.Contains(out, "go install") || !strings.Contains(out, "shevanio-ai/v2/cmd/shevanio-ai@v1.1.0") {
 			t.Fatalf("full manual command should remain visible; got:\n%s", out)
 		}
 		for _, wrapped := range lines[i+1:] {
@@ -125,32 +125,32 @@ func TestRenderUpgradeSync_LongManualHintUsesWidth(t *testing.T) {
 	t.Fatalf("hint preamble should appear in output; got:\n%s", out)
 }
 
-func TestRenderUpgradeSync_SkipsSyncWhenGentleAIUpgraded(t *testing.T) {
+func TestRenderUpgradeSync_SkipsSyncWhenShevanioAIUpgraded(t *testing.T) {
 	report := &upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
-		{ToolName: "gentle-ai", OldVersion: "v1.36.1", NewVersion: "v1.36.2", Status: upgrade.UpgradeSucceeded},
+		{ToolName: "shevanio-ai", OldVersion: "v1.36.1", NewVersion: "v1.36.2", Status: upgrade.UpgradeSucceeded},
 	}}
 
 	out := RenderUpgradeSync(nil, report, nil, nil, nil, false, true, 0, 0)
 	lower := strings.ToLower(out)
 	if !strings.Contains(lower, "sync skipped") {
-		t.Fatalf("RenderUpgradeSync() should say sync was skipped after gentle-ai upgrade:\n%s", out)
+		t.Fatalf("RenderUpgradeSync() should say sync was skipped after shevanio-ai upgrade:\n%s", out)
 	}
-	if !strings.Contains(lower, "restart gentle-ai") {
-		t.Fatalf("RenderUpgradeSync() should ask for restart after gentle-ai upgrade:\n%s", out)
+	if !strings.Contains(lower, "restart shevanio-ai") {
+		t.Fatalf("RenderUpgradeSync() should ask for restart after shevanio-ai upgrade:\n%s", out)
 	}
 	if strings.Contains(lower, "no files needed updating") {
-		t.Fatalf("RenderUpgradeSync() should not pretend sync ran after gentle-ai upgrade:\n%s", out)
+		t.Fatalf("RenderUpgradeSync() should not pretend sync ran after shevanio-ai upgrade:\n%s", out)
 	}
 }
 
-func TestRenderUpgrade_ShowsRestartNoticeWhenGentleAIUpgraded(t *testing.T) {
+func TestRenderUpgrade_ShowsRestartNoticeWhenShevanioAIUpgraded(t *testing.T) {
 	report := &upgrade.UpgradeReport{Results: []upgrade.ToolUpgradeResult{
-		{ToolName: "gentle-ai", OldVersion: "v1.36.1", NewVersion: "v1.36.2", Status: upgrade.UpgradeSucceeded},
+		{ToolName: "shevanio-ai", OldVersion: "v1.36.1", NewVersion: "v1.36.2", Status: upgrade.UpgradeSucceeded},
 	}}
 
 	out := RenderUpgrade(nil, report, nil, false, true, 0, 0)
-	if !strings.Contains(strings.ToLower(out), "restart gentle-ai") {
-		t.Fatalf("RenderUpgrade() should show restart notice after gentle-ai upgrade:\n%s", out)
+	if !strings.Contains(strings.ToLower(out), "restart shevanio-ai") {
+		t.Fatalf("RenderUpgrade() should show restart notice after shevanio-ai upgrade:\n%s", out)
 	}
 }
 

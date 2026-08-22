@@ -10,17 +10,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // startNewLineageForFinalizeTest is the shared fixture for this file's
 // tests: a tier-0 (RiskLow) new lineage, created through the real CLI
 // `review start` with the activation switch on — the exact repro shape the
-// verify report's CRITICAL C1 used (`GENTLE_AI_RDD_NEW_LINEAGE=1 gentle-ai
+// verify report's CRITICAL C1 used (`SHEVANIO_AI_RDD_NEW_LINEAGE=1 shevanio-ai
 // review start --lineage X`).
 func startNewLineageForFinalizeTest(t *testing.T, repo, lineage string) {
 	t.Helper()
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	lines := make([]string, 5)
 	for index := range lines {
 		lines[index] = "ordinary documentation line"
@@ -42,7 +42,7 @@ func startNewLineageForFinalizeTest(t *testing.T, repo, lineage string) {
 	if started.LineageID != lineage || started.State != reviewtransaction.NewLineageStateReviewing {
 		t.Fatalf("new-lineage start = %#v", started)
 	}
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "")
 }
 
 // TestReviewFacadeFinalizeNewLineageReachesReceiptNoBlocker is task C1's

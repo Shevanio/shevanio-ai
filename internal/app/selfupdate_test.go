@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/update/upgrade"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
+	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
 )
 
 // stubProfile returns a minimal PlatformProfile for testing.
@@ -51,7 +51,7 @@ func unsetEnv(t *testing.T, key string) {
 
 // swapSelfUpdateDeps replaces all package-level dependency vars used by selfUpdate
 // and registers cleanup to restore them. Returns pointers to track call counts.
-// Note: reExec and goOS were removed in task 4.6 — restartAfterGentleAIUpgrade
+// Note: reExec and goOS were removed in task 4.6 — restartAfterShevanioAIUpgrade
 // now always prints the restart message and returns; no re-exec on any OS.
 type selfUpdateStubs struct {
 	checkCalled   int
@@ -164,7 +164,7 @@ func TestSelfUpdate_UpdateAvailable_CallsUpgradeAndRestart(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -172,7 +172,7 @@ func TestSelfUpdate_UpdateAvailable_CallsUpgradeAndRestart(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -208,7 +208,7 @@ func TestSelfUpdate_UpToDate_NoUpgradeCall(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.8.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpToDate,
@@ -235,7 +235,7 @@ func TestSelfUpdate_CheckError_ReturnsNil(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:   update.ToolInfo{Name: "gentle-ai"},
+			Tool:   update.ToolInfo{Name: "shevanio-ai"},
 			Status: update.CheckFailed,
 			Err:    context.DeadlineExceeded,
 		},
@@ -258,7 +258,7 @@ func TestSelfUpdate_UpgradeError_ReturnsNil(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -267,7 +267,7 @@ func TestSelfUpdate_UpgradeError_ReturnsNil(t *testing.T) {
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
 			{
-				ToolName: "gentle-ai",
+				ToolName: "shevanio-ai",
 				Status:   upgrade.UpgradeFailed,
 				Err:      os.ErrPermission,
 			},
@@ -283,7 +283,7 @@ func TestSelfUpdate_UpgradeError_ReturnsNil(t *testing.T) {
 }
 
 // TestSelfUpdate_PrintsRestartMessage verifies that after a successful upgrade
-// on any OS, restartAfterGentleAIUpgrade prints a restart-guidance message and
+// on any OS, restartAfterShevanioAIUpgrade prints a restart-guidance message and
 // does NOT re-exec (converged behavior — task 4.6).
 func TestSelfUpdate_PrintsRestartMessage(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
@@ -291,7 +291,7 @@ func TestSelfUpdate_PrintsRestartMessage(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -299,11 +299,11 @@ func TestSelfUpdate_PrintsRestartMessage(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
-	// restartAfterGentleAIUpgrade is OS-agnostic after task 4.6 — prints and returns.
+	// restartAfterShevanioAIUpgrade is OS-agnostic after task 4.6 — prints and returns.
 	// No goOS swap needed; the behavior is identical on all platforms.
 	for _, osName := range []string{"darwin", "windows", "linux"} {
 		t.Run("os="+osName, func(t *testing.T) {
@@ -338,7 +338,7 @@ func TestSelfUpdate_BrewInstallMethod_PassedToUpgradeExecutor(t *testing.T) {
 	checkResults := []update.UpdateResult{
 		{
 			Tool: update.ToolInfo{
-				Name:          "gentle-ai",
+				Name:          "shevanio-ai",
 				InstallMethod: update.InstallBrew,
 			},
 			InstalledVersion: "1.7.0",
@@ -376,7 +376,7 @@ func TestSelfUpdate_BrewInstallMethod_PassedToUpgradeExecutor(t *testing.T) {
 		capturedProfile = profile
 		return upgrade.UpgradeReport{
 			Results: []upgrade.ToolUpgradeResult{
-				{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+				{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 			},
 		}
 	}
@@ -405,7 +405,7 @@ func TestSelfUpdate_BrewInstallMethod_PassedToUpgradeExecutor(t *testing.T) {
 }
 
 // TestSelfUpdate_ConfirmUpdate_UserAccepts verifies that when the user accepts
-// the prompt, the upgrade runs. GENTLE_AI_CONFIRM_UPDATE removed in slice 5 —
+// the prompt, the upgrade runs. SHEVANIO_AI_CONFIRM_UPDATE removed in slice 5 —
 // prompt is unconditional.
 func TestSelfUpdate_ConfirmUpdate_UserAccepts(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
@@ -413,7 +413,7 @@ func TestSelfUpdate_ConfirmUpdate_UserAccepts(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -421,7 +421,7 @@ func TestSelfUpdate_ConfirmUpdate_UserAccepts(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -450,14 +450,14 @@ func TestSelfUpdate_ConfirmUpdate_UserAccepts(t *testing.T) {
 }
 
 // TestSelfUpdate_ConfirmUpdate_UserDeclines verifies that when the user declines
-// the prompt, the upgrade is skipped. GENTLE_AI_CONFIRM_UPDATE removed in slice 5.
+// the prompt, the upgrade is skipped. SHEVANIO_AI_CONFIRM_UPDATE removed in slice 5.
 func TestSelfUpdate_ConfirmUpdate_UserDeclines(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
 	unsetEnv(t, envSelfUpdateDone)
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -488,7 +488,7 @@ func TestSelfUpdate_ConfirmUpdate_UserDeclines(t *testing.T) {
 }
 
 // TestSelfUpdate_PromptAlwaysShown verifies that when an update is available,
-// promptFn is always called — GENTLE_AI_CONFIRM_UPDATE is removed and ignored.
+// promptFn is always called — SHEVANIO_AI_CONFIRM_UPDATE is removed and ignored.
 // Slice 5 replaces the old "env unset → auto-apply (no prompt)" behavior.
 func TestSelfUpdate_PromptAlwaysShown(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
@@ -496,7 +496,7 @@ func TestSelfUpdate_PromptAlwaysShown(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -504,7 +504,7 @@ func TestSelfUpdate_PromptAlwaysShown(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -533,12 +533,12 @@ func TestSelfUpdate_PromptAlwaysShown(t *testing.T) {
 }
 
 // TestSelfUpdate_ConfirmUpdateTable exercises prompt-path combinations.
-// Slice 5: GENTLE_AI_CONFIRM_UPDATE is removed — prompt is always called.
+// Slice 5: SHEVANIO_AI_CONFIRM_UPDATE is removed — prompt is always called.
 // Only promptFn reply + --yes flag govern whether upgrade proceeds.
 func TestSelfUpdate_ConfirmUpdateTable(t *testing.T) {
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -546,11 +546,11 @@ func TestSelfUpdate_ConfirmUpdateTable(t *testing.T) {
 	}
 	successReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
-	// wantReExec removed: restartAfterGentleAIUpgrade always prints and returns (task 4.6).
+	// wantReExec removed: restartAfterShevanioAIUpgrade always prints and returns (task 4.6).
 	tests := []struct {
 		name            string
 		promptReply     bool
@@ -604,7 +604,7 @@ func TestSelfUpdate_ConfirmUpdateTable(t *testing.T) {
 // ─── Slice 4 RED: PendingSync written on successful self-upgrade ─────────────
 
 // TestSelfUpdate_SetsPendingSyncOnSuccess verifies that after a successful
-// gentle-ai self-upgrade, PendingSync=true is written to state before the
+// shevanio-ai self-upgrade, PendingSync=true is written to state before the
 // process exits (re-exec or print message). This is the deferred-sync flag
 // that the next launch reads to run sync automatically.
 func TestSelfUpdate_SetsPendingSyncOnSuccess(t *testing.T) {
@@ -613,7 +613,7 @@ func TestSelfUpdate_SetsPendingSyncOnSuccess(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -621,7 +621,7 @@ func TestSelfUpdate_SetsPendingSyncOnSuccess(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -655,7 +655,7 @@ func TestSelfUpdate_SetsPendingSyncOnSuccess(t *testing.T) {
 }
 
 // TestSelfUpdate_DoesNotSetPendingSyncOnFailure verifies that when the
-// gentle-ai upgrade fails, PendingSync is NOT set in state (no retry needed
+// shevanio-ai upgrade fails, PendingSync is NOT set in state (no retry needed
 // since sync was never deferred).
 func TestSelfUpdate_DoesNotSetPendingSyncOnFailure(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
@@ -663,7 +663,7 @@ func TestSelfUpdate_DoesNotSetPendingSyncOnFailure(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -671,7 +671,7 @@ func TestSelfUpdate_DoesNotSetPendingSyncOnFailure(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeFailed, Err: os.ErrPermission},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeFailed, Err: os.ErrPermission},
 		},
 	}
 
@@ -706,7 +706,7 @@ func TestSelfUpdate_NoClobberOnCorruptStateFile(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -714,7 +714,7 @@ func TestSelfUpdate_NoClobberOnCorruptStateFile(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -723,7 +723,7 @@ func TestSelfUpdate_NoClobberOnCorruptStateFile(t *testing.T) {
 	selfUpdateHomeDirFn = func() (string, error) { return tmpHome, nil }
 
 	// Write a corrupt (non-missing) state file so state.Read returns a non-ErrNotExist error.
-	stateDir := filepath.Join(tmpHome, ".gentle-ai")
+	stateDir := filepath.Join(tmpHome, ".shevanio-ai")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
@@ -756,17 +756,17 @@ func TestSelfUpdate_NoClobberOnCorruptStateFile(t *testing.T) {
 // ─── Slice 5 RED: CLI prompt is default ──────────────────────────────────────
 
 // TestSelfUpdate_PromptCalledWithoutEnvVar verifies that selfUpdate calls
-// promptFn unconditionally when an update is available — no GENTLE_AI_CONFIRM_UPDATE
+// promptFn unconditionally when an update is available — no SHEVANIO_AI_CONFIRM_UPDATE
 // env var is required. Task 5.1.
 func TestSelfUpdate_PromptCalledWithoutEnvVar(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
 	unsetEnv(t, envSelfUpdateDone)
 	// Ensure env is NOT set — prompt must be called anyway.
-	unsetEnv(t, "GENTLE_AI_CONFIRM_UPDATE")
+	unsetEnv(t, "SHEVANIO_AI_CONFIRM_UPDATE")
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -774,7 +774,7 @@ func TestSelfUpdate_PromptCalledWithoutEnvVar(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -793,21 +793,21 @@ func TestSelfUpdate_PromptCalledWithoutEnvVar(t *testing.T) {
 		t.Fatalf("selfUpdate returned error: %v", err)
 	}
 	if promptCalled != 1 {
-		t.Errorf("promptCalled = %d, want 1 (prompt must be called without GENTLE_AI_CONFIRM_UPDATE)", promptCalled)
+		t.Errorf("promptCalled = %d, want 1 (prompt must be called without SHEVANIO_AI_CONFIRM_UPDATE)", promptCalled)
 	}
 }
 
-// TestSelfUpdate_ConfirmUpdateEnvIgnored verifies that setting GENTLE_AI_CONFIRM_UPDATE=1
+// TestSelfUpdate_ConfirmUpdateEnvIgnored verifies that setting SHEVANIO_AI_CONFIRM_UPDATE=1
 // makes no difference — it is ignored and the prompt is called regardless. Task 5.1.
 func TestSelfUpdate_ConfirmUpdateEnvIgnored(t *testing.T) {
 	unsetEnv(t, envNoSelfUpdate)
 	unsetEnv(t, envSelfUpdateDone)
 	// Env var set to "1" but must have NO effect on whether prompt is called.
-	setEnv(t, "GENTLE_AI_CONFIRM_UPDATE", "1")
+	setEnv(t, "SHEVANIO_AI_CONFIRM_UPDATE", "1")
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -815,7 +815,7 @@ func TestSelfUpdate_ConfirmUpdateEnvIgnored(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -833,9 +833,9 @@ func TestSelfUpdate_ConfirmUpdateEnvIgnored(t *testing.T) {
 	if err != nil {
 		t.Fatalf("selfUpdate returned error: %v", err)
 	}
-	// Prompt must be called: GENTLE_AI_CONFIRM_UPDATE is no longer a gate.
+	// Prompt must be called: SHEVANIO_AI_CONFIRM_UPDATE is no longer a gate.
 	if promptCalled != 1 {
-		t.Errorf("promptCalled = %d, want 1 (GENTLE_AI_CONFIRM_UPDATE must be ignored)", promptCalled)
+		t.Errorf("promptCalled = %d, want 1 (SHEVANIO_AI_CONFIRM_UPDATE must be ignored)", promptCalled)
 	}
 }
 
@@ -847,7 +847,7 @@ func TestSelfUpdate_UserDeclines_NoUpgrade(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -975,7 +975,7 @@ func TestSelfUpdate_YesFlag_AutoAccepts(t *testing.T) {
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -983,7 +983,7 @@ func TestSelfUpdate_YesFlag_AutoAccepts(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -1017,18 +1017,18 @@ func TestSelfUpdate_YesFlag_AutoAccepts(t *testing.T) {
 	}
 }
 
-// TestSelfUpdate_YesEnvVar_AutoAccepts verifies the GENTLE_AI_YES=1 env-var
+// TestSelfUpdate_YesEnvVar_AutoAccepts verifies the SHEVANIO_AI_YES=1 env-var
 // contract end-to-end using the real selfUpdateYesFn (not an injected stub).
 // When the env var is set, the upgrade must proceed without calling the
 // interactive promptFn. Task 5.3 / 5.5 env-var path.
 func TestSelfUpdate_YesEnvVar_AutoAccepts(t *testing.T) {
-	t.Setenv("GENTLE_AI_YES", "1")
+	t.Setenv("SHEVANIO_AI_YES", "1")
 	unsetEnv(t, envNoSelfUpdate)
 	unsetEnv(t, envSelfUpdateDone)
 
 	checkResults := []update.UpdateResult{
 		{
-			Tool:             update.ToolInfo{Name: "gentle-ai"},
+			Tool:             update.ToolInfo{Name: "shevanio-ai"},
 			InstalledVersion: "1.7.0",
 			LatestVersion:    "1.8.0",
 			Status:           update.UpdateAvailable,
@@ -1036,7 +1036,7 @@ func TestSelfUpdate_YesEnvVar_AutoAccepts(t *testing.T) {
 	}
 	upgradeReport := upgrade.UpgradeReport{
 		Results: []upgrade.ToolUpgradeResult{
-			{ToolName: "gentle-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
+			{ToolName: "shevanio-ai", Status: upgrade.UpgradeSucceeded, NewVersion: "1.8.0"},
 		},
 	}
 
@@ -1047,7 +1047,7 @@ func TestSelfUpdate_YesEnvVar_AutoAccepts(t *testing.T) {
 	t.Cleanup(func() { selfUpdateYesFn = origYes })
 	selfUpdateYesFn = func() bool { return os.Getenv(envYesUpdate) == "1" }
 
-	// A promptFn that declines — it must NOT be called when GENTLE_AI_YES=1.
+	// A promptFn that declines — it must NOT be called when SHEVANIO_AI_YES=1.
 	origPrompt := promptFn
 	t.Cleanup(func() { promptFn = origPrompt })
 	promptCalled := 0
@@ -1061,14 +1061,14 @@ func TestSelfUpdate_YesEnvVar_AutoAccepts(t *testing.T) {
 		t.Fatalf("selfUpdate returned error: %v", err)
 	}
 	if stubs.upgradeCalled != 1 {
-		t.Errorf("upgradeCalled = %d, want 1 (GENTLE_AI_YES=1 auto-accepts)", stubs.upgradeCalled)
+		t.Errorf("upgradeCalled = %d, want 1 (SHEVANIO_AI_YES=1 auto-accepts)", stubs.upgradeCalled)
 	}
 	if promptCalled != 0 {
-		t.Errorf("promptCalled = %d, want 0 (GENTLE_AI_YES=1 bypasses interactive prompt)", promptCalled)
+		t.Errorf("promptCalled = %d, want 0 (SHEVANIO_AI_YES=1 bypasses interactive prompt)", promptCalled)
 	}
 }
 
-// TestSelfUpdate_NoSelfUpdate_StillSkips_Slice5 verifies that GENTLE_AI_NO_SELF_UPDATE
+// TestSelfUpdate_NoSelfUpdate_StillSkips_Slice5 verifies that SHEVANIO_AI_NO_SELF_UPDATE
 // continues to work after slice 5 changes. Task 5.7 guard.
 func TestSelfUpdate_NoSelfUpdate_StillSkips_Slice5(t *testing.T) {
 	setEnv(t, envNoSelfUpdate, "1")
@@ -1081,7 +1081,7 @@ func TestSelfUpdate_NoSelfUpdate_StillSkips_Slice5(t *testing.T) {
 		t.Fatalf("selfUpdate returned error: %v", err)
 	}
 	if stubs.checkCalled != 0 {
-		t.Errorf("checkCalled = %d, want 0 (GENTLE_AI_NO_SELF_UPDATE must still skip)", stubs.checkCalled)
+		t.Errorf("checkCalled = %d, want 0 (SHEVANIO_AI_NO_SELF_UPDATE must still skip)", stubs.checkCalled)
 	}
 }
 

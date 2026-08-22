@@ -276,7 +276,7 @@ func TestExplicitPrePRRequestWithoutRemoteFailsClosed(t *testing.T) {
 	ledgerPath := filepath.Join(dir, "ledger.json")
 	evidencePath := filepath.Join(dir, "evidence.md")
 	for path, content := range map[string]string{
-		policyPath: "bounded policy\n", ledgerPath: "{\"schema\":\"gentle-ai.review-ledger/v1\",\"findings\":[]}", evidencePath: "verified\n",
+		policyPath: "bounded policy\n", ledgerPath: "{\"schema\":\"shevanio-ai.review-ledger/v1\",\"findings\":[]}", evidencePath: "verified\n",
 	} {
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
@@ -823,7 +823,7 @@ func TestResolveAdvertisedSelectorPreservesOperationalFailures(t *testing.T) {
 
 			if tt.failRemote != "" {
 				original := gitCommandContext
-				t.Setenv("GENTLE_AI_TEST_GIT_PATH_FAIL", "1")
+				t.Setenv("SHEVANIO_AI_TEST_GIT_PATH_FAIL", "1")
 				gitCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 					if slicesContain(args, "config") && slicesContain(args, "remote."+tt.failRemote+".url") {
 						return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestGitAuthorityPathHelperProcess$")
@@ -950,7 +950,7 @@ func TestResolveAdvertisedSelectorClassifiesAdvertisedOutput(t *testing.T) {
 func mockLsRemoteOutput(t *testing.T, output string) {
 	t.Helper()
 	original := gitCommandContext
-	t.Setenv("GENTLE_AI_TEST_GIT_PATH_OUTPUT", base64.StdEncoding.EncodeToString([]byte(output)))
+	t.Setenv("SHEVANIO_AI_TEST_GIT_PATH_OUTPUT", base64.StdEncoding.EncodeToString([]byte(output)))
 	gitCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		if slicesContain(args, "ls-remote") && slicesContain(args, "--heads") {
 			return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestGitAuthorityPathHelperProcess$")
@@ -1204,7 +1204,7 @@ func newCompatiblePrePRFixtureMode(t *testing.T, deliveryPath, basePath string, 
 	evidencePath := filepath.Join(dir, "evidence.md")
 	policyPayload := []byte("# Bounded review policy\n\npre_pr_ci_issuer: trusted-ci\npre_pr_ci_ed25519_public_key: " + base64.StdEncoding.EncodeToString(publicKey) + "\n")
 	for path, payload := range map[string][]byte{
-		policyPath: policyPayload, ledgerPath: []byte("{\"schema\":\"gentle-ai.review-ledger/v1\",\"findings\":[]}"), evidencePath: []byte("verified\n"),
+		policyPath: policyPayload, ledgerPath: []byte("{\"schema\":\"shevanio-ai.review-ledger/v1\",\"findings\":[]}"), evidencePath: []byte("verified\n"),
 	} {
 		if err := os.WriteFile(path, payload, 0o644); err != nil {
 			t.Fatal(err)
@@ -1624,7 +1624,7 @@ func TestNativeGateUsesRetainedArtifactContentAndRejectsMismatch(t *testing.T) {
 	if got := EvaluateNativeGate(context.Background(), repo, receipt, request); got.Result != GateAllow {
 		t.Fatalf("retained content gate = %#v", got)
 	}
-	request.LedgerContent = `{"schema":"gentle-ai.review-ledger/v1","findings":[{"id":"mismatch"}]}`
+	request.LedgerContent = `{"schema":"shevanio-ai.review-ledger/v1","findings":[{"id":"mismatch"}]}`
 	if got := EvaluateNativeGate(context.Background(), repo, receipt, request); got.Result == GateAllow {
 		t.Fatal("mismatched retained ledger content was accepted")
 	}
@@ -1950,7 +1950,7 @@ func appendApprovedStoreChain(t *testing.T, store Store, approved Transaction) s
 func repositoryLineageStoreDir(t *testing.T, repo, lineage string) string {
 	t.Helper()
 	commonDir := trimGit(gitSnapshot(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-	return filepath.Join(commonDir, "gentle-ai", "review-transactions", "v1", lineage)
+	return filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v1", lineage)
 }
 
 // TestDiscoverCompactFacadeGateReviewClassification is the ladder table for

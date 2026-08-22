@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 type statResult struct {
@@ -25,7 +25,7 @@ func NewAdapter() *Adapter {
 	}
 }
 
-// antigravityVariantDir retains Gentle AI's legacy settings/skills selection.
+// antigravityVariantDir retains Shevanio AI's legacy settings/skills selection.
 func (a *Adapter) antigravityVariantDir(homeDir string) string {
 	desktop := filepath.Join(homeDir, ".gemini", "antigravity-desktop")
 	if stat := a.statPath(desktop); stat.err == nil {

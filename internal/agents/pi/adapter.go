@@ -11,10 +11,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/agents/capabilitymanifest"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/agents/capabilitymanifest"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 const (
@@ -54,7 +54,7 @@ type Adapter struct {
 	statPath func(string) statResult
 }
 
-// CodeGraphPathSet declares the Pi paths owned or inspected by Gentle AI's
+// CodeGraphPathSet declares the Pi paths owned or inspected by Shevanio AI's
 // optional CodeGraph integration. It intentionally contains no gentle-pi path.
 type CodeGraphPathSet struct {
 	AgentDir  string
@@ -72,7 +72,7 @@ func CodeGraphPaths(homeDir string) CodeGraphPathSet {
 	return CodeGraphPathSet{
 		AgentDir:  agentDir,
 		MCPConfig: filepath.Join(agentDir, piEngramMCPConfigFile),
-		Manifest:  filepath.Join(homeDir, ".gentle-ai", "pi-codegraph.json"),
+		Manifest:  filepath.Join(homeDir, ".shevanio-ai", "pi-codegraph.json"),
 	}
 }
 

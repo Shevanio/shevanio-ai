@@ -18,7 +18,7 @@ import "fmt"
 // work. The exit is to stop claiming a remediation, which no message ever said.
 func runtimeDischargedFailureRefusal(evidence string, dischargedByOrdinal int) error {
 	return fmt.Errorf(
-		"failed verification %s has already been repaired by the passing settlement at attempt %d, so the attempt chain holds no unremediated failure for this correction to name; this work unit is ordinary work — settle it with the same flags but WITHOUT --remediates-evidence-revision. Run `gentle-ai sdd-attempt status --cwd <repo> --change <change>` to read the chain: a correction plan decomposed into several bounded work units names the failure once, on the slice that repairs it, and the remaining slices settle plainly",
+		"failed verification %s has already been repaired by the passing settlement at attempt %d, so the attempt chain holds no unremediated failure for this correction to name; this work unit is ordinary work — settle it with the same flags but WITHOUT --remediates-evidence-revision. Run `shevanio-ai sdd-attempt status --cwd <repo> --change <change>` to read the chain: a correction plan decomposed into several bounded work units names the failure once, on the slice that repairs it, and the remaining slices settle plainly",
 		evidence, dischargedByOrdinal)
 }
 
@@ -33,7 +33,7 @@ func runtimeDischargedFailureRefusal(evidence string, dischargedByOrdinal int) e
 // candidate, and the operator can see at a glance which.
 func runtimeChargedCandidateRefusal(approvedTree, chargedTree, lineage string) error {
 	return fmt.Errorf(
-		"approved review %s covers candidate tree %s, but this attempt charged tree %s, so the successor does not bind the work being settled; these two trees must be identical. Either restore the workspace to the approved bytes and settle again, or get the charged tree approved and name that lineage — `gentle-ai review status --cwd <repo> --contract %s --next-transition` names the next review action for the candidate you actually have. `git diff %s %s` shows exactly what differs",
+		"approved review %s covers candidate tree %s, but this attempt charged tree %s, so the successor does not bind the work being settled; these two trees must be identical. Either restore the workspace to the approved bytes and settle again, or get the charged tree approved and name that lineage — `shevanio-ai review status --cwd <repo> --contract %s --next-transition` names the next review action for the candidate you actually have. `git diff %s %s` shows exactly what differs",
 		lineage, approvedTree, chargedTree, runtimeReviewIntegrationContract, approvedTree, chargedTree)
 }
 
@@ -43,11 +43,11 @@ func runtimeChargedCandidateRefusal(approvedTree, chargedTree, lineage string) e
 func runtimeBoundPredecessorRefusal(lineage, boundRevision, currentRevision string, stale bool) error {
 	if stale {
 		return fmt.Errorf(
-			"this change is bound to review %s at revision %s, but that lineage has since advanced to %s, so the binding no longer describes its authority; re-bind to the current revision with `gentle-ai review bind-sdd --cwd <repo> --change <change> --lineage %s` and settle again",
+			"this change is bound to review %s at revision %s, but that lineage has since advanced to %s, so the binding no longer describes its authority; re-bind to the current revision with `shevanio-ai review bind-sdd --cwd <repo> --change <change> --lineage %s` and settle again",
 			lineage, boundRevision, currentRevision, lineage)
 	}
 	return fmt.Errorf(
-		"this change is bound to review %s at revision %s, and that revision is not in an approved state, so it cannot authorize a settlement; run `gentle-ai review status --cwd <repo> --contract %s --next-transition` to see what that lineage still owes before it can approve",
+		"this change is bound to review %s at revision %s, and that revision is not in an approved state, so it cannot authorize a settlement; run `shevanio-ai review status --cwd <repo> --contract %s --next-transition` to see what that lineage still owes before it can approve",
 		lineage, boundRevision, runtimeReviewIntegrationContract)
 }
 

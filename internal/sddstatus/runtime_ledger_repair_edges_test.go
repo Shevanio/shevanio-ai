@@ -35,7 +35,7 @@ func newConsecutiveRescopeRepairFixture(t *testing.T) consecutiveRescopeRepairFi
 	}
 	last, generation := b.Attempts[0], b.ObjectiveGeneration+1
 	request := RescopeObjectiveRequest{ExpectedRevision: b.Revision, RequestID: "rescope-b-c", WorkUnit: "objective-c", EvidenceGoal: "prove C", MaxAttempts: 1, MaxChangedLines: 5, Reason: "narrow B to C", Actor: "maintainer"}
-	poison := runtimeRecord{Schema: runtimeRecordSchema, Change: store.Change, PreviousRevision: b.Revision, Operation: runtimeOperationRescope, RequestID: request.RequestID, RequestDigest: runtimeValueHash("gentle-ai.sdd-runtime-rescope-request/v1", request), Rescope: &runtimeRescopeEvent{PreviousObjectiveID: b.Objective.ID, PreviousGeneration: b.Objective.Generation, PreviousMaxAttempts: b.Objective.MaxAttempts, PreviousMaxChangedLines: b.Objective.MaxChangedLines, RescopeCandidateIdentity: b.Objective.InitialCandidateIdentity, RescopeCandidateTree: last.FinishCandidateTree, ObjectiveID: runtimeObjectiveID(store.Change, request.WorkUnit, request.EvidenceGoal, b.Objective.InitialCandidateIdentity, generation), ObjectiveGeneration: generation, WorkUnit: request.WorkUnit, EvidenceGoal: request.EvidenceGoal, MaxAttempts: request.MaxAttempts, MaxChangedLines: request.MaxChangedLines, Reason: request.Reason, Actor: request.Actor}}
+	poison := runtimeRecord{Schema: runtimeRecordSchema, Change: store.Change, PreviousRevision: b.Revision, Operation: runtimeOperationRescope, RequestID: request.RequestID, RequestDigest: runtimeValueHash("shevanio-ai.sdd-runtime-rescope-request/v1", request), Rescope: &runtimeRescopeEvent{PreviousObjectiveID: b.Objective.ID, PreviousGeneration: b.Objective.Generation, PreviousMaxAttempts: b.Objective.MaxAttempts, PreviousMaxChangedLines: b.Objective.MaxChangedLines, RescopeCandidateIdentity: b.Objective.InitialCandidateIdentity, RescopeCandidateTree: last.FinishCandidateTree, ObjectiveID: runtimeObjectiveID(store.Change, request.WorkUnit, request.EvidenceGoal, b.Objective.InitialCandidateIdentity, generation), ObjectiveGeneration: generation, WorkUnit: request.WorkUnit, EvidenceGoal: request.EvidenceGoal, MaxAttempts: request.MaxAttempts, MaxChangedLines: request.MaxChangedLines, Reason: request.Reason, Actor: request.Actor}}
 	revision, payload, err := runtimeRecordRevision(poison)
 	if err != nil {
 		t.Fatal(err)
@@ -196,7 +196,7 @@ func TestRuntimeConsecutiveRescopeRepairRefusesNonExactDamage(t *testing.T) {
 			test.mutate(&record)
 			if record.Operation == runtimeOperationRescope {
 				request := RescopeObjectiveRequest{ExpectedRevision: record.PreviousRevision, RequestID: record.RequestID, WorkUnit: record.Rescope.WorkUnit, EvidenceGoal: record.Rescope.EvidenceGoal, MaxAttempts: record.Rescope.MaxAttempts, MaxChangedLines: record.Rescope.MaxChangedLines, Reason: record.Rescope.Reason, Actor: record.Rescope.Actor}
-				record.RequestDigest = runtimeValueHash("gentle-ai.sdd-runtime-rescope-request/v1", request)
+				record.RequestDigest = runtimeValueHash("shevanio-ai.sdd-runtime-rescope-request/v1", request)
 			}
 			head := fixture.rewrite(t, record)
 			if _, err := fixture.store.RepairConsecutiveRescope(context.Background(), RepairConsecutiveRescopeRequest{ExpectedRevision: head, RequestID: "repair-refusal", Reason: "must refuse", Actor: "maintainer"}); err == nil {
@@ -226,8 +226,8 @@ func TestRuntimeConsecutiveRescopeRepairContinuationQuotesDynamicArguments(t *te
 	}
 
 	// Replace the executable name with `set --` so the shell parses the printed
-	// arguments without launching Gentle AI. A broken quote would create marker.
-	script := "set -- " + strings.TrimPrefix(command, "gentle-ai ") + "\nfor argument in \"$@\"; do printf '%s\\000' \"$argument\"; done"
+	// arguments without launching Shevanio AI. A broken quote would create marker.
+	script := "set -- " + strings.TrimPrefix(command, "shevanio-ai ") + "\nfor argument in \"$@\"; do printf '%s\\000' \"$argument\"; done"
 	output, err := exec.Command(shell, "-c", script).Output()
 	if err != nil {
 		t.Fatalf("shell rejected continuation %q: %v", command, err)
@@ -252,7 +252,7 @@ func TestRuntimeConsecutiveRescopeRepairContinuationQuotesDynamicArguments(t *te
 
 func TestRuntimeConsecutiveRescopeRepairRequiredErrorPrintsContinuationOnNewLine(t *testing.T) {
 	const revision = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	const continuation = "gentle-ai sdd-attempt repair --cwd /tmp/repo --change repair-2839"
+	const continuation = "shevanio-ai sdd-attempt repair --cwd /tmp/repo --change repair-2839"
 
 	got := (&runtimeConsecutiveRescopeRepairRequiredError{
 		Revision:     revision,

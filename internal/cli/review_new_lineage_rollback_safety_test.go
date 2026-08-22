@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestNewLineageRollbackSafetyStaysReadableAndFinalizableWhileSwitchIsOff is
@@ -37,7 +37,7 @@ func TestNewLineageRollbackSafetyStaysReadableAndFinalizableWhileSwitchIsOff(t *
 	// to no changed paths at all under GatePreCommit.
 	runReviewCLIGit(t, repo, "add", "tracked.txt")
 
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "1")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "1")
 	live, _, err := governingAuthorityLiveEvidence(context.Background(), repo, reviewtransaction.NativeGateRequestInput{Gate: reviewtransaction.GatePreCommit})
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +58,7 @@ func TestNewLineageRollbackSafetyStaysReadableAndFinalizableWhileSwitchIsOff(t *
 
 	// Rollback: the activation switch goes back off. No new start would use
 	// v3, but this lineage already exists.
-	t.Setenv("GENTLE_AI_RDD_NEW_LINEAGE", "")
+	t.Setenv("SHEVANIO_AI_RDD_NEW_LINEAGE", "")
 
 	if _, err := store.Load(); err != nil {
 		t.Fatalf("in-flight new lineage unreadable after rollback: %v", err)
@@ -81,7 +81,7 @@ func TestNewLineageRollbackSafetyStaysReadableAndFinalizableWhileSwitchIsOff(t *
 	if !errors.As(err, &denied) || denied.Result == reviewtransaction.GateAllow {
 		t.Fatalf("in-flight new lineage validate error after rollback = %v, want a ReviewGateDeniedError that never allows", err)
 	}
-	if _, statErr := os.Stat(filepath.Join(repo, ".git", "gentle-ai", "review-transactions", "v2")); !os.IsNotExist(statErr) {
+	if _, statErr := os.Stat(filepath.Join(repo, ".git", "shevanio-ai", "review-transactions", "v2")); !os.IsNotExist(statErr) {
 		t.Fatalf("rollback validate fabricated a legacy authority instead of using the in-flight v3 one: %v", statErr)
 	}
 

@@ -14,7 +14,7 @@ import (
 const (
 	// LensContextEmissionSchema identifies one durable record that the provider
 	// itself produced the reviewer lens context for one selected lens slot.
-	LensContextEmissionSchema = "gentle-ai.review-lens-context-emission/v1"
+	LensContextEmissionSchema = "shevanio-ai.review-lens-context-emission/v1"
 	// LensContextEmissionDir sits beside the captured reviewer results in the
 	// same authority store, and is append-only for exactly the same reason: it
 	// is audit history, not authority. Publishing here costs no authority

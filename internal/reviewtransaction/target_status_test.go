@@ -1302,7 +1302,7 @@ func TestAssessTargetStatusPropagatesOperationalAuthorityFailures(t *testing.T) 
 		writeSnapshotFile(t, repo, "tracked.txt", "drifted candidate\n")
 		originalCommand := gitCommandContext
 		t.Cleanup(func() { gitCommandContext = originalCommand })
-		t.Setenv("GENTLE_AI_TARGET_STATUS_GIT_HELPER", "exit73")
+		t.Setenv("SHEVANIO_AI_TARGET_STATUS_GIT_HELPER", "exit73")
 		gitCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 			if gitInvocationContains(args, "--git-common-dir") {
 				return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestTargetStatusGitHelperProcess$", "--")
@@ -1324,7 +1324,7 @@ func TestAssessTargetStatusPropagatesOperationalAuthorityFailures(t *testing.T) 
 		t.Cleanup(func() {
 			gitCommandContext, LocalGitCommandTimeout, gitCommandWaitDelay = originalCommand, originalTimeout, originalWait
 		})
-		t.Setenv("GENTLE_AI_TARGET_STATUS_GIT_HELPER", "sleep")
+		t.Setenv("SHEVANIO_AI_TARGET_STATUS_GIT_HELPER", "sleep")
 		LocalGitCommandTimeout, gitCommandWaitDelay = 25*time.Millisecond, 10*time.Millisecond
 		gitCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 			if gitInvocationContains(args, "--git-common-dir") {
@@ -2072,7 +2072,7 @@ func TestCompactCorrectionTargetStartStatusParity(t *testing.T) {
 
 			originalCommand := gitCommandContext
 			if tt.operational {
-				t.Setenv("GENTLE_AI_TARGET_STATUS_GIT_HELPER", "exit73")
+				t.Setenv("SHEVANIO_AI_TARGET_STATUS_GIT_HELPER", "exit73")
 				gitCommandContext = func(ctx context.Context, _ string, _ ...string) *exec.Cmd {
 					return exec.CommandContext(ctx, os.Args[0], "-test.run=^TestTargetStatusGitHelperProcess$", "--")
 				}
@@ -2280,7 +2280,7 @@ func publishCompactStatusTerminal(store CompactStore, initial CompactRecord, rev
 }
 
 func TestTargetStatusGitHelperProcess(t *testing.T) {
-	switch os.Getenv("GENTLE_AI_TARGET_STATUS_GIT_HELPER") {
+	switch os.Getenv("SHEVANIO_AI_TARGET_STATUS_GIT_HELPER") {
 	case "exit73":
 		os.Exit(73)
 	case "sleep":

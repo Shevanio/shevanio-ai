@@ -10,25 +10,25 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewerprovider"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewerprovider"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const ReviewIntegrationStatusSchemaV1 = "gentle-ai.review-integration.status/v1"
-const ReviewIntegrationStatusSchemaIDV1 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/status.schema.json"
-const ReviewIntegrationStatusSchemaV2 = "gentle-ai.review-integration.status/v2"
-const ReviewIntegrationStatusSchemaIDV2 = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/status-v2.schema.json"
-const ReviewIntegrationStatusSchemaV3 = "gentle-ai.review-integration.status/v3"
-const ReviewIntegrationStatusSchemaIDV3 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/status.schema.json"
-const ReviewIntegrationStatusSchemaV4 = "gentle-ai.review-integration.status/v4"
-const ReviewIntegrationStatusSchemaIDV4 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/status-v4.schema.json"
-const ReviewIntegrationStatusSchemaV5 = "gentle-ai.review-integration.status/v5"
-const ReviewIntegrationStatusSchemaIDV5 = "https://gentle-ai.dev/contracts/review-integration/v2/schemas/status-v5.schema.json"
+const ReviewIntegrationStatusSchemaV1 = "shevanio-ai.review-integration.status/v1"
+const ReviewIntegrationStatusSchemaIDV1 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/status.schema.json"
+const ReviewIntegrationStatusSchemaV2 = "shevanio-ai.review-integration.status/v2"
+const ReviewIntegrationStatusSchemaIDV2 = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/status-v2.schema.json"
+const ReviewIntegrationStatusSchemaV3 = "shevanio-ai.review-integration.status/v3"
+const ReviewIntegrationStatusSchemaIDV3 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/status.schema.json"
+const ReviewIntegrationStatusSchemaV4 = "shevanio-ai.review-integration.status/v4"
+const ReviewIntegrationStatusSchemaIDV4 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/status-v4.schema.json"
+const ReviewIntegrationStatusSchemaV5 = "shevanio-ai.review-integration.status/v5"
+const ReviewIntegrationStatusSchemaIDV5 = "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/status-v5.schema.json"
 const ReviewIntegrationStatusSchema = ReviewIntegrationStatusSchemaV5
 const ReviewIntegrationStatusSchemaID = ReviewIntegrationStatusSchemaIDV5
-const ReviewIntegrationProjectionSchema = "gentle-ai.review-integration.projection/v1"
-const ReviewIntegrationProjectionSchemaID = "https://gentle-ai.dev/contracts/review-integration/v1/schemas/projection.schema.json"
+const ReviewIntegrationProjectionSchema = "shevanio-ai.review-integration.projection/v1"
+const ReviewIntegrationProjectionSchemaID = "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/projection.schema.json"
 
 type ReviewReceiptStatus string
 
@@ -945,7 +945,7 @@ func (result ReviewTargetStatusResult) validateNextTransitionTargets() error {
 				return errors.New("fresh empty workspace target lacks a base-ref collection transition") // refusal:by-design world-action: only a provider code fix can emit the base-ref collection this classification requires
 			}
 			input := result.NextTransition.Collect.Inputs[0]
-			if input.Name != "base_ref" || input.Schema != "gentle-ai.review-base-ref-selection/v1" ||
+			if input.Name != "base_ref" || input.Schema != "shevanio-ai.review-base-ref-selection/v1" ||
 				input.CaptureOperation != "external.select_base_ref" || input.Submission != nil ||
 				!reflect.DeepEqual(input.Arguments, reviewTargetArguments(result)) {
 				return errors.New("fresh empty workspace target lacks a base-ref collection transition") // refusal:by-design world-action: only a provider code fix can emit the base-ref collection this classification requires
@@ -1015,16 +1015,16 @@ func (result ReviewTargetStatusResult) validateNextTransitionTargets() error {
 
 func (result ReviewTargetStatusResult) validateIntendedUntrackedSelectionTransition() error {
 	if result.NextTransition.Collect == nil || len(result.NextTransition.Collect.Inputs) != 1 {
-		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `gentle-ai review status --next-transition`")
+		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `shevanio-ai review status --next-transition`")
 	}
 	input := result.NextTransition.Collect.Inputs[0]
 	if input.Name != "intended_untracked_selection" || input.Schema != reviewIntendedUntrackedSelectionSchema ||
 		input.CaptureOperation != "external.select_intended_untracked" || input.Submission != nil || len(input.Arguments) != 6 {
-		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `gentle-ai review status --next-transition`")
+		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `shevanio-ai review status --next-transition`")
 	}
 	if !reflect.DeepEqual(input.Arguments[:4], reviewTargetArguments(result)) || input.Arguments[4].Name != "eligible_paths_json" ||
 		input.Arguments[5].Name != "expected_untracked_inventory" || input.Arguments[5].Value == "" {
-		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `gentle-ai review status --next-transition`")
+		return errors.New("fresh target lacks an intended-untracked selection transition; rerun `shevanio-ai review status --next-transition`")
 	}
 	return nil
 }

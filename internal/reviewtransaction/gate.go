@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-const GateRequestSchema = "gentle-ai.review-gate-request/v1"
+const GateRequestSchema = "shevanio-ai.review-gate-request/v1"
 
 type GateRequest struct {
 	Schema           string                      `json:"schema"`

@@ -54,6 +54,33 @@ func TestRunExitsZeroWhenEverythingCompleted(t *testing.T) {
 	}
 }
 
+func TestReadResultsAcceptsOnlyShevanioAndLegacyGentleSchemas(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		schema  string
+		wantErr bool
+	}{
+		{name: "Shevanio", schema: ResultsSchema},
+		{name: "legacy Gentle comparison", schema: LegacyGentleResultsSchema},
+		{name: "unknown", schema: "other.results/v1", wantErr: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "results.json")
+			content := `{"schema":` + strconv.Quote(tt.schema) + `,"mode":"driven"}`
+			if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			got, err := readResults(path)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("readResults() error = %v, wantErr %t", err, tt.wantErr)
+			}
+			if err == nil && got.Schema != ResultsSchema {
+				t.Fatalf("schema = %q, want %q", got.Schema, ResultsSchema)
+			}
+		})
+	}
+}
+
 func TestExecutableForGOOSUsesPlatformNativeExecutableRules(t *testing.T) {
 	if !executableMode(0o644, "windows") {
 		t.Fatal("Windows executable preflight rejected a regular executable file without Unix mode bits")
@@ -162,7 +189,7 @@ func benchmarkTestBinary(t *testing.T) (string, string) {
 	dir := t.TempDir()
 	invocations := filepath.Join(dir, "invocations.log")
 	source := filepath.Join(dir, "main.go")
-	binary := filepath.Join(dir, "gentle-ai-test.exe")
+	binary := filepath.Join(dir, "shevanio-ai-test.exe")
 	program := `package main
 import (
 	"fmt"

@@ -11,10 +11,10 @@ import (
 )
 
 // hostOpenCodeLane drives the REAL OpenCode host application headlessly:
-// `opencode run` in a sandboxed HOME with the real gentle-ai transport plugin
+// `opencode run` in a sandboxed HOME with the real shevanio-ai transport plugin
 // installed globally, a real driver model invoking one review Task, the real
 // tool.execute.before/after hooks relaying the start and completion frames
-// through a live `gentle-ai review opencode-transport` child, and a real
+// through a live `shevanio-ai review opencode-transport` child, and a real
 // reviewer subagent model producing the captured verdict. This is the lane
 // that catches host-app behavior (like swallowed hook throws) the emulated
 // deterministic opencode lane cannot see.
@@ -56,7 +56,7 @@ func (b *battery) runHostOpenCodeLane() {
 	if !ok {
 		return
 	}
-	// The whole lane, gentle-ai included, runs under the sandbox HOME: the
+	// The whole lane, shevanio-ai included, runs under the sandbox HOME: the
 	// plugin's transport child inherits OpenCode's environment, so lineage
 	// authority, opaque contexts, and the RDD switch all live in the sandbox.
 	// The enable runs from the scratch repo because mode resolution also
@@ -93,7 +93,7 @@ func (b *battery) runHostOpenCodeLane() {
 		b.fail(hostOpenCodeLane, "binding assembly", err.Error())
 		return
 	}
-	prompt := "GENTLE_AI_REVIEW_BINDING " + string(binding) + "\nReview this frozen candidate through the assigned lens."
+	prompt := "SHEVANIO_AI_REVIEW_BINDING " + string(binding) + "\nReview this frozen candidate through the assigned lens."
 	message := "You are driving a review transport integration test. Call the task tool exactly once with " +
 		"subagent_type set to \"" + args["lens"] + "\" and the prompt argument set to EXACTLY the text between " +
 		"the BEGIN and END marker lines below (marker lines excluded), byte for byte: preserve the JSON exactly " +
@@ -129,7 +129,7 @@ func (b *battery) runHostOpenCodeLane() {
 	b.hostFollowToReceipt(hostOpenCodeLane, repo, "opencode", env)
 }
 
-// realOpenCodeReviewAgents extracts the gentle-ai-synced review-* subagent
+// realOpenCodeReviewAgents extracts the shevanio-ai-synced review-* subagent
 // definitions from the user's real OpenCode configuration.
 func realOpenCodeReviewAgents(realHome string) (map[string]any, error) {
 	payload, err := os.ReadFile(filepath.Join(realHome, ".config", "opencode", "opencode.json"))
@@ -158,7 +158,7 @@ func realOpenCodeReviewAgents(realHome string) (map[string]any, error) {
 		}
 	}
 	if len(review) == 0 {
-		return nil, fmt.Errorf("no review-* agents; run gentle-ai sync for OpenCode first")
+		return nil, fmt.Errorf("no review-* agents; run shevanio-ai sync for OpenCode first")
 	}
 	return review, nil
 }
@@ -218,7 +218,7 @@ func (b *battery) prepareOpenCodeSandbox(authPath string, reviewAgents map[strin
 	return sandboxHome, env, nil
 }
 
-// openCodeSandboxGentleEnvironment is the override set for gentle-ai
+// openCodeSandboxGentleEnvironment is the override set for shevanio-ai
 // invocations belonging to the sandboxed lane.
 func openCodeSandboxGentleEnvironment(sandboxHome string) []string {
 	return []string{
@@ -232,19 +232,19 @@ func openCodeSandboxGentleEnvironment(sandboxHome string) []string {
 
 // openCodeSandboxSessionEnvironment is the complete environment for the real
 // OpenCode session process itself: sandbox HOME, no autoupdate, and a PATH
-// whose first entry resolves `gentle-ai` to the binary under test.
+// whose first entry resolves `shevanio-ai` to the binary under test.
 func openCodeSandboxSessionEnvironment(sandboxHome, shimPath string) []string {
 	return mergeEnvironment(append(openCodeSandboxGentleEnvironment(sandboxHome),
 		"OPENCODE_DISABLE_AUTOUPDATE=1", "PATH="+shimPath))
 }
 
-// hostShimPath builds a PATH whose first entry resolves `gentle-ai` to the
+// hostShimPath builds a PATH whose first entry resolves `shevanio-ai` to the
 // binary under test, so the real plugin's transport spawn hits it.
 func (b *battery) hostShimPath() string {
 	shimDir := filepath.Join(b.workRoot, "host-shim-bin")
 	if err := os.MkdirAll(shimDir, 0o755); err == nil {
 		shim := "#!/bin/sh\nexec \"" + b.binary + "\" \"$@\"\n"
-		_ = os.WriteFile(filepath.Join(shimDir, "gentle-ai"), []byte(shim), 0o755)
+		_ = os.WriteFile(filepath.Join(shimDir, "shevanio-ai"), []byte(shim), 0o755)
 	}
 	return shimDir + string(os.PathListSeparator) + os.Getenv("PATH")
 }

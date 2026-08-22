@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestDisabledDeliveryIsNeverBlockedByADamagedAuthorityEntry is property 3.
@@ -178,7 +178,7 @@ func TestEnabledDeliveryOverADamagedEntryStillServesTheHealthyCandidate(t *testi
 			if !strings.Contains(blocked.Error(), successor) {
 				t.Fatalf("the block does not name the entry it refuses: %v", blocked)
 			}
-			if !strings.Contains(blocked.Error(), "gentle-ai review inspect-authority") {
+			if !strings.Contains(blocked.Error(), "shevanio-ai review inspect-authority") {
 				t.Fatalf("the block names no runnable diagnosis: %v", blocked)
 			}
 		})

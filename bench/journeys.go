@@ -11,7 +11,7 @@ import (
 
 // reviewContract is the negotiated integration contract the status envelope
 // needs before it will emit next_transition.
-const reviewContract = "gentle-ai.review-integration/v1"
+const reviewContract = "shevanio-ai.review-integration/v1"
 
 // statusEnvelope is the subset of `review status --next-transition` this
 // benchmark reads. Unknown fields are ignored so older and newer envelopes
@@ -312,7 +312,7 @@ func runPrintedTransition(r *journeyRun, envelope statusEnvelope) (Observation, 
 
 // printedCommandArguments turns one printed command line into the argv a POSIX
 // shell would hand the product, and refuses anything that is not a complete,
-// immediately runnable `gentle-ai ...` invocation.
+// immediately runnable `shevanio-ai ...` invocation.
 func printedCommandArguments(command string) ([]string, error) {
 	words, err := splitPrintedCommandWords(command)
 	if err != nil {
@@ -594,12 +594,12 @@ func assertReviewParseRefusalsPreflight(run *journeyRun, operation, booleanFlag 
 				if got := strings.TrimSpace(observation.Stderr); got != "Error: "+test.cause {
 					return fmt.Errorf("%s %s plain diagnostic = %q, want %q", operation, test.name, got, "Error: "+test.cause)
 				}
-				usage := "Usage: gentle-ai review " + operation + " [flags]"
+				usage := "Usage: shevanio-ai review " + operation + " [flags]"
 				if got := strings.Contains(observation.Stdout, usage); got != test.usage {
 					return fmt.Errorf("%s %s plain usage %t, want %t", operation, test.name, got, test.usage)
 				}
 			}
-			if _, err := os.Stat(filepath.Join(run.sandbox.Repo, ".git", "gentle-ai", "defect-reports")); !errors.Is(err, os.ErrNotExist) {
+			if _, err := os.Stat(filepath.Join(run.sandbox.Repo, ".git", "shevanio-ai", "defect-reports")); !errors.Is(err, os.ErrNotExist) {
 				if err == nil {
 					return fmt.Errorf("%s %s %s refusal wrote a defect report", operation, test.name, mode)
 				}

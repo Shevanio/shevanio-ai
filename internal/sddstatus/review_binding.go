@@ -15,11 +15,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathidentity"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathidentity"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const reviewBindingSchema = "gentle-ai.sdd-review-binding/v1"
+const (
+	reviewBindingSchema       = "shevanio-ai.sdd-review-binding/v1"
+	legacyReviewBindingSchema = "gentle-ai.sdd-review-binding/v1"
+)
 
 // A change identity is whatever sdd-status already resolves: an OpenSpec
 // directory name or an Engram change ID such as DEC-EXAMPLE-CHANGE. It stays
@@ -69,7 +72,7 @@ func BindApprovedReview(ctx context.Context, repo, change, lineage, expected str
 	if err != nil {
 		return ReviewBinding{}, err
 	}
-	requestID := "bind-" + strings.TrimPrefix(runtimeValueHash("gentle-ai.sdd-review-binding-request-id/v1", struct {
+	requestID := "bind-" + strings.TrimPrefix(runtimeValueHash("shevanio-ai.sdd-review-binding-request-id/v1", struct {
 		Change   string `json:"change"`
 		Lineage  string `json:"lineage"`
 		Expected string `json:"expected"`
@@ -544,7 +547,7 @@ func verifyBindingLedger(changeRoot string, findings []reviewtransaction.Finding
 	return nil
 }
 func bindingPath(store reviewtransaction.CompactStore, change string) string {
-	return filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(store.Dir)))), "gentle-ai", "sdd-review-bindings", "v1", change, "binding.json")
+	return filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(store.Dir)))), "shevanio-ai", "sdd-review-bindings", "v1", change, "binding.json")
 }
 func bindingHash(payload []byte) string {
 	sum := sha256.Sum256(payload)
@@ -615,7 +618,7 @@ func reviewBindingViolation(payload []byte, binding ReviewBinding) string {
 		return "binding could not be re-encoded for canonical comparison"
 	case !bytes.Equal(payload, canonical):
 		return "payload is not the canonical encoding of its own fields"
-	case binding.Schema != reviewBindingSchema:
+	case binding.Schema != reviewBindingSchema && binding.Schema != legacyReviewBindingSchema:
 		return "schema is not " + reviewBindingSchema
 	case !validReviewBindingChange(binding.Change):
 		return "change name is not a valid change identifier"

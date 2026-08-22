@@ -18,7 +18,7 @@ import (
 
 const (
 	ReviewRepositoryContextCapability = "review.opaque_repository_context"
-	ReviewRepositoryContextSchema     = "gentle-ai.review-repository-context/v1"
+	ReviewRepositoryContextSchema     = "shevanio-ai.review-repository-context/v1"
 
 	reviewRepositoryContextHandlePrefix = "rctx1_"
 	reviewRepositoryLocatorMaxBytes     = 64 << 10
@@ -474,7 +474,7 @@ func reviewRepositoryContextPath(handle string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".gentle-ai", "review-contexts", "v1", handle+".json"), nil
+	return filepath.Join(home, ".shevanio-ai", "review-contexts", "v1", handle+".json"), nil
 }
 
 func reviewRepositoryContextHome() (string, error) {
@@ -486,7 +486,7 @@ func reviewRepositoryContextHome() (string, error) {
 }
 
 func ensureReviewRepositoryContextStorageRoot(home string, create bool) (string, error) {
-	root := filepath.Join(home, ".gentle-ai")
+	root := filepath.Join(home, ".shevanio-ai")
 	if !locatorPathWithin(home, root) {
 		return "", errors.New("review repository context storage root escapes HOME")
 	}

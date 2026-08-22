@@ -121,7 +121,7 @@ func TestAuthorityDispositionClosureDescendantFirstSeedLastOrdering(t *testing.T
 }
 
 // TestAuthorityDispositionPlanDigestN1ByteStability satisfies tasks.md 1.5:
-// pins plan_digest for a cardinality-one closure to a literal, pre-Wave-6
+// pins plan_digest for a cardinality-one closure to a literal fork baseline
 // value so the topological-ordering change (task 1.4) cannot silently alter
 // N=1 digest bytes. Closure = {seed} has no ordering choice to make, so this
 // is the unit-level half of "every Wave 2 leaf digest, golden, and ds06/ds08
@@ -139,9 +139,9 @@ func TestAuthorityDispositionPlanDigestN1ByteStability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const wantDigest = "sha256:7084e2abc8a42b812a785dad4a4426483e63af71a8ced06ac51c7e88f21843e6"
+	const wantDigest = "sha256:38a57ff5f629fe7ebb62648754e9443c8b3746116df6f3dc2117772079fb4b19"
 	if digest != wantDigest {
-		t.Fatalf("N=1 plan_digest = %q, want pinned pre-Wave-6 value %q — topological ordering change altered N=1 digest bytes", digest, wantDigest)
+		t.Fatalf("N=1 plan_digest = %q, want pinned Shevanio fork value %q; topological ordering change altered N=1 digest bytes", digest, wantDigest)
 	}
 }
 

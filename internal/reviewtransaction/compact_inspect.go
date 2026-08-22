@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pathquote"
+	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 )
 
 const (
@@ -350,7 +350,7 @@ func compactStartInvalidGraphRefusal(ctx context.Context, repo string, records m
 				exit.SuccessorLineageID, compactRepairCommandText(repo, plan))
 		}
 	}
-	return fmt.Errorf("%v.%s Capture the complete machine-readable diagnosis for every affected lineage with `gentle-ai review inspect-authority --cwd %s`",
+	return fmt.Errorf("%v.%s Capture the complete machine-readable diagnosis for every affected lineage with `shevanio-ai review inspect-authority --cwd %s`",
 		cause, continuation.String(), pathquote.Quote(repo))
 }
 

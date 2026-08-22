@@ -11,9 +11,9 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/opencode"
 )
 
 // requiredLedgerClauses is the OpenCode binding of the shared clause set: the
@@ -247,7 +247,7 @@ func assertOpenCodeProviderInjectedReviewer(t *testing.T, label string, agent ma
 	if strings.Contains(prompt, "unsupported-capability") {
 		t.Fatalf("%s prompt still refuses immutable inspection as unsupported: %s", label, prompt)
 	}
-	if !strings.Contains(prompt, "GENTLE_AI_REVIEW_CONTEXT") || !strings.Contains(prompt, "You have no execution tools") {
+	if !strings.Contains(prompt, "SHEVANIO_AI_REVIEW_CONTEXT") || !strings.Contains(prompt, "You have no execution tools") {
 		t.Fatalf("%s prompt does not name the provider-injected context block: %s", label, prompt)
 	}
 	permission, ok := agent["permission"].(map[string]any)
@@ -285,7 +285,7 @@ func TestReviewerBashPromptIsNativeAndWindowsPortable(t *testing.T) {
 		}
 	}
 	for _, operation := range []string{"name-status", "numstat", "stat", "patch", "object"} {
-		if !strings.Contains(prompt, "gentle-ai review inspect-candidate") || !strings.Contains(prompt, "--operation "+operation) {
+		if !strings.Contains(prompt, "shevanio-ai review inspect-candidate") || !strings.Contains(prompt, "--operation "+operation) {
 			t.Errorf("review prompt omits native %s inspection recipe", operation)
 		}
 	}
@@ -314,7 +314,7 @@ func TestKilocodeReviewSettingsMatchCurrentMainBaseline(t *testing.T) {
 	// stopped telling the orchestrator to surface a bare `reason_code`
 	// ("never from status prose") and gained the embedded "Continue after a
 	// stop reason code" table (16 rows, one per reviewStopTransition code,
-	// each naming its real continuation and `gentle-ai review mode disable`
+	// each naming its real continuation and `shevanio-ai review mode disable`
 	// as the self-service fallback where no more specific exit exists).
 	// Kilocode embeds the same shared contract, so its rendered settings hash
 	// moved again. Deliberate, not drift.
@@ -336,7 +336,7 @@ func TestKilocodeReviewSettingsMatchCurrentMainBaseline(t *testing.T) {
 	// SDD edit-authority consent relay (#2570, S6 of #2540): the orchestrator
 	// contract gained the byte-identical "SDD Edit-Authority Consent Relay
 	// (MANDATORY)" clause teaching the lossless relay of the typed
-	// gentle-ai.sdd-integration.consent/v1 envelope. Kilocode embeds the same
+	// shevanio-ai.sdd-integration.consent/v1 envelope. Kilocode embeds the same
 	// orchestrator contract in `agent.gentle-orchestrator.prompt`, so the
 	// hash moved a fifth time. Deliberate, not drift.
 	//
@@ -402,7 +402,9 @@ func TestKilocodeReviewSettingsMatchCurrentMainBaseline(t *testing.T) {
 	// #3249 registers Pi as an immutable-reviewer runtime in the shared
 	// contract's advertised-runtimes paragraph, so the hash moved.
 	// Deliberate, not drift.
-	const want = "c478b283aeceb83e3c5d74453a0ecd7a66d154ed2d7ef84337f8ccc60a916966"
+	// The Shevanio fork rewrites the embedded runtime and protocol identity;
+	// the rendered settings shape is otherwise unchanged.
+	const want = "65d8b75eb653832f9a3a8f6c09958c07a4738c57d4a8e9c202f1b57f4be9b224"
 	if got != want {
 		t.Fatalf("Kilocode settings SHA-256 = %s, want current-main baseline %s", got, want)
 	}
@@ -435,7 +437,7 @@ func TestOpenCodeRenderedReviewProtocolCost(t *testing.T) {
 		maxCharacters int
 	}{
 		// wantChars grew by 110 (7,085 -> 7,195 / 14,078 -> 14,188) when the
-		// review-ledger-contract.md GENTLE_AI_REVIEW_BINDING sentence was
+		// review-ledger-contract.md SHEVANIO_AI_REVIEW_BINDING sentence was
 		// corrected: it previously claimed START emits that field verbatim,
 		// which no emitter does; it now says how to assemble it from START's
 		// own lineage_id/target_identity/lens_bindings fields (issue: docs vs
@@ -448,7 +450,7 @@ func TestOpenCodeRenderedReviewProtocolCost(t *testing.T) {
 		// subject_hash and no inspection, and one reported inspection.status
 		// "access_failure" after trying to inspect the candidate and
 		// verify its SHA-256 itself, which its declared read-only tools never
-		// permitted. The prompt now names GENTLE_AI_REVIEW_BINDING as the only
+		// permitted. The prompt now names SHEVANIO_AI_REVIEW_BINDING as the only
 		// source of subject_hash, forbids inventing it, says the diff and
 		// manifest arrive in the prompt, and states that there are no
 		// execution tools. This is a deliberate contract change, not drift.
@@ -571,7 +573,7 @@ func TestOpenCodeRenderedReviewProtocolCost(t *testing.T) {
 		// continuations (docs/review-integration.md's own table, which docs/ is
 		// never embedded to ship) into dead ends on the one channel a consuming
 		// orchestrator may route from. The table names every reason code's real
-		// continuation plus `gentle-ai review mode disable` as the self-service
+		// continuation plus `shevanio-ai review mode disable` as the self-service
 		// fallback wherever no more specific exit exists. The standard ceiling
 		// moves with it (18,500 -> 21,200) to restore the ~15% margin below; the
 		// full-4R ceiling already had enough headroom and is unchanged.
@@ -579,7 +581,7 @@ func TestOpenCodeRenderedReviewProtocolCost(t *testing.T) {
 		// 27,034) fixing adversarial verification findings against exit-naming
 		// audit fix #1: F1 completed two abbreviated `review status
 		// --next-transition` invocations to their real required form
-		// (--contract gentle-ai.review-integration/v2 --agent claude-code,
+		// (--contract shevanio-ai.review-integration/v2 --agent claude-code,
 		// verified by execution -- the bare form is refused), F4 disclosed
 		// that `review start` on an unchanged candidate only resumes the same
 		// review rather than starting a fresh one (also verified by
@@ -617,8 +619,8 @@ func TestOpenCodeRenderedReviewProtocolCost(t *testing.T) {
 		// #3249: the advertised-runtimes paragraph gains Pi's host relay
 		// (+247 characters in both renderings, ~62 tokens, still over 15%
 		// headroom). Deliberate, not drift.
-		{name: "standard", agents: []string{"review-reliability"}, beforeChars: 42_301, wantChars: 22_179, maxCharacters: 26_000},
-		{name: "full-4R", agents: []string{"review-risk", "review-resilience", "review-readability", "review-reliability"}, beforeChars: 106_998, wantChars: 34_524, maxCharacters: 41_000},
+		{name: "standard", agents: []string{"review-reliability"}, beforeChars: 42_301, wantChars: 22_265, maxCharacters: 26_000},
+		{name: "full-4R", agents: []string{"review-risk", "review-resilience", "review-readability", "review-reliability"}, beforeChars: 106_998, wantChars: 34_646, maxCharacters: 41_000},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

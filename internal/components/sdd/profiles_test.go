@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/opencode"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/opencode"
 )
 
 func TestResolveProfileStrategy_ExplicitWins(t *testing.T) {
@@ -833,7 +833,7 @@ func TestGenerateProfileOverlay_OrchestratorPromptSuffixed(t *testing.T) {
 	}
 
 	for _, wanted := range []string{
-		"Gentle AI",
+		"Shevanio AI",
 		"| orchestrator | anthropic/claude-haiku-3-5 |",
 	} {
 		if !strings.Contains(prompt, wanted) {
@@ -858,12 +858,12 @@ func TestGenerateProfileOverlay_ExcludesDesktopDelegationVisibility(t *testing.T
 	prompt := agentMap["sdd-orchestrator-cheap"].(map[string]any)["prompt"].(string)
 
 	for _, unwanted := range []string{
-		"<!-- gentle-ai:opencode-desktop-delegation-progress -->",
+		"<!-- shevanio-ai:opencode-desktop-delegation-progress -->",
 		"#### Delegation Visibility (OpenCode Desktop)",
 		"⏳ Delegating {phase} to {agent}...",
 		"✅ {agent} completed — {status}",
 		"⚠️ {agent} returned {status} — {short reason}",
-		"<!-- /gentle-ai:opencode-desktop-delegation-progress -->",
+		"<!-- /shevanio-ai:opencode-desktop-delegation-progress -->",
 	} {
 		if strings.Contains(prompt, unwanted) {
 			t.Fatalf("named profile orchestrator prompt contains default Desktop progress wording %q", unwanted)

@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/skillregistry"
+	"github.com/shevanio/shevanio-ai/v2/internal/skillregistry"
 )
 
 // TestSkillRegistryPluginSkipsNonProjectDirectories runs the real plugin
-// under node with a fake `gentle-ai` on PATH that records its argv. OpenCode
+// under node with a fake `shevanio-ai` on PATH that records its argv. OpenCode
 // resolves a brand-new non-project directory to "/" (or another markerless
 // location); the plugin must skip those without spawning, and spawn exactly
 // once for a real project root.
@@ -38,7 +38,7 @@ await plugin({ worktree: bareDir, directory: "" })
 await plugin({ worktree: projectDir, directory: "" })
 await plugin({ worktree: skillsDir, directory: "" }) // no .git/.atl: a skills dir alone is a project marker
 
-const logPath = process.env.GENTLE_AI_RELAY_LOG
+const logPath = process.env.SHEVANIO_AI_RELAY_LOG
 const readLines = () => (existsSync(logPath) ? readFileSync(logPath, "utf8").split("\n").filter(Boolean) : [])
 const deadline = Date.now() + 5000
 while (Date.now() < deadline && readLines().length < 2) {
@@ -50,7 +50,7 @@ console.log(JSON.stringify({ project: projectDir, skills: skillsDir, lines: read
 `
 	const relay = `#!/usr/bin/env node
 import { appendFileSync } from "node:fs"
-appendFileSync(process.env.GENTLE_AI_RELAY_LOG, JSON.stringify(process.argv.slice(2)) + "\n")
+appendFileSync(process.env.SHEVANIO_AI_RELAY_LOG, JSON.stringify(process.argv.slice(2)) + "\n")
 `
 	output, _ := runOpenCodeTransportPluginHarness(t, map[string]string{"plugin.mts": string(source)}, harness, relay)
 	// The plugin's console.info skip notices share stdout with the harness

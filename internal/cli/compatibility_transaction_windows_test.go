@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/pipeline"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/planner"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 func createWindowsCompatibilityJunction(t *testing.T, link, target string) {
@@ -272,7 +272,7 @@ func TestWindowsCompatibilityTransactionRefusesRootParentAndNestedJunctions(t *t
 			if content, readErr := os.ReadFile(pluginPath); readErr != nil || string(content) != "stale" {
 				t.Fatalf("plugin refresh ran after compatibility refusal: content=%q error=%v", content, readErr)
 			}
-			if _, statErr := os.Stat(filepath.Join(home, ".gentle-ai", "backups")); !os.IsNotExist(statErr) {
+			if _, statErr := os.Stat(filepath.Join(home, ".shevanio-ai", "backups")); !os.IsNotExist(statErr) {
 				t.Fatalf("backup started after compatibility refusal: %v", statErr)
 			}
 		})

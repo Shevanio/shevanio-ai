@@ -3,7 +3,7 @@ import type { Plugin } from "@opencode-ai/plugin"
 const TASK_RESULT = /^<task id="[^"\r\n]+" state="completed">\n<task_result>\n([\s\S]*?)\n<\/task_result>\n<\/task>$/
 const TASK_TAG = /<\/?task(?:\s|>)|<\/?task_result>/
 const SDD_PHASES = ["sdd-init", "sdd-explore", "sdd-propose", "sdd-spec", "sdd-design", "sdd-tasks", "sdd-apply", "sdd-verify", "sdd-archive", "sdd-onboard"]
-const SDD_TASK_FAILURE_PREFIX = "GENTLE_AI_SDD_FAILURE "
+const SDD_TASK_FAILURE_PREFIX = "SHEVANIO_AI_SDD_FAILURE "
 const SDD_TASK_ROUTE_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$/
 
 type SDDTaskFailure = { phase: string, code: string, handoff: string }
@@ -54,13 +54,13 @@ function sddTaskFailure(phase: string, cwd: string, cause: unknown, metadata?: u
     phase,
     code,
     handoff: SDD_TASK_FAILURE_PREFIX + JSON.stringify({
-      schemaName: "gentle-ai.sdd-task-result-failure/v1",
+      schemaName: "shevanio-ai.sdd-task-result-failure/v1",
       status: "blocked",
       code,
       phase,
       ...(taskModel === undefined ? {} : { taskModel }),
       summary,
-      continuation: `gentle-ai sdd-status --cwd ${shellQuote(cwd)} --json`,
+      continuation: `shevanio-ai sdd-status --cwd ${shellQuote(cwd)} --json`,
     }),
   }
   return Object.assign(new Error(failure.handoff), { sddFailure: failure }) as SDDTaskFailureError
@@ -68,14 +68,14 @@ function sddTaskFailure(phase: string, cwd: string, cause: unknown, metadata?: u
 
 function sddDispatchLatched(requested: string, failure: SDDTaskFailure, cwd: string): Error {
   return new Error(SDD_TASK_FAILURE_PREFIX + JSON.stringify({
-    schemaName: "gentle-ai.sdd-task-result-failure/v1",
+    schemaName: "shevanio-ai.sdd-task-result-failure/v1",
     status: "blocked",
     code: "sdd_task_dispatch_latched",
     phase: requested,
     latchedPhase: failure.phase,
     latchedCode: failure.code,
     summary: `${requested} was not dispatched. Earlier in this session ${failure.phase} returned ${failure.code}, and SDD launches stay latched afterwards so a failed phase is never silently retried and no later phase advances on top of it. No provider call, no subagent, and no artifact write happened for this launch, so it produced no new evidence about the original failure.`,
-    continuation: `gentle-ai sdd-status --cwd ${shellQuote(cwd)} --json`,
+    continuation: `shevanio-ai sdd-status --cwd ${shellQuote(cwd)} --json`,
     exit: "Inspect the artifact state the original failure left, surface it to the user, and start a new session to launch SDD phases again. Relaunching in this session cannot dispatch.",
   }))
 }

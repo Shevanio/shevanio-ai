@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
 var updateChannelEnv = os.Getenv
 
 // CheckAll runs update checks for all registered tools concurrently.
-// currentVersion is the build-time version of gentle-ai (from app.Version).
+// currentVersion is the build-time version of shevanio-ai (from app.Version).
 // profile determines platform-specific update instructions.
 func CheckAll(ctx context.Context, currentVersion string, profile system.PlatformProfile) []UpdateResult {
 	return CheckFiltered(ctx, currentVersion, profile, nil)
@@ -136,7 +136,7 @@ func checkSingleTool(ctx context.Context, tool ToolInfo, currentBuildVersion str
 			return result
 		}
 		if tool.DetectCmd == nil {
-			// gentle-ai with no build version (shouldn't happen, but handle gracefully).
+			// shevanio-ai with no build version (shouldn't happen, but handle gracefully).
 			result.Status = VersionUnknown
 		} else {
 			// Binary not found on PATH.
@@ -168,15 +168,15 @@ func checkSingleTool(ctx context.Context, tool ToolInfo, currentBuildVersion str
 }
 
 func usesBetaMainHeadCheck(tool ToolInfo, currentVersion string) bool {
-	return isGentleAIRepo(tool) && (isBetaUpdateChannel() || isGoPseudoVersionWithCommit(currentVersion))
+	return isShevanioAIRepo(tool) && (isBetaUpdateChannel() || isGoPseudoVersionWithCommit(currentVersion))
 }
 
-func isGentleAIRepo(tool ToolInfo) bool {
-	return tool.Name == "gentle-ai" && strings.EqualFold(tool.Owner, "Gentleman-Programming") && tool.Repo == "gentle-ai"
+func isShevanioAIRepo(tool ToolInfo) bool {
+	return tool.Name == "shevanio-ai" && strings.EqualFold(tool.Owner, "Shevanio") && tool.Repo == "shevanio-ai"
 }
 
 func isBetaUpdateChannel() bool {
-	switch strings.ToLower(strings.TrimSpace(updateChannelEnv("GENTLE_AI_CHANNEL"))) {
+	switch strings.ToLower(strings.TrimSpace(updateChannelEnv("SHEVANIO_AI_CHANNEL"))) {
 	case "beta", "nightly":
 		return true
 	default:
@@ -198,7 +198,7 @@ func applyBetaMainHeadStatus(result UpdateResult, localVersion string, commit gi
 	// that delivers main@<sha> is `go install ...@main`. The per-OS stable
 	// hint would silently replace this beta build with the latest stable
 	// release (issue #2323).
-	result.UpdateHint = GentleAISourceInstallCommand(result.LatestVersion)
+	result.UpdateHint = ShevanioAISourceInstallCommand(result.LatestVersion)
 
 	if strings.TrimSpace(localVersion) == "" {
 		result.Status = VersionUnknown

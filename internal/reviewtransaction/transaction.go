@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const TransactionSchema = "gentle-ai.review-transaction/v1"
+const TransactionSchema = "shevanio-ai.review-transaction/v1"
 
 type Mode string
 
@@ -219,6 +219,7 @@ type Transaction struct {
 	ActualCorrectionLines   *int                       `json:"actual_correction_lines,omitempty"`
 	legacyCausality         bool
 	legacyCorrectionBudget  bool
+	legacyProductIdentity   bool
 }
 
 func NewTransaction(start Start) (*Transaction, error) {
@@ -352,7 +353,7 @@ func LensResultHash(result LensResult) string {
 		Findings []Finding `json:"findings"`
 		Evidence []string  `json:"evidence"`
 	}{Lens: result.Lens, Findings: result.Findings, Evidence: result.Evidence})
-	sum := sha256.Sum256(append([]byte("gentle-ai.lens-result/v1\x00"), payload...))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.lens-result/v1\x00"), payload...))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
@@ -733,7 +734,7 @@ func (transaction *Transaction) CompleteFix(snapshot Snapshot, fixDeltaHash stri
 // not evidence of the correction that changed the candidate tree.
 func FixDeltaHashForSnapshot(snapshot Snapshot) string {
 	hash := sha256.New()
-	hash.Write([]byte("gentle-ai.fix-delta/v1\x00"))
+	hash.Write([]byte("shevanio-ai.fix-delta/v1\x00"))
 	for _, value := range []string{snapshot.BaseTree, snapshot.CandidateTree, snapshot.PathsDigest, snapshot.IntendedUntrackedProof} {
 		writeLengthPrefixed(hash, []byte(value))
 	}
@@ -1451,13 +1452,23 @@ func (transaction *Transaction) validateFindingRouting() error {
 	if hasStringIntersection(fixIDs, pendingIDs) {
 		return errors.New("a severe finding cannot be both correction-bound and pending refutation")
 	}
-	if transaction.State != StateUnreviewed && transaction.State != StateReviewing && transaction.State != StateInvalidated && (!validSHA256(transaction.LedgerHash) || !validSHA256(transaction.LedgerFindingsHash) || transaction.LedgerFindingsHash != findingsHash(transaction.Findings)) {
+	wantFindingsHash := findingsHash(transaction.Findings)
+	if transaction.legacyProductIdentity {
+		wantFindingsHash = legacyFindingsHash(transaction.Findings)
+	}
+	if transaction.State != StateUnreviewed && transaction.State != StateReviewing && transaction.State != StateInvalidated && (!validSHA256(transaction.LedgerHash) || !validSHA256(transaction.LedgerFindingsHash) || transaction.LedgerFindingsHash != wantFindingsHash) {
 		return errors.New("frozen review state requires a content-bound ledger hash")
 	}
 	return transaction.validateFindingState(findings, severe)
 }
 
 func findingsHash(findings []Finding) string {
+	payload, _ := json.Marshal(ledgerProjection(findings))
+	sum := sha256.Sum256(append([]byte("shevanio-ai.review-ledger-findings/v1\x00"), payload...))
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+
+func legacyFindingsHash(findings []Finding) string {
 	payload, _ := json.Marshal(ledgerProjection(findings))
 	sum := sha256.Sum256(append([]byte("gentle-ai.review-ledger-findings/v1\x00"), payload...))
 	return "sha256:" + hex.EncodeToString(sum[:])

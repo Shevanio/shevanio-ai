@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestNegotiatedReviewStartMatchesVersionedFixture(t *testing.T) {
@@ -540,7 +540,7 @@ func TestReviewRecoverHelpDocumentsProjectionAndCanonicalAuthorization(t *testin
 		t.Fatal(err)
 	}
 	help := output.String()
-	for _, required := range []string{"--projection", "default: predecessor projection", "gentle-ai.review-recovery-authorization/v1", "target_identity"} {
+	for _, required := range []string{"--projection", "default: predecessor projection", "shevanio-ai.review-recovery-authorization/v1", "target_identity"} {
 		if !strings.Contains(help, required) {
 			t.Fatalf("review recover help missing %q:\n%s", required, help)
 		}
@@ -595,7 +595,7 @@ func recoveryProjectionArgs(repo string, predecessor reviewtransaction.CompactRe
 }
 
 func reviewRecoveryAuthorization(lineage, revision, identity, actor, reason string) string {
-	return "gentle-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage + "\npredecessor_revision=" + revision +
+	return "shevanio-ai.review-recovery-authorization/v1\npredecessor_lineage=" + lineage + "\npredecessor_revision=" + revision +
 		"\ntarget_identity=" + identity + "\nactor=" + actor + "\nreason=" + reason
 }
 
@@ -772,7 +772,7 @@ func TestNegotiatedReviewStartPreservesLegacyPayloadAndAuthorityIdentity(t *test
 }
 
 func TestNegotiatedReviewStartRejectsInvalidContractsBeforeAuthorityMutation(t *testing.T) {
-	for _, contract := range []string{"", "gentle-ai.review-integration/v3", " " + ReviewIntegrationContractV1} {
+	for _, contract := range []string{"", "shevanio-ai.review-integration/v3", " " + ReviewIntegrationContractV1} {
 		t.Run(strings.ReplaceAll(contract, "/", "_"), func(t *testing.T) {
 			repo := initReviewCLIRepo(t)
 			if err := os.WriteFile(filepath.Join(repo, "tracked.txt"), []byte("candidate\n"), 0o644); err != nil {
@@ -831,7 +831,7 @@ func TestExplicitReviewStartRetriesAcrossSharedCommonDirWithoutReconstruction(t 
 		t.Fatal(err)
 	}
 	commonDir := strings.TrimSpace(runReviewCLIGit(t, repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-	broken := filepath.Join(commonDir, "gentle-ai", "review-transactions", "v2", "unrelated-broken")
+	broken := filepath.Join(commonDir, "shevanio-ai", "review-transactions", "v2", "unrelated-broken")
 	if err := os.MkdirAll(broken, 0o755); err != nil {
 		t.Fatal(err)
 	}

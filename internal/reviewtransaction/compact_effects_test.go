@@ -220,7 +220,7 @@ func TestCompactEffectMarkerStrictValidation(t *testing.T) {
 		{"valid", valid},
 		{"malformed", []byte("{")},
 		{"trailing JSON", append(append([]byte(nil), valid...), []byte("{}")...)},
-		{"unknown field", []byte(`{"schema":"gentle-ai.review-effect-marker/v1","lineage_id":"strict-validation","authority_revision":"` + hash("a") + `","event_id":"` + hash("b") + `","state":"pending","observation":"pending_transient","extra":true}`)},
+		{"unknown field", []byte(`{"schema":"shevanio-ai.review-effect-marker/v1","lineage_id":"strict-validation","authority_revision":"` + hash("a") + `","event_id":"` + hash("b") + `","state":"pending","observation":"pending_transient","extra":true}`)},
 		{"wrong schema", markerPayload(marker, func(value *compactEffectMarker) { value.Schema = "wrong" })},
 		{"wrong lineage", markerPayload(marker, func(value *compactEffectMarker) { value.LineageID = "wrong" })},
 		{"wrong revision", markerPayload(marker, func(value *compactEffectMarker) { value.AuthorityRevision = hash("c") })},

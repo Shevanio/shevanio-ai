@@ -7,7 +7,7 @@
 ## Architecture
 
 ```
-cmd/gentle-ai/             CLI entrypoint
+cmd/shevanio-ai/             CLI entrypoint
 internal/
   app/                     Command dispatch + runtime wiring
   model/                   Domain types (agents, components, skills, presets, personas)
@@ -52,10 +52,10 @@ go test ./...
 RUN_FULL_E2E=1 RUN_BACKUP_TESTS=1 ./e2e/docker-test.sh
 
 # Dry-run smoke test (macOS/Linux)
-gentle-ai install --dry-run --agent claude-code --preset minimal
+shevanio-ai install --dry-run --agent claude-code --preset minimal
 
 # Dry-run smoke test (Windows PowerShell)
-gentle-ai.exe install --dry-run --agent claude-code --preset minimal
+shevanio-ai.exe install --dry-run --agent claude-code --preset minimal
 ```
 
 Test coverage is broad and changes frequently. Keep this section qualitative unless counts are generated automatically:

@@ -92,7 +92,7 @@ func (b *battery) statusEnv(repo, agent string, env []string) (map[string]any, s
 // runCommandLineEnv mirrors runCommandLine over runEnv.
 func (b *battery) runCommandLineEnv(source, dir string, env []string, command string) (map[string]any, string, int) {
 	fields := strings.Fields(command)
-	if len(fields) < 2 || fields[0] != "gentle-ai" {
+	if len(fields) < 2 || fields[0] != "shevanio-ai" {
 		return nil, fmt.Sprintf("unexpected provider command %q", command), 1
 	}
 	return b.runJSONEnv(source, dir, env, fields[1:]...)
@@ -137,7 +137,7 @@ func (b *battery) hostNegotiatedMediumStart(lane, repo, agent string, env []stri
 		return false
 	}
 	consent, stderr, _ := b.runCommandLineEnv("consent", repo, env, command)
-	if getString(consent, "schema") != "gentle-ai.review-integration.consent/v3" || getString(consent, "action") != "consent_required" {
+	if getString(consent, "schema") != "shevanio-ai.review-integration.consent/v3" || getString(consent, "action") != "consent_required" {
 		b.fail(lane, "consent envelope surfaced", fmt.Sprintf("schema=%q action=%q %s", getString(consent, "schema"), getString(consent, "action"), firstLine(stderr)))
 		return false
 	}
@@ -194,7 +194,7 @@ func (b *battery) hostCaptureLens(lane, repo string, env []string, input map[str
 	b.noteHostCost(lane, "1 compiled reviewer subprocess run (capture-result --agent)")
 	capture, stderr, code := b.runJSONEnv("result-artifact", repo, env,
 		append([]string{"review", "capture-result"}, argumentTokens(input)...)...)
-	if code != 0 || getString(capture, "schema") != "gentle-ai.review-result-artifact/v2" || getString(capture, "admission_decision") != "completed" {
+	if code != 0 || getString(capture, "schema") != "shevanio-ai.review-result-artifact/v2" || getString(capture, "admission_decision") != "completed" {
 		b.fail(lane, "reviewer capture admitted", fmt.Sprintf("exit=%d schema=%q admission=%q %s",
 			code, getString(capture, "schema"), getString(capture, "admission_decision"), firstLine(stderr)))
 		return false

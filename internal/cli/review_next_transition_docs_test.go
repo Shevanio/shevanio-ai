@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
 )
 
 // reviewStopTransitionCallRegexp extracts every literal reason code passed to
@@ -129,21 +129,21 @@ func TestEveryReviewStopReasonCodeHasAShippedContinuation(t *testing.T) {
 
 	// The universal self-service exit (blocking-budget rule 2) must be
 	// reachable from every row whose continuation names no other runnable
-	// `gentle-ai` command, so a terminal stop the product cannot resolve
+	// `shevanio-ai` command, so a terminal stop the product cannot resolve
 	// automatically never reads as "nothing more to do" on the one channel
 	// the orchestrator is allowed to route from.
-	namesOtherContinuation := regexp.MustCompile("`gentle-ai [a-z][a-z-]*|`--[a-z][a-z-]*")
+	namesOtherContinuation := regexp.MustCompile("`shevanio-ai [a-z][a-z-]*|`--[a-z][a-z-]*")
 	for _, line := range strings.Split(section, "\n") {
 		row := reviewStopReasonDocsTableRowRegexp.FindStringSubmatch(line)
 		if row == nil {
 			continue
 		}
 		code := row[1]
-		if strings.Contains(line, "gentle-ai review mode disable") {
+		if strings.Contains(line, "shevanio-ai review mode disable") {
 			continue
 		}
 		if !namesOtherContinuation.MatchString(line) {
-			t.Errorf("shipped %s row for %q names no runnable `gentle-ai` command, no `--flag` to pass on the same invocation, and no `gentle-ai review mode disable` fallback, so this stop reads as a dead end", reviewLedgerContractAsset, code)
+			t.Errorf("shipped %s row for %q names no runnable `shevanio-ai` command, no `--flag` to pass on the same invocation, and no `shevanio-ai review mode disable` fallback, so this stop reads as a dead end", reviewLedgerContractAsset, code)
 		}
 	}
 }
@@ -193,27 +193,27 @@ func reviewStopReasonDocsCompleteDocuments(t *testing.T) map[string]string {
 }
 
 // reviewStatusNextTransitionInvocationRegexp matches any backtick-quoted
-// `gentle-ai review status ... --next-transition` invocation.
-var reviewStatusNextTransitionInvocationRegexp = regexp.MustCompile("`gentle-ai review status[^`]*--next-transition`")
+// `shevanio-ai review status ... --next-transition` invocation.
+var reviewStatusNextTransitionInvocationRegexp = regexp.MustCompile("`shevanio-ai review status[^`]*--next-transition`")
 
 // TestNamedReviewStatusNextTransitionIsAlwaysComplete is the execution-based
-// RED-first proof for adversarial finding F1: `gentle-ai review status
+// RED-first proof for adversarial finding F1: `shevanio-ai review status
 // --next-transition` alone is refused by this real CLI --
 //
-//	Error: --action-eligibility and --next-transition require --contract gentle-ai.review-integration/v1
+//	Error: --action-eligibility and --next-transition require --contract shevanio-ai.review-integration/v1
 //
 // -- and even the error's own suggested `--contract` names the LEGACY v1
 // schema, not the v2 contract this table's own Route section requires
-// routing from. The only form that actually runs is `gentle-ai review
-// status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent
+// routing from. The only form that actually runs is `shevanio-ai review
+// status --cwd <repo> --contract shevanio-ai.review-integration/v2 --agent
 // claude-code --next-transition` (confirmed by execution: exit 0, real
 // next_transition JSON returned). Every backtick-quoted invocation in the
 // shipped asset and its docs source must be this complete form.
 func TestNamedReviewStatusNextTransitionIsAlwaysComplete(t *testing.T) {
 	for label, content := range reviewStopReasonDocsCompleteDocuments(t) {
 		for _, invocation := range reviewStatusNextTransitionInvocationRegexp.FindAllString(content, -1) {
-			if !strings.Contains(invocation, "--contract gentle-ai.review-integration/v2") || !reviewAgentBindingRegexp.MatchString(invocation) {
-				t.Errorf("%s: %s is incomplete -- the real CLI refuses --next-transition without --contract gentle-ai.review-integration/v2 and a bound --agent (verified by execution)", label, invocation)
+			if !strings.Contains(invocation, "--contract shevanio-ai.review-integration/v2") || !reviewAgentBindingRegexp.MatchString(invocation) {
+				t.Errorf("%s: %s is incomplete -- the real CLI refuses --next-transition without --contract shevanio-ai.review-integration/v2 and a bound --agent (verified by execution)", label, invocation)
 			}
 		}
 	}
@@ -228,11 +228,11 @@ func TestNamedReviewStatusNextTransitionIsAlwaysComplete(t *testing.T) {
 var reviewAgentBindingRegexp = regexp.MustCompile("--agent [^ `]+")
 
 // reviewReopenResultsInvocationRegexp matches any backtick-quoted
-// `gentle-ai review reopen-results ...` invocation.
-var reviewReopenResultsInvocationRegexp = regexp.MustCompile("`gentle-ai review reopen-results[^`]*`")
+// `shevanio-ai review reopen-results ...` invocation.
+var reviewReopenResultsInvocationRegexp = regexp.MustCompile("`shevanio-ai review reopen-results[^`]*`")
 
 // TestNamedReviewReopenResultsIsAlwaysComplete is the execution-based
-// RED-first proof for adversarial finding F7: `gentle-ai review
+// RED-first proof for adversarial finding F7: `shevanio-ai review
 // reopen-results --prepare --quarantine-lens <lens>` alone is refused --
 //
 //	Error: review reopen-results requires --cwd, --lineage, --expected-revision, --target, --reason, and --actor
@@ -240,12 +240,12 @@ var reviewReopenResultsInvocationRegexp = regexp.MustCompile("`gentle-ai review 
 // (verified by execution). Every backtick-quoted invocation must name all
 // six required flags.
 func TestNamedReviewReopenResultsIsAlwaysComplete(t *testing.T) {
-	const bareNominalReference = "`gentle-ai review reopen-results`"
+	const bareNominalReference = "`shevanio-ai review reopen-results`"
 	requiredFlags := []string{"--cwd", "--lineage", "--expected-revision", "--target", "--reason", "--actor"}
 	for label, content := range reviewStopReasonDocsCompleteDocuments(t) {
 		for _, invocation := range reviewReopenResultsInvocationRegexp.FindAllString(content, -1) {
 			// A bare, flagless mention is a nominal reference to the command
-			// ("`gentle-ai review reopen-results` is a bounded maintenance
+			// ("`shevanio-ai review reopen-results` is a bounded maintenance
 			// operation..."), not an attempted invocation -- only a span that
 			// already carries at least one flag is claiming to be runnable.
 			if invocation == bareNominalReference {
@@ -260,38 +260,38 @@ func TestNamedReviewReopenResultsIsAlwaysComplete(t *testing.T) {
 	}
 }
 
-// reviewModeDisableInvocationRegexp matches any backtick-quoted `gentle-ai
+// reviewModeDisableInvocationRegexp matches any backtick-quoted `shevanio-ai
 // review mode disable ...` invocation.
-var reviewModeDisableInvocationRegexp = regexp.MustCompile("`gentle-ai review mode disable[^`]*`")
+var reviewModeDisableInvocationRegexp = regexp.MustCompile("`shevanio-ai review mode disable[^`]*`")
 
 // TestNamedReviewModeDisableIsAlwaysCloneScoped is the execution-based
 // RED-first proof for adversarial finding F6: `--scope` defaults to
-// `global` (review_mode.go's own flag default), so `gentle-ai review mode
+// `global` (review_mode.go's own flag default), so `shevanio-ai review mode
 // disable` with no `--scope` disables receipt-driven development for every
 // repository on the machine, not just the one the orchestrator meant.
-// Verified by execution: the bare form writes ~/.gentle-ai/state.json;
+// Verified by execution: the bare form writes ~/.shevanio-ai/state.json;
 // `--scope clone --cwd <repo>` writes only under that repository's own
-// .git/gentle-ai directory. Every invocation in the shipped asset must name
+// .git/shevanio-ai directory. Every invocation in the shipped asset must name
 // the clone-scoped form.
 func TestNamedReviewModeDisableIsAlwaysCloneScoped(t *testing.T) {
 	content := assets.MustRead(reviewLedgerContractAsset)
 	invocations := reviewModeDisableInvocationRegexp.FindAllString(content, -1)
 	if len(invocations) == 0 {
-		t.Fatal("found no `gentle-ai review mode disable` invocations in the shipped asset; the extraction is stale")
+		t.Fatal("found no `shevanio-ai review mode disable` invocations in the shipped asset; the extraction is stale")
 	}
 	for _, invocation := range invocations {
 		if !strings.Contains(invocation, "--scope clone") || !strings.Contains(invocation, "--cwd <repo>") {
-			t.Errorf("shipped asset: %s defaults to global scope if run as printed (verified by execution: omitting --scope writes ~/.gentle-ai/state.json machine-wide) -- name --scope clone --cwd <repo> instead", invocation)
+			t.Errorf("shipped asset: %s defaults to global scope if run as printed (verified by execution: omitting --scope writes ~/.shevanio-ai/state.json machine-wide) -- name --scope clone --cwd <repo> instead", invocation)
 		}
 	}
 }
 
 // TestShippedUnchangedOrUnverifiedAuthorityNamesTheRealPrecondition is the
-// execution-based RED-first proof for adversarial finding F4: `gentle-ai
+// execution-based RED-first proof for adversarial finding F4: `shevanio-ai
 // review start` on a candidate whose target is unchanged from the current
 // authority does not start a fresh lineage -- it resumes the SAME one
 // (confirmed by execution: the response reports `"action": "resumed"` with
-// the identical lineage_id). Naming only `gentle-ai review start` loops the
+// the identical lineage_id). Naming only `shevanio-ai review start` loops the
 // consumer back to the same stop. The row/entry must disclose that the
 // candidate needs to change first.
 func TestShippedUnchangedOrUnverifiedAuthorityNamesTheRealPrecondition(t *testing.T) {

@@ -9,32 +9,32 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 func TestReviewProviderArtifactV1ContractsArePinned(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v1")
 	want := map[string]string{
-		"fixtures/capabilities-v1.4.fixture.json": "84e0db457b76b97b35c2be772dfc647f9eab66810ea98f64fed85645c3c266ba",
-		"fixtures/start.fixture.json":             "3b963b221cd1560eb8872cbabbb5407096f593ced2f13eb9cb06eb61e4cca4d1",
+		"fixtures/capabilities-v1.4.fixture.json": "745c1d8508ae371c8292839e933b8edf4a3c05b09c19871e6593e10cc6318535",
+		"fixtures/start.fixture.json":             "3963cf5997e26864087e87ebd704302bd2b17ab4e419cc353bec515748b31c0f",
 		// issue #2659: start-v2/status-v2 embed a freshly minted target_identity,
 		// and the purified identity domain legitimately changed that hash for
 		// every new snapshot. Deliberate, not drift.
-		"fixtures/start-v2.fixture.json":         "2699660832c0d944184d5d314f08774ab9a02f5b8a7a4c2a07983440e0e346ad",
-		"fixtures/status.fixture.json":           "555054d8046a896162995dcb117752f9cd1ef903fb9ebaad29af1b7e7f319bb3",
-		"fixtures/status-v2.fixture.json":        "33c5032dcd5d916b4bff73781495640da83893b2f2b334465cbb40c18e1b85f4",
-		"fixtures/status-ambiguous.fixture.json": "ee695fd58ba72adfb3b51dfd16432a177498173a45bfcb594d6bdc53bfa32e6e",
-		"fixtures/status-corrupted.fixture.json": "4cfc0048c28a39cec8a32fecfaad66e56e5c1248263ceb4ce66b6717981880b2",
-		"fixtures/status-recover.fixture.json":   "714f762f72380ce93d567626cafbaa536ab3aae02af73d3d40ca123f1f30d8b0",
-		"fixtures/status-unrelated.fixture.json": "deab36c877ced3c9b480ca33724c10d88f75c761d6426fa14be850345122891d",
-		"schemas/admitted-result.schema.json":    "7796e8dbba331434594108c902dfab7ec46f691fa447a9259a78f2448111b0de",
-		"schemas/artifact-subject.schema.json":   "f7dcd934e27e8f3735a37f3d0ec8048dd8ccc1811b9df61124a1dcbf8a03f40e",
-		"schemas/capabilities-v1.4.schema.json":  "926b61c8ac0f870f09214f6bd8af1b035c5b72f14f0b83c0d4a7bdbb277f5447",
-		"schemas/result-artifact.schema.json":    "91296bd2c261fd2fe03bffd63efe58badd4927e0d0d8480cd4213f651ecacdf6",
-		"schemas/start.schema.json":              "4296aebbd4128ce51945a2f6d3228aa77ac7215c802978d559bff5279ec56229",
-		"schemas/start-v2.schema.json":           "ec8550cd93bbe84af1ce87dfd7abfa9e24692f42b20f8f0bf9cac1d4b88ea46c",
-		"schemas/status.schema.json":             "250d2c646b8822b38eaefafd2bfdefa1134cc23a00e553a7201f33257573149a",
-		"schemas/status-v2.schema.json":          "dd9914b647a1d9edc4ecdcbed4f0c800b39ec290912d5c2a4cc6ba3098d5f21e",
+		"fixtures/start-v2.fixture.json":         "322268ab298a1e54a957187242964d5e1abbd9b6434403ed7f52e5f425a169c3",
+		"fixtures/status.fixture.json":           "cabdec8e925c65663b11f10d424563531f5e608d1daf01f5aa4cc8d4fc5c6e8a",
+		"fixtures/status-v2.fixture.json":        "8b19bef08fe870707823f6c7a52d929ec7375ab678b050e56d58b504e9c8f65a",
+		"fixtures/status-ambiguous.fixture.json": "53f7bf00053dfd4379b7ab9c05a4bf41e8ca2c6047927c75a019775ffe4c4ff4",
+		"fixtures/status-corrupted.fixture.json": "f1d2d6c323fd810ea72df27b68a5d02f1336547eca3986b17817ee74edf3ce25",
+		"fixtures/status-recover.fixture.json":   "ab8eaf51acedc824a6b1f5d53e1c3a53f4497be171a7fb5870b4a62f9bc90aa9",
+		"fixtures/status-unrelated.fixture.json": "cd4204848b40e2d255bd8a9b76b7b2e366db3d07b2c6c305a3bf9c2882efc136",
+		"schemas/admitted-result.schema.json":    "6c5b6c8cc3da1813b021da64f9b518ed6e48771c8911b361e920a8da3bd73f92",
+		"schemas/artifact-subject.schema.json":   "ab5419a1e2ae6f794caa7d839b93914577c0a8d33cb26288f175354cf8879fb4",
+		"schemas/capabilities-v1.4.schema.json":  "4cecdcf0a336737d351b578ab630ea4fd1a23f072d83b130a2322c517e9da140",
+		"schemas/result-artifact.schema.json":    "9497399e082cfa71e3ede9b2f7262a8063c5e9314cd2e6d27153fb088a35d444",
+		"schemas/start.schema.json":              "068c5a9b7d67364575fdbd84dc4dcc28b8a22bc7948ed79040783dd3a6ff2e25",
+		"schemas/start-v2.schema.json":           "7536780c098b5dbb60e6d2e6bab289b1d669840b6b048e05d371a8b4283b52ce",
+		"schemas/status.schema.json":             "965a18a0f5c4f7b36b9f7ccecec5e4476597e19be74b3d80b4dd7e9d816bd1aa",
+		"schemas/status-v2.schema.json":          "34001defcbd57c12ea7636331419809c2518b0d408d3da986ad2bb311fda8d80",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
@@ -51,12 +51,12 @@ func TestReviewProviderArtifactV1ContractsArePinned(t *testing.T) {
 func TestReviewProviderArtifactV20ContractsArePinned(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v2")
 	want := map[string]string{
-		"fixtures/capabilities.fixture.json": "17c150d851c15b3f0c20d18c2e2741eb2232ffa24f35aa71d6d30e90a85e42b7",
-		"fixtures/consent.fixture.json":      "203cc96d5c29ba0f27b5c4db04c2e88566e0a923d3a0cdb317f78d9065349075",
-		"fixtures/status.fixture.json":       "4cd77906bacdca35d8f99773de147211d2b05fe34dd1b999011ead09e84be7a5",
-		"schemas/capabilities.schema.json":   "7ab061ed27bd3b929d6033cc20f56097e851f4454ca14a815255748b50191248",
-		"schemas/consent.schema.json":        "b2b4465338497f11927de91cb2e5da12b6cb4a1039afe05aebe1abbf53b21858",
-		"schemas/status.schema.json":         "c4dcc736cfc6300560a3c4262d2d982368529d5c49d58d499552a3b0beef9212",
+		"fixtures/capabilities.fixture.json": "9cb8dae15023d5d9ff4bbd3b9e11ee9426376312ecf5b1c34cb7128995b683d1",
+		"fixtures/consent.fixture.json":      "d5b6a0aff860b167fe08085ea1d96fb62c9c6eeb11c0a90ae278faa7d40ead7f",
+		"fixtures/status.fixture.json":       "e2289c86b0ac798f7ecd40a9d962b28c680e28a783338fe6f014ccd2cafe32ec",
+		"schemas/capabilities.schema.json":   "43f381dde3669281b8c85c42d7bd1e1ed1681ad17d52eea599af760ae33648fc",
+		"schemas/consent.schema.json":        "bda1b04619e284e8df47e8b4f8d7c4130819af7b48e50d3fcbce4c3b4b8b8c5d",
+		"schemas/status.schema.json":         "5ee1171879ad59f4d8ed82343ea1c1f905ec9e27350f391a2336fb944471a344",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
@@ -73,12 +73,12 @@ func TestReviewProviderArtifactV20ContractsArePinned(t *testing.T) {
 func TestReviewProviderArtifactV21ContractsArePinned(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v2")
 	want := map[string]string{
-		"fixtures/capabilities-v2.1.fixture.json": "4bbcbaed1b20e6ea8f9c615f35ff17b13ee69b4648784a4906191880751c668d",
+		"fixtures/capabilities-v2.1.fixture.json": "d5fad1d401b8df62d18e2274222062804294efca704dc12b5429e557fc4bac62",
 		// issue #2659: consent-v3 embeds a freshly minted target_identity;
 		// the purified identity domain legitimately changed that hash.
 		// Deliberate, not drift.
-		"fixtures/consent-v3.fixture.json":      "feb1dc7705f7da6490698ef48021bb7730de154ae23ec73d033d8d96fa996a21",
-		"schemas/capabilities-v2.1.schema.json": "9ede8ebbe3e169cf6ca4f4a6882c9c4e588a6d1073d8e22a155649cd41d38cd0",
+		"fixtures/consent-v3.fixture.json":      "45a96c22fdc93b67ed2a4ef135a4d4e7d731c6551b7113453bc96cbc1fd9c44b",
+		"schemas/capabilities-v2.1.schema.json": "4fd757c7bf69bfb6c4ad90cd4975e29e4e33b69704950086cbfbc4db3be59485",
 		// Cross-lane battery conformance fix: the schema pinned the choice
 		// invocations to `--agent claude-code`, but the live emitter omits the
 		// agent token when the caller declared no runtime (the pinned fixture
@@ -88,8 +88,8 @@ func TestReviewProviderArtifactV21ContractsArePinned(t *testing.T) {
 		// relay drives consent with its own declared runtime identity, which
 		// the emitter legitimately publishes once the relay handshake is
 		// declared. Deliberate, not drift.
-		"schemas/consent-v3.schema.json": "f56b1809c1bff21713795ef37a095c6ecfdbbb3cf928bcf604b8d5f33be3dea5",
-		"schemas/status.schema.json":     "c4dcc736cfc6300560a3c4262d2d982368529d5c49d58d499552a3b0beef9212",
+		"schemas/consent-v3.schema.json": "e182f62cc749093e13138f3c5dbd1a4eff261533c02aae8c315953a310e786a5",
+		"schemas/status.schema.json":     "5ee1171879ad59f4d8ed82343ea1c1f905ec9e27350f391a2336fb944471a344",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
@@ -106,7 +106,7 @@ func TestReviewProviderArtifactV21ContractsArePinned(t *testing.T) {
 func TestReviewProviderArtifactV25StatusContractsArePinned(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v2")
 	want := map[string]string{
-		"fixtures/status-v5.fixture.json": "1a6d002c9691c87e50687f8d5f3e59013e9229d93004028f746bfcda7947d5fc",
+		"fixtures/status-v5.fixture.json": "831b9d6b6771ebd053f270cad451765f024fd8a0327da8b20398278cb3bd22af",
 		// Cross-lane battery conformance fix: live negotiated STATUS publishes
 		// the top-level repository_context reference (review_status_contract.go's
 		// ReviewTargetStatusResult, populated since the recovered-units merges),
@@ -120,7 +120,7 @@ func TestReviewProviderArtifactV25StatusContractsArePinned(t *testing.T) {
 		// input with a capture-result submission descriptor, which the
 		// submission oneOf and the no-submission allOf rule both rejected.
 		// Deliberate, not drift.
-		"schemas/status-v5.schema.json": "4dd17e863725edb20e9cbb85d9614dfdc07ef6c9257aa789f4c9e8835400483e",
+		"schemas/status-v5.schema.json": "da0e0c7c5d696b08bcc82e33f30943ebe2bdd9a25857f29e60d020a238e5748a",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
@@ -136,14 +136,14 @@ func TestReviewProviderArtifactV25StatusContractsArePinned(t *testing.T) {
 
 // TestReviewProviderArtifactConformanceSchemasArePinned pins the schemas the
 // cross-lane battery conformance work first published: the delivery gate
-// result (gentle-ai.review-gate-result/v1) and the OpenCode provider-role
-// capture acknowledgement (gentle-ai.opencode-review-provider-role/v1). Both
+// result (shevanio-ai.review-gate-result/v1) and the OpenCode provider-role
+// capture acknowledgement (shevanio-ai.opencode-review-provider-role/v1). Both
 // envelopes already shipped on the wire; only their published schemas are new.
 func TestReviewProviderArtifactConformanceSchemasArePinned(t *testing.T) {
 	root := filepath.Join("..", "..", "contracts", "review-integration", "v2")
 	want := map[string]string{
-		"schemas/gate-result.schema.json":            "38aa37bdea8bdc8ea664d888f7c7217beac7e34c43a95a3ed7d9354bf76709ed",
-		"schemas/opencode-provider-role.schema.json": "c6b9f216f89c044f8e844b55e7200114850cfbc16642bca0677f30a399d8aa9b",
+		"schemas/gate-result.schema.json":            "cfa5ca058d7ff4238f1461c33374b908cf272081c4578dbb47cd8edbde04436e",
+		"schemas/opencode-provider-role.schema.json": "9082804bd12099cae4018be5e93da8bae78d839604fe888f12fdb2d6eb55bf32",
 	}
 	for name, expected := range want {
 		payload, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
@@ -163,10 +163,10 @@ func TestReviewProviderArtifactSchemasAreStrictAndBound(t *testing.T) {
 		name string
 		id   string
 	}{
-		{name: "artifact-subject.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v1/schemas/artifact-subject.schema.json"},
-		{name: "admitted-result.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v1/schemas/admitted-result.schema.json"},
+		{name: "artifact-subject.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/artifact-subject.schema.json"},
+		{name: "admitted-result.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/admitted-result.schema.json"},
 		{name: "correction-plan-request.schema.json", id: reviewtransaction.CorrectionPlanRequestSchemaID},
-		{name: "result-artifact-v2.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v1/schemas/result-artifact-v2.schema.json"},
+		{name: "result-artifact-v2.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v1/schemas/result-artifact-v2.schema.json"},
 		{name: "start-v2.schema.json", id: ReviewIntegrationStartSchemaIDV2},
 		{name: "status-v2.schema.json", id: ReviewIntegrationStatusSchemaIDV2},
 		{name: "authority-repair-assessment.schema.json", id: reviewtransaction.AuthorityRepairAssessmentSchemaID},
@@ -251,8 +251,8 @@ func TestReviewProviderArtifactSchemasAreStrictAndBound(t *testing.T) {
 		name string
 		id   string
 	}{
-		{name: "artifact-subject.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v2/schemas/artifact-subject.schema.json"},
-		{name: "admitted-result.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v2/schemas/admitted-result.schema.json"},
+		{name: "artifact-subject.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/artifact-subject.schema.json"},
+		{name: "admitted-result.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/admitted-result.schema.json"},
 		{name: "start.schema.json", id: ReviewIntegrationStartSchemaID},
 		{name: "status.schema.json", id: ReviewIntegrationStatusSchemaIDV3},
 		{name: "status-v4.schema.json", id: ReviewIntegrationStatusSchemaIDV4},
@@ -265,8 +265,8 @@ func TestReviewProviderArtifactSchemasAreStrictAndBound(t *testing.T) {
 		{name: "failure.schema.json", id: ReviewIntegrationFailureSchemaIDV2},
 		{name: "operation.schema.json", id: ReviewIntegrationOperationSchemaIDV2},
 		{name: "repair.schema.json", id: ReviewIntegrationRepairSchemaIDV2},
-		{name: "gate-result.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v2/schemas/gate-result.schema.json"},
-		{name: "opencode-provider-role.schema.json", id: "https://gentle-ai.dev/contracts/review-integration/v2/schemas/opencode-provider-role.schema.json"},
+		{name: "gate-result.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/gate-result.schema.json"},
+		{name: "opencode-provider-role.schema.json", id: "https://shevanio-ai.dev/contracts/review-integration/v2/schemas/opencode-provider-role.schema.json"},
 	}
 	v2Documents := make(map[string]map[string]any, len(v2Schemas))
 	for _, tt := range v2Schemas {

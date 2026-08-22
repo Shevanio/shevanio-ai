@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/assets"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
-const managedAssetProvenanceRefusal = "managed reviewer assets are outdated; run `gentle-ai sync`"
+const managedAssetProvenanceRefusal = "managed reviewer assets are outdated; run `shevanio-ai sync`"
 
 // managedAssetDigest returns a content digest of the managed assets this
 // binary embeds. It deliberately does NOT use the review capabilities build
@@ -34,7 +34,7 @@ func managedAssetDigest() (string, error) {
 // or one with no digest recorded, means no managed assets were ever installed
 // here, so there is nothing stale to protect against and nothing this refusal
 // could tell the caller to repair. Refusing that shape would block every user
-// who never ran `gentle-ai install` from reviewing at all.
+// who never ran `shevanio-ai install` from reviewing at all.
 func authorizeManagedReviewerAssets() error {
 	homeDir, err := osUserHomeDir()
 	if err != nil {

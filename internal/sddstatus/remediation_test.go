@@ -126,7 +126,7 @@ func TestParseRemediationResultMultipleBindingsPreserveEvidenceRevision(t *testi
 func remediationEnvelope(revision string) string {
 	return strings.Join([]string{
 		"```yaml",
-		"schema: gentle-ai.remediation-result/v1",
+		"schema: shevanio-ai.remediation-result/v1",
 		"status: complete",
 		"failed_evidence_revision: " + revision,
 		"focused_tests: passed",
@@ -138,7 +138,7 @@ func remediationEnvelope(revision string) string {
 
 func remediationResultEvidence(revision string) string {
 	payload := map[string]any{
-		"schema":                   "gentle-ai.remediation-evidence/v1",
+		"schema":                   "shevanio-ai.remediation-evidence/v1",
 		"failed_evidence_revision": revision,
 		"commands":                 []map[string]any{{"command": "go test ./internal/example", "exit_code": 0, "result": "1 test passed"}},
 		"runtime_harness": map[string]any{
@@ -157,7 +157,7 @@ func remediationResultEvidence(revision string) string {
 func remediationResultEvidenceWithBinding(revision string, binding RemediationBinding) string {
 	envelope := remediationEnvelopeWithBinding(revision, binding)
 	payload := map[string]any{
-		"schema":                   "gentle-ai.remediation-evidence/v1",
+		"schema":                   "shevanio-ai.remediation-evidence/v1",
 		"failed_evidence_revision": revision,
 		"lineage_id":               binding.LineageID,
 		"generation":               binding.Generation,
@@ -181,7 +181,7 @@ func remediationEnvelopeWithBinding(revision string, binding RemediationBinding)
 }
 
 func legacyRemediationResult(revision string, binding RemediationBinding) string {
-	return "```json\n{\"schema\":\"gentle-ai.remediation-result/v1\",\"failedVerifyRevision\":\"" + revision + "\",\"lineageId\":\"" + binding.LineageID + "\",\"generation\":" + strconv.Itoa(binding.Generation) + ",\"fixBatch\":" + strconv.Itoa(binding.FixBatch) + "}\n```"
+	return "```json\n{\"schema\":\"shevanio-ai.remediation-result/v1\",\"failedVerifyRevision\":\"" + revision + "\",\"lineageId\":\"" + binding.LineageID + "\",\"generation\":" + strconv.Itoa(binding.Generation) + ",\"fixBatch\":" + strconv.Itoa(binding.FixBatch) + "}\n```"
 }
 
 func quoteRemediationEnvelope(envelope, prefix string) string {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // runtimeBeginAdmissionResult is everything Begin needs from the admission

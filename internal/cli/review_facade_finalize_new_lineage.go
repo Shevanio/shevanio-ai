@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // ReviewFacadeFinalizeNewLineageResult is finalize's v3 activation-branch
@@ -112,7 +112,7 @@ func runReviewFacadeFinalizeNewLineage(
 		if errors.Is(err, reviewtransaction.ErrFinalizeRequiresLensResults) {
 			missing := authority.MissingCapturedLensNames()
 			return reviewPreflightError(fmt.Errorf(
-				"new-lineage finalize requires captured results for every frozen selected lens before approving: missing %s; capture each with `gentle-ai review capture-result --cwd <repo> --lineage %s --target <target> --lens <lens> --order <order> --input <result.json>` (run with --preflight first to discover the exact subject hash to echo back), then retry `gentle-ai review finalize --cwd <repo> --lineage %s --captured-results=true`",
+				"new-lineage finalize requires captured results for every frozen selected lens before approving: missing %s; capture each with `shevanio-ai review capture-result --cwd <repo> --lineage %s --target <target> --lens <lens> --order <order> --input <result.json>` (run with --preflight first to discover the exact subject hash to echo back), then retry `shevanio-ai review finalize --cwd <repo> --lineage %s --captured-results=true`",
 				strings.Join(missing, ", "), lineage, lineage,
 			))
 		}

@@ -20,9 +20,9 @@ import (
 // It is exported so a refusal in another package that names `review abandon`
 // as its continuation can print the template and be checked against the schema
 // this gate actually verifies, rather than against a copy of the string.
-const CompactAbandonAuthorizationSchema = "gentle-ai.review-abandon-authorization/v2"
+const CompactAbandonAuthorizationSchema = "shevanio-ai.review-abandon-authorization/v2"
 
-const compactLegacyAbandonAuthorizationSchema = "gentle-ai.review-abandon-authorization/v1"
+const compactLegacyAbandonAuthorizationSchema = "shevanio-ai.review-abandon-authorization/v1"
 
 // CompactAbandonRequest identifies one non-terminal compact-v2 review lineage to
 // quarantine, together with the exact maintainer authorization binding for
@@ -153,7 +153,7 @@ func compactDiscardedWorkSummary(ctx context.Context, store CompactStore, record
 }
 
 func compactAbandonV2Rerun(repo, lineage, revision, snapshotIdentity, actor, reason string, discarded CompactDiscardedWorkSummary) string {
-	return fmt.Sprintf("Re-run `gentle-ai review abandon --cwd %q --lineage %q --expected-revision %q --reason %q --actor %q --maintainer-authorization <the exact binding below>` using schema %s:\n%s",
+	return fmt.Sprintf("Re-run `shevanio-ai review abandon --cwd %q --lineage %q --expected-revision %q --reason %q --actor %q --maintainer-authorization <the exact binding below>` using schema %s:\n%s",
 		repo, lineage, revision, reason, strings.TrimSpace(actor), CompactAbandonAuthorizationSchema,
 		compactAbandonAuthorizationBindingV2(lineage, revision, snapshotIdentity, actor, reason, discarded))
 }

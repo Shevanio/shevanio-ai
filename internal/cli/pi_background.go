@@ -8,16 +8,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/components/filemerge"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/model"
-	"github.com/gentleman-programming/gentle-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 // PiBackgroundSubagentsEnv is the environment source for the managed Pi
 // background-subagent preference. It mirrors the OpenCode contract; there is
 // no launcher or activation plumbing behind it because the primitive is the
 // already-installed pi-subagents extension reading a projected policy file.
-const PiBackgroundSubagentsEnv = "GENTLE_AI_PI_BACKGROUND_SUBAGENTS"
+const PiBackgroundSubagentsEnv = "SHEVANIO_AI_PI_BACKGROUND_SUBAGENTS"
 
 // PiConfigHomeEnv overrides gentle-pi's config base directory (default
 // ~/.pi), matching gentle-pi's own configuration precedent.
@@ -149,14 +149,14 @@ func ResolvePiBackgroundInteractive(prior model.PiBackgroundIntent) (PiBackgroun
 }
 
 // piBackgroundPolicyPath resolves the gentle-pi-readable policy location:
-// <base>/gentle-ai/background-subagents.json where base is
+// <base>/shevanio-ai/background-subagents.json where base is
 // GENTLE_PI_CONFIG_HOME when set, otherwise ~/.pi.
 func piBackgroundPolicyPath(homeDir string) string {
 	base := strings.TrimSpace(os.Getenv(PiConfigHomeEnv))
 	if base == "" {
 		base = filepath.Join(homeDir, ".pi")
 	}
-	return filepath.Join(base, "gentle-ai", "background-subagents.json")
+	return filepath.Join(base, "shevanio-ai", "background-subagents.json")
 }
 
 // piBackgroundProjectionPlan writes the RESOLVED effective on/off policy to

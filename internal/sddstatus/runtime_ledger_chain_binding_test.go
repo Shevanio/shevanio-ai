@@ -116,7 +116,7 @@ func TestRuntimeLegacyInterruptedEvidenceStillReplays(t *testing.T) {
 		Outcome: AttemptInterrupted, ChangedLines: 0, EvidenceRevision: runtimeTestHash('a'), Diagnosis: "legacy interrupted record",
 		HarnessDisposition: HarnessInvalidated, CleanupEvidence: "clean", ProcessEvidence: "none",
 	}}
-	legacy.RequestDigest = runtimeValueHash("gentle-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{ExpectedRevision: legacy.PreviousRevision, RequestID: legacy.RequestID, Outcome: legacy.Finish.Outcome, EvidenceRevision: legacy.Finish.EvidenceRevision, Diagnosis: legacy.Finish.Diagnosis, HarnessDisposition: legacy.Finish.HarnessDisposition, CleanupEvidence: legacy.Finish.CleanupEvidence, ProcessEvidence: legacy.Finish.ProcessEvidence})
+	legacy.RequestDigest = runtimeValueHash("shevanio-ai.sdd-runtime-finish-request/v1", FinishAttemptRequest{ExpectedRevision: legacy.PreviousRevision, RequestID: legacy.RequestID, Outcome: legacy.Finish.Outcome, EvidenceRevision: legacy.Finish.EvidenceRevision, Diagnosis: legacy.Finish.Diagnosis, HarnessDisposition: legacy.Finish.HarnessDisposition, CleanupEvidence: legacy.Finish.CleanupEvidence, ProcessEvidence: legacy.Finish.ProcessEvidence})
 	revision, payload, err := runtimeRecordRevision(legacy)
 	if err != nil {
 		t.Fatal(err)

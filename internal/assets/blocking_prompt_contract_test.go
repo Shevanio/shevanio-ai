@@ -211,13 +211,13 @@ func TestNativeBlockingPromptRulesRetainInteractiveUIWithFailClosedFallback(t *t
 	}
 }
 
-func TestCoordinatorOrchestratorsCarryGentleAIProviderDefectHandoff(t *testing.T) {
+func TestCoordinatorOrchestratorsCarryShevanioAIProviderDefectHandoff(t *testing.T) {
 	requirements := []struct {
 		name string
 		text string
 	}{
 		{name: "admissibility before lossless relay", text: "Before losslessly relaying any blocking choice envelope, classify its semantic admissibility"},
-		{name: "direct repair prohibition", text: "never offer to switch to, inspect, modify, or directly repair the Gentle AI repository"},
+		{name: "direct repair prohibition", text: "never offer to switch to, inspect, modify, or directly repair the Shevanio AI repository"},
 		{name: "invalid upstream envelope", text: "reject it as semantically inadmissible and issue this separate orchestrator-owned handoff envelope"},
 		{name: "localized consent", text: "Ask the user first, in the active orchestrator conversation language"},
 		{name: "explicit consent", text: "for explicit consent to report the apparent defect"},
@@ -225,9 +225,9 @@ func TestCoordinatorOrchestratorsCarryGentleAIProviderDefectHandoff(t *testing.T
 		{name: "exact answer tokens", text: "`report_and_continue`, `continue_without_reporting`, `stop_here`"},
 		{name: "localized labels", text: "Localize their labels and descriptions without changing these semantics"},
 		{name: "no internal labels", text: "do not expose machine or internal codes in user-facing labels"},
-		{name: "report and continue choice", text: "**Report the Gentle AI defect and continue**: Only after explicit consent and that final privacy scan"},
+		{name: "report and continue choice", text: "**Report the Shevanio AI defect and continue**: Only after explicit consent and that final privacy scan"},
 		{name: "continue without reporting choice", text: "**Continue without reporting**: Perform no GitHub search, write, comment, or label, and no report-side privacy scan is required."},
-		{name: "fixed repository", text: "`Gentleman-Programming/gentle-ai`"},
+		{name: "fixed repository", text: "`Shevanio/shevanio-ai`"},
 		{name: "definitive equivalent lookup", text: "complete a definitive lookup across open and closed issues for an equivalent defect or canonical tracker"},
 		{name: "equivalent definition", text: "same observable defect and affected contract, backed by concrete evidence rather than title similarity alone"},
 		{name: "canonical definition", text: "owns the causal class"},
@@ -250,14 +250,14 @@ func TestCoordinatorOrchestratorsCarryGentleAIProviderDefectHandoff(t *testing.T
 		{name: "comment exact canonical", text: "on that exact canonical/equivalent issue"},
 		{name: "unconfirmed creation continuation", text: "If creation fails, is ambiguous, incomplete, times out, lacks permission, or has an unknown outcome, preserve all consumer state; do not search, comment, update, or retry creation until the exact created issue identity is resolved, then use the uncertainty continuation below."},
 		{name: "report outcome continuation", text: "After a definitive successful report outcome, or any report-side uncertainty after stopping further GitHub mutation, execute the shared candidate-scoped continuation below."},
-		{name: "captured provider decline", text: "exact captured provider-owned `choices[answer=\"declined\"].invocation` from the `gentle-ai.review-integration.consent/v3` envelope"},
+		{name: "captured provider decline", text: "exact captured provider-owned `choices[answer=\"declined\"].invocation` from the `shevanio-ai.review-integration.consent/v3` envelope"},
 		{name: "captured decline only", text: "Never synthesize the decline command, target, token, or consumer continuation from prose."},
 		{name: "missing decline context fails closed", text: "If the captured exact v3 decline invocation, exact target identity, or consumer continuation context is unavailable or ambiguous, fail closed with all consumer state preserved and do not run a substitute command."},
 		{name: "decline result validation", text: "validate `action: \"declined\"`, `consent: \"declined_this_candidate\"`, and the exact target identity match"},
 		{name: "decline preserves ordinary delivery", text: "The result carries no lineage or receipt; ordinary delivery is unmanaged by the candidate choice, and the next candidate asks again."},
 		{name: "native negotiated status re-entry", text: "re-enter through native negotiated STATUS, then resume the already-held consumer continuation"},
 		{name: "continue paths reuse exact decline", text: "Both continue choices execute that exact captured decline invocation exactly once"},
-		{name: "review mode disable prohibition", text: "Do not invoke `gentle-ai review mode disable` at clone or global scope within this handoff."},
+		{name: "review mode disable prohibition", text: "Do not invoke `shevanio-ai review mode disable` at clone or global scope within this handoff."},
 		{name: "rdd mode preservation", text: "Do not turn RDD off or on within this handoff."},
 		{name: "stop choice", text: "**Stop here**: Perform no GitHub operation and no decline invocation; preserve all consumer state and STOP."},
 		{name: "observed evidence", text: "Report observed evidence, not an unconfirmed root cause"},
@@ -297,7 +297,7 @@ func TestCoordinatorOrchestratorsCarryGentleAIProviderDefectHandoff(t *testing.T
 				t.Errorf("provider-defect handoff has %d numbered semantic choices; want exactly 3", got)
 			}
 			for index, choice := range []string{
-				"  1. **Report the Gentle AI defect and continue**:",
+				"  1. **Report the Shevanio AI defect and continue**:",
 				"  2. **Continue without reporting**:",
 				"  3. **Stop here**:",
 			} {
@@ -332,7 +332,7 @@ func TestCoordinatorOrchestratorsCarryGentleAIProviderDefectHandoff(t *testing.T
 					t.Errorf("provider-defect handoff must not make published fixes the only resumption route: %q", prohibited)
 				}
 			}
-			if count := strings.Count(contract, "gentle-ai review mode disable"); count != 1 {
+			if count := strings.Count(contract, "shevanio-ai review mode disable"); count != 1 {
 				t.Errorf("provider-defect handoff mentions review mode disable %d times; want exactly its prohibition", count)
 			}
 			for _, invariant := range []struct {
@@ -428,7 +428,7 @@ func providerDefectHandoffLine(t *testing.T, contract, prefix string) string {
 func TestCoordinatorOrchestratorsCarrySDDEditAuthorityConsentRelay(t *testing.T) {
 	requirements := []string{
 		"When native SDD status reports `blocked(edit_authority_missing)`",
-		"typed `gentle-ai.sdd-integration.consent/v1` envelope",
+		"typed `shevanio-ai.sdd-integration.consent/v1` envelope",
 		"optional `consent` block",
 		"Treat that envelope as a Lossless Blocking Prompt under this contract",
 		"same discipline as the review consent relay",
@@ -484,7 +484,7 @@ func sddConsentRelaySection(t *testing.T, path string) string {
 
 func providerDefectHandoffSection(t *testing.T, path string) string {
 	t.Helper()
-	const heading = "#### Gentle AI Provider Defect Handoff (MANDATORY)"
+	const heading = "#### Shevanio AI Provider Defect Handoff (MANDATORY)"
 	content := MustRead(path)
 	start := strings.Index(content, heading)
 	if start == -1 {

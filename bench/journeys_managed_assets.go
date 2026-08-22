@@ -12,9 +12,9 @@ import (
 
 const (
 	// historicalManagedAssetStateSHA256 pins the exact state bytes emitted by
-	// `gentle-ai sync --agents opencode` from predecessor 8c2cbd80.
+	// `shevanio-ai sync --agents opencode` from predecessor 8c2cbd80.
 	historicalManagedAssetStateSHA256 = "6c337347a4c94055f321b6e4aef7fa6ee96f4ca0159e2e8d99e385557120a329"
-	managedAssetRemediation           = "managed reviewer assets are outdated; run `gentle-ai sync`"
+	managedAssetRemediation           = "managed reviewer assets are outdated; run `shevanio-ai sync`"
 )
 
 //go:embed testdata/managed-assets/state-8c2cbd80.json
@@ -31,7 +31,7 @@ func staleManagedAssetState(sandbox *Sandbox) error {
 	if got := fmt.Sprintf("%x", sha256.Sum256(historicalManagedAssetState)); got != historicalManagedAssetStateSHA256 {
 		return fmt.Errorf("historical managed asset state SHA-256 = %s, want %s", got, historicalManagedAssetStateSHA256)
 	}
-	path := filepath.Join(sandbox.Home, ".gentle-ai", "state.json")
+	path := filepath.Join(sandbox.Home, ".shevanio-ai", "state.json")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}

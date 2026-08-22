@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
-const StatusContractV1 = "gentle-ai.sdd-status/v1"
+const StatusContractV1 = "shevanio-ai.sdd-status/v1"
 
 // StatusV1Projection is the frozen wire shape consumed by legacy Gentle Pi
 // clients. Status remains the internal aggregate and may grow independently.

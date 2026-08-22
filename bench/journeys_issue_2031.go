@@ -74,7 +74,7 @@ func negotiateIssue2031Recovery(r *journeyRun) error {
 	const actor = "bench-maintainer"
 	const reason = "authorize corrected escalated target with expanded delivery scope"
 	authorization := strings.Join([]string{
-		"gentle-ai.review-recovery-authorization/v1",
+		"shevanio-ai.review-recovery-authorization/v1",
 		"predecessor_lineage=" + issue2031EscalatedPredecessor,
 		"predecessor_revision=" + expectedRevision,
 		"target_identity=" + expectedTarget,

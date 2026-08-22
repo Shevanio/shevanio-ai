@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/sddstatus"
+	"github.com/shevanio/shevanio-ai/v2/internal/sddstatus"
 )
 
 // TestRunSDDAttemptAcquireRemediationIntentFailsFastAfterReset is #2564's CLI
@@ -64,7 +64,7 @@ func TestRunSDDAttemptAcquireRemediationIntentFailsFastAfterReset(t *testing.T) 
 	if refused.State != "blocked" || refused.Reason != "remediation_unsatisfiable" || refused.Token != "" {
 		t.Fatalf("stale post-reset remediation-intent acquire = %#v, want blocked/remediation_unsatisfiable", refused)
 	}
-	if !strings.Contains(refused.Exit, "gentle-ai sdd-attempt") || refused.Detail == "" {
+	if !strings.Contains(refused.Exit, "shevanio-ai sdd-attempt") || refused.Detail == "" {
 		t.Fatalf("remediation-intent refusal does not name a runnable continuation: %#v", refused)
 	}
 

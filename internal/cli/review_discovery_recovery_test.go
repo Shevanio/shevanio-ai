@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gentleman-programming/gentle-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 )
 
 // TestReceiptDiscoveryDenialNamesRunnableReviewStart is the guard for the
@@ -111,7 +111,7 @@ func TestReceiptDiscoveryDenialNamesRunnableReviewStart(t *testing.T) {
 	}
 }
 
-// runNamedReviewContinuation parses the single runnable `gentle-ai review ...`
+// runNamedReviewContinuation parses the single runnable `shevanio-ai review ...`
 // command out of a denial message, dispatches it through the real CLI router,
 // and drives the review it starts to a terminal receipt exactly as an operator
 // following the message would. Every argument comes from the message; nothing
@@ -120,11 +120,11 @@ func runNamedReviewContinuation(t *testing.T, repo, message string) {
 	t.Helper()
 	tokens := namedReviewCommandTokens(t, message)
 	if len(tokens) < 2 || tokens[0] != "review" {
-		t.Fatalf("denial named %v, want a gentle-ai review <verb> continuation: %q", tokens, message)
+		t.Fatalf("denial named %v, want a shevanio-ai review <verb> continuation: %q", tokens, message)
 	}
 	var output bytes.Buffer
 	if err := RunReview(append(append([]string{}, tokens[1:]...), "--cwd", repo), &output); err != nil {
-		t.Fatalf("the command the denial named exits non-zero (named dead end): gentle-ai %s: %v\n%s",
+		t.Fatalf("the command the denial named exits non-zero (named dead end): shevanio-ai %s: %v\n%s",
 			strings.Join(tokens, " "), err, output.String())
 	}
 	var started ReviewFacadeStartResult
@@ -145,16 +145,16 @@ func runNamedReviewContinuation(t *testing.T, repo, message string) {
 }
 
 // namedReviewCommandTokens returns the argument tokens of the first
-// `gentle-ai ...` command in a message, and fails when the message names none
+// `shevanio-ai ...` command in a message, and fails when the message names none
 // or leaves an unfilled <placeholder> the operator would still have to
 // resolve. It mirrors what the friction harness's classifier accepts as a
 // runnable command.
 func namedReviewCommandTokens(t *testing.T, message string) []string {
 	t.Helper()
-	const product = "gentle-ai "
+	const product = "shevanio-ai "
 	index := strings.Index(message, product)
 	if index < 0 {
-		t.Fatalf("denial names no runnable gentle-ai command: %q", message)
+		t.Fatalf("denial names no runnable shevanio-ai command: %q", message)
 	}
 	tail := message[index+len(product):]
 	if cut := strings.IndexAny(tail, "\n"); cut >= 0 {

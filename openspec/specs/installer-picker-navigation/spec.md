@@ -72,7 +72,7 @@ Backward navigation MUST be the exact reverse of forward navigation and MUST be 
 
 ### Requirement: Cross-cutting guards remain outside the slice
 
-The `ModelConfigMode` exit-ramp, the `OpenCodePluginsStandalone` guard, and the GentleAI-upgrade Esc-quit MUST remain early-return guards evaluated before the flow-slice walk; they MUST NOT be folded into `pickerFlowSlice`.
+The `ModelConfigMode` exit-ramp, the `OpenCodePluginsStandalone` guard, and the ShevanioAI-upgrade Esc-quit MUST remain early-return guards evaluated before the flow-slice walk; they MUST NOT be folded into `pickerFlowSlice`.
 
 #### Scenario: ModelConfigMode exit-ramp returns to config menu
 
