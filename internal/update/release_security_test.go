@@ -46,6 +46,9 @@ func TestReleaseWorkflowUsesFailClosedLeastPrivilegeGates(t *testing.T) {
 		"MINISIGN_PUBLIC_KEYS_CANONICAL: ${{ steps.trust-anchors.outputs.canonical }}",
 		"MINISIGN_SECRET_KEY_FILE:",
 		"version: v2.15.2",
+		"workflow_call:",
+		"RELEASE_CHANNEL: ${{ inputs.release_channel || 'stable' }}",
+		"--skip=homebrew",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("release workflow is missing %q", required)
@@ -74,6 +77,26 @@ func TestReleaseWorkflowUsesFailClosedLeastPrivilegeGates(t *testing.T) {
 	}
 	if err := scanner.Err(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRCReleaseWorkflowDelegatesOnlyCanonicalPublication(t *testing.T) {
+	workflow := readRepositoryFile(t, ".github", "workflows", "release-rc.yml")
+	for _, required := range []string{
+		`- "v*-rc.*"`,
+		"contents: write",
+		"actions: read",
+		"uses: ./.github/workflows/release.yml",
+		"release_channel: rc",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("RC release workflow is missing %q", required)
+		}
+	}
+	for _, forbidden := range []string{"HOMEBREW_TAP_TOKEN", "MINISIGN_SECRET_KEY_BASE64", "steps:"} {
+		if strings.Contains(workflow, forbidden) {
+			t.Errorf("RC release workflow bypasses the shared protected publisher with %q", forbidden)
+		}
 	}
 }
 
@@ -185,9 +208,14 @@ func TestReleaseAssetVerifierPreservesReadOnlyRotationVerification(t *testing.T)
 set -euo pipefail
 printf '%s\n' "$*" >>"$GH_CALL_LOG"
 tag=${RELEASE_VERIFICATION_TAG:-$GITHUB_REF_NAME}
+version=${tag#v}
+prerelease=false
+[[ "${RELEASE_CHANNEL:-stable}" != rc ]] || prerelease=true
+[[ -z "${FAKE_PRERELEASE:-}" ]] || prerelease=$FAKE_PRERELEASE
+immutable=${FAKE_IMMUTABLE:-true}
 if [[ "$1" == api && "$2" == "repos/$GITHUB_REPOSITORY/releases/tags/$tag" ]]; then
   cat <<JSON
-{"tag_name":"$tag","draft":false,"prerelease":false,"assets":[{"name":"shevanio-ai_1.2.3_darwin_amd64.tar.gz"},{"name":"shevanio-ai_1.2.3_darwin_arm64.tar.gz"},{"name":"shevanio-ai_1.2.3_linux_amd64.tar.gz"},{"name":"shevanio-ai_1.2.3_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
+{"tag_name":"$tag","draft":false,"prerelease":$prerelease,"immutable":$immutable,"assets":[{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
 JSON
   exit 0
 fi
@@ -203,10 +231,10 @@ if [[ "$1" == release && "$2" == download && "$3" == "$tag" ]]; then
   [[ -n "$directory" ]]
   mkdir -p "$directory"
   for platform in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64; do
-    printf 'archive %s\n' "$platform" >"$directory/shevanio-ai_1.2.3_${platform}.tar.gz"
+    printf 'archive %s\n' "$platform" >"$directory/shevanio-ai_${version}_${platform}.tar.gz"
   done
   printf 'provider contract\n' >"$directory/shevanio-ai-review-provider-contract-1.1.0.tar.gz"
-  (cd "$directory" && sha256sum shevanio-ai_1.2.3_*.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz >checksums.txt)
+  (cd "$directory" && sha256sum shevanio-ai_${version}_*.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz >checksums.txt)
   printf 'test signature\n' >"$directory/checksums.txt.minisig"
   exit 0
 fi
@@ -231,6 +259,9 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 		githubRef       string
 		verificationTag string
 		setExplicitTag  bool
+		channel         string
+		fakePrerelease  string
+		fakeImmutable   string
 		wantSuccess     bool
 		wantOutput      string
 	}{
@@ -245,6 +276,61 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			name:        "native tag ref remains supported",
 			githubRef:   "v1.2.3",
 			wantSuccess: true,
+		},
+		{
+			name:        "canonical RC tag is accepted only in RC mode",
+			githubRef:   "v1.2.3-rc.4",
+			channel:     "rc",
+			wantSuccess: true,
+		},
+		{
+			name:       "RC mode rejects stable tag",
+			githubRef:  "v1.2.3",
+			channel:    "rc",
+			wantOutput: "tag is not exact RC semver",
+		},
+		{
+			name:       "stable mode rejects RC tag",
+			githubRef:  "v1.2.3-rc.1",
+			wantOutput: "tag is not exact stable semver",
+		},
+		{
+			name:       "RC mode rejects zero sequence",
+			githubRef:  "v1.2.3-rc.0",
+			channel:    "rc",
+			wantOutput: "tag is not exact RC semver",
+		},
+		{
+			name:       "RC mode rejects leading zero version",
+			githubRef:  "v01.2.3-rc.1",
+			channel:    "rc",
+			wantOutput: "tag is not exact RC semver",
+		},
+		{
+			name:       "RC mode rejects beta tag",
+			githubRef:  "v1.2.3-beta.1",
+			channel:    "rc",
+			wantOutput: "tag is not exact RC semver",
+		},
+		{
+			name:       "RC mode rejects leading zero sequence",
+			githubRef:  "v1.2.3-rc.01",
+			channel:    "rc",
+			wantOutput: "tag is not exact RC semver",
+		},
+		{
+			name:           "RC mode rejects release marked stable",
+			githubRef:      "v1.2.3-rc.1",
+			channel:        "rc",
+			fakePrerelease: "false",
+			wantOutput:     "remote release channel mismatch",
+		},
+		{
+			name:          "RC mode rejects mutable release",
+			githubRef:     "v1.2.3-rc.1",
+			channel:       "rc",
+			fakeImmutable: "false",
+			wantOutput:    "remote release is not immutable",
 		},
 		{
 			name:            "empty explicit promotion tag fails closed",
@@ -264,7 +350,7 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			for _, value := range os.Environ() {
 				name, _, _ := strings.Cut(value, "=")
 				switch name {
-				case "PATH", "GH_CALL_LOG", "GH_TOKEN", "GITHUB_REPOSITORY", "GITHUB_REF_NAME", "MINISIGN_PUBLIC_KEYS", "EXPECTED_SIGNING_KEY", "RELEASE_VERIFICATION_TAG":
+				case "PATH", "GH_CALL_LOG", "GH_TOKEN", "GITHUB_REPOSITORY", "GITHUB_REF_NAME", "MINISIGN_PUBLIC_KEYS", "EXPECTED_SIGNING_KEY", "RELEASE_VERIFICATION_TAG", "RELEASE_CHANNEL", "FAKE_PRERELEASE", "FAKE_IMMUTABLE":
 					continue
 				}
 				environment = append(environment, value)
@@ -280,6 +366,15 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 			)
 			if tc.setExplicitTag {
 				command.Env = append(command.Env, "RELEASE_VERIFICATION_TAG="+tc.verificationTag)
+			}
+			if tc.channel != "" {
+				command.Env = append(command.Env, "RELEASE_CHANNEL="+tc.channel)
+			}
+			if tc.fakePrerelease != "" {
+				command.Env = append(command.Env, "FAKE_PRERELEASE="+tc.fakePrerelease)
+			}
+			if tc.fakeImmutable != "" {
+				command.Env = append(command.Env, "FAKE_IMMUTABLE="+tc.fakeImmutable)
 			}
 			output, err := command.CombinedOutput()
 			if tc.wantSuccess && err != nil {
@@ -299,7 +394,11 @@ printf 'repo=%s;tag=%s\n' "$GITHUB_REPOSITORY" "${RELEASE_VERIFICATION_TAG:-$GIT
 				t.Fatal(err)
 			}
 			lines := strings.Split(strings.TrimSpace(string(calls)), "\n")
-			if len(lines) != 2 || !strings.HasPrefix(lines[0], "api repos/") || !strings.HasPrefix(lines[1], "release download v1.2.3 ") {
+			expectedTag := tc.githubRef
+			if tc.setExplicitTag {
+				expectedTag = tc.verificationTag
+			}
+			if len(lines) != 2 || !strings.HasPrefix(lines[0], "api repos/") || !strings.HasPrefix(lines[1], "release download "+expectedTag+" ") {
 				t.Fatalf("release verifier used commands outside the approved read-only surface: %q", lines)
 			}
 		})
@@ -353,6 +452,7 @@ func TestGoReleaserSignsBoundManifestAndInjectsTrustAnchors(t *testing.T) {
 		`- "${artifact}"`,
 		`- "${signature}"`,
 		`repo=Shevanio/shevanio-ai;tag={{ .Tag }}`,
+		"prerelease: auto",
 		`github.com/shevanio/shevanio-ai/v2/internal/update/upgrade.releaseMinisignPublicKeys={{ .Env.MINISIGN_PUBLIC_KEYS_CANONICAL }}`,
 		"-trimpath",
 	} {
@@ -412,6 +512,8 @@ func TestReleaseSecurityScriptsAreSyntacticallyValidAndFailClosed(t *testing.T) 
 			path: "release-preflight.sh",
 			required: []string{
 				`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`,
+				`-rc\.([1-9][0-9]*)$`,
+				`RELEASE_CHANNEL`,
 				`refs/remotes/origin/main`,
 				`refs/tags/$tag^{commit}`,
 				`go mod tidy -diff`,
@@ -440,6 +542,8 @@ func TestReleaseSecurityScriptsAreSyntacticallyValidAndFailClosed(t *testing.T) 
 				`sha256sum --check --strict`,
 				`shevanio-ai_${version}_linux_amd64.tar.gz`,
 				`checksums.txt.minisig`,
+				`RELEASE_CHANNEL`,
+				`remote release is not immutable`,
 			},
 		},
 		{
