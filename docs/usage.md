@@ -149,9 +149,19 @@ If no `--component` flag is provided for a partial uninstall, `shevanio-ai` remo
 
 ### update / upgrade
 
-Check for and install new versions of `shevanio-ai` itself. The pre-upgrade backup snapshot covers only the agents recorded in `state.InstalledAgents` (`~/.shevanio-ai/state.json`) — not every agent config directory that exists on your machine.
+Upgrade `shevanio-ai` with the same method used to install it. The official Homebrew formula and signed release binaries carry production trust anchors. Binaries produced by `go install` or a local source build do not, so their binary self-upgrader fails closed by design.
 
-No Shevanio AI release is published yet. Source builds have no embedded Shevanio Minisign trust anchor, so binary upgrade fails closed; rebuild and reinstall locally until release publication is explicitly announced.
+The pre-upgrade backup snapshot covers only the agents recorded in `state.InstalledAgents` (`~/.shevanio-ai/state.json`), not every agent config directory that exists on your machine.
+
+**Homebrew:**
+
+```bash
+brew upgrade shevanio-ai
+shevanio-ai sync
+shevanio-ai doctor
+```
+
+**Official signed binary:**
 
 ```bash
 # Check if a newer version is available
@@ -159,23 +169,23 @@ shevanio-ai update
 
 # Upgrade to the latest release (downloads new binary, replaces current)
 shevanio-ai upgrade
+shevanio-ai sync
+shevanio-ai doctor
 ```
 
-After any upgrade or manual binary replacement, run `shevanio-ai sync` to refresh all managed assets to the new version's content.
+**Go or source:**
+
+```bash
+go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest
+shevanio-ai sync
+shevanio-ai doctor
+```
+
+For a local repository build, check out the intended release and rebuild into the same binary path instead of running `go install`, then run `shevanio-ai sync` and `shevanio-ai doctor`.
 
 If GitHub rate-limits update checks, export `GITHUB_TOKEN` or `GH_TOKEN` before running `shevanio-ai update`/`upgrade`.
 
-If Homebrew refuses an upgrade from an untrusted tap, trust only the artifact Homebrew names and retry the upgrade:
-
-```bash
-# Formula tools, for example shevanio-ai
-brew trust --formula shevanio/tap/shevanio-ai
-brew upgrade shevanio-ai
-
-# Cask tools, for example engram
-brew trust --cask gentleman-programming/tap/engram
-brew upgrade engram
-```
+If Homebrew 6 refuses the external tap, follow the [formula-scoped trust guidance](#homebrew-upgrade-troubleshooting) rather than trusting the entire tap.
 
 **Self-update prompt behavior** (changed in v1.x slice 5 — `SHEVANIO_AI_CONFIRM_UPDATE` removed):
 
@@ -297,6 +307,7 @@ shevanio-ai install --agent claude-code,cursor --preset full-gentleman
 # After a new release: upgrade + sync
 brew upgrade shevanio-ai
 shevanio-ai sync
+shevanio-ai doctor
 
 # Remove only managed SDD + persona config from one agent
 shevanio-ai uninstall --agent claude-code --component sdd,persona
@@ -307,10 +318,7 @@ shevanio-ai install --agent windsurf --preset full-gentleman
 
 ### Homebrew upgrade troubleshooting
 
-The Shevanio AI formula is not published yet. Once publication is announced, Homebrew 6 can require explicit trust for non-official taps and, on Linux, can
-sandbox builds with Bubblewrap. `shevanio-ai upgrade` and `scripts/install.sh`
-auto-trust only the Shevanio AI formula, but manual upgrades may still need this
-one-time command:
+The published Shevanio AI formula is available from `shevanio/tap`. Homebrew 6 can require explicit trust for non-official taps and, on Linux, can sandbox builds with Bubblewrap. `shevanio-ai upgrade` and `scripts/install.sh` auto-trust only the Shevanio AI formula, but manual installs or upgrades may still need this one-time command:
 
 ```bash
 brew trust --formula shevanio/tap/shevanio-ai

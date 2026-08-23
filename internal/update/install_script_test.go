@@ -36,6 +36,29 @@ func TestWindowsInstallScriptIsASCIIOnly(t *testing.T) {
 	}
 }
 
+func TestWindowsInstallScriptUsesCanonicalShevanioModule(t *testing.T) {
+	path := filepath.Join("..", "..", "scripts", "install.ps1")
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", path, err)
+	}
+
+	script := string(content)
+	for _, want := range []string{
+		`$GITHUB_OWNER = "Shevanio"`,
+		`$STABLE_SOURCE_COMMAND = "go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest"`,
+		`$goPackage = "github.com/$($GITHUB_OWNER.ToLower())/$GITHUB_REPO/v2/cmd/$BINARY_NAME@$version"`,
+	} {
+		if !strings.Contains(script, want) {
+			t.Fatalf("scripts/install.ps1 cannot generate the canonical Shevanio module path; missing %q", want)
+		}
+	}
+
+	if strings.Contains(strings.ToLower(script), "gentleman-programming") {
+		t.Fatal("scripts/install.ps1 still references the retired Gentleman-Programming owner")
+	}
+}
+
 // TestWindowsInstallScriptHasNoUnsafeStringSubexpression guards against the
 // PowerShell 5.1 parser failure reported in issue #849. Patterns like
 // "($fileSize bytes)" inside a double-quoted string are read by Windows
