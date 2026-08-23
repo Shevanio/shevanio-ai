@@ -55,6 +55,7 @@ var (
 		_, err := cli.RunSync(args)
 		return err
 	}
+	migrateLegacyGGAFn = cli.MigrateLegacyGGA
 )
 
 func Run() error {
