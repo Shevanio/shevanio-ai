@@ -18,7 +18,7 @@
 ---
 
 > [!IMPORTANT]
-> **This repository is the source-first initial Shevanio AI runtime.** No Shevanio AI release or Homebrew formula has been published yet. Build and install locally using the commands below.
+> **Shevanio AI has a signed stable release.** Install [v2.5.0](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.5.0) with Homebrew or one of the verified alternatives below.
 >
 > Receipt-Driven Development (RDD) remains opt-in. Enable it with `shevanio-ai review mode enable --scope global` only after the local runtime is installed.
 
@@ -76,28 +76,157 @@ Implementation routing does not decide review strength, and per-action test, bui
 
 ## Quick Start
 
-### Build locally
+### Install with Homebrew (recommended)
 
-> [!NOTE]
-> `shevanio-ai install` requires Node.js 18+ and npm on every platform (it warns if either is missing). See [Prerequisites](docs/quickstart.md#prerequisites) for your distro's install hint.
+Homebrew provides the shortest supported path on macOS and Linux, for both amd64 and arm64:
 
 ```bash
-go build -trimpath -o ./bin/shevanio-ai ./cmd/shevanio-ai
-./bin/shevanio-ai version
+brew install shevanio/tap/shevanio-ai
+shevanio-ai version
 ```
 
-### Install locally
+If Homebrew refuses the external tap, trust only this formula and retry the install:
 
 ```bash
+brew trust --formula shevanio/tap/shevanio-ai
+```
+
+### Prerequisites
+
+| Requirement | When you need it |
+| --- | --- |
+| An existing [supported agent runtime](#supported-agent-integrations) | Always. Shevanio AI configures agents; it does not install them. |
+| Node.js 18+ and npm | When installing the ecosystem into an agent runtime. |
+| Git 2.38+ | For project-aware workflows. |
+| Go 1.25.10+ | Only for Go/source installation or Windows. |
+| Homebrew | Only for the recommended Homebrew route. |
+| `curl`, Minisign, and SHA-256 tooling (`sha256sum` or `shasum`) | Only for manual official archive installation. |
+
+### First run
+
+Run `shevanio-ai` to open the guided TUI. It detects supported agents and lets you review the selected components before installation.
+
+For an explicit, auditable CLI path, inspect a dry run before applying the same selection:
+
+```bash
+shevanio-ai install --dry-run --agent opencode --preset full-gentleman
+shevanio-ai install --agent opencode --preset full-gentleman
+shevanio-ai doctor
+```
+
+The dry run returns before any writes. Replace `opencode` with the ID of an agent runtime already installed on your machine. Global scope is the default; add `--scope=workspace` to both install commands to keep agent-scoped files in the current project. Integrations that are global-only remain global by design.
+
+### Upgrade and sync
+
+Use the upgrade path that matches how you installed the binary. Every path ends by syncing managed assets and checking the installation.
+
+**Homebrew:**
+
+```bash
+brew upgrade shevanio-ai
+shevanio-ai sync
+shevanio-ai doctor
+```
+
+**Official signed binary:**
+
+```bash
+shevanio-ai update
+shevanio-ai upgrade
+shevanio-ai sync
+shevanio-ai doctor
+```
+
+**Go:**
+
+```bash
+go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest
+shevanio-ai sync
+shevanio-ai doctor
+```
+
+Binary replacement and managed assets are version-bound: upgrading without `sync` can leave agent configuration on the previous version. See the [sync and upgrade reference](docs/usage.md#sync).
+
+### Other installation methods
+
+<details>
+<summary><strong>Install with Go or build from source</strong></summary>
+
+Install the latest version, or pin the current stable release for a reproducible installation:
+
+```bash
+go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@latest
+# Reproducible stable install:
+go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@v2.5.0
+shevanio-ai version
+```
+
+To build the same stable version from source:
+
+```bash
+git clone --branch v2.5.0 --depth 1 https://github.com/Shevanio/shevanio-ai.git
+cd shevanio-ai
+go build -trimpath -o ./bin/shevanio-ai ./cmd/shevanio-ai
 mkdir -p "$HOME/.local/bin"
 install -m 0755 ./bin/shevanio-ai "$HOME/.local/bin/shevanio-ai"
-"$HOME/.local/bin/shevanio-ai" install --dry-run
+"$HOME/.local/bin/shevanio-ai" version
 ```
 
-Ensure `$HOME/.local/bin` is on `PATH`, then run `shevanio-ai install` when the dry run looks correct. Windows users can build `./cmd/shevanio-ai` with Go and place `shevanio-ai.exe` on `PATH`; no official Windows archive is published.
+Ensure the selected binary directory (`$(go env GOPATH)/bin` or `$HOME/.local/bin`) is on `PATH`. A local/source build does not embed the production Minisign trust anchors, so its binary self-upgrader fails closed instead of replacing itself. Update these installations with `go install` into the same binary directory, then run `shevanio-ai sync` and `shevanio-ai doctor`.
 
-> [!IMPORTANT]
-> After replacing or upgrading the `shevanio-ai` binary, run `shevanio-ai sync` to refresh its managed assets. See the [sync and upgrade reference](docs/usage.md#sync).
+</details>
+
+<details>
+<summary><strong>Install an official signed archive on macOS or Linux</strong></summary>
+
+Official archives cover `darwin` and `linux` on `amd64` and `arm64`. Select your platform, then download the archive and signed manifest from one immutable release:
+
+```bash
+version=2.5.0
+os=linux       # linux or darwin
+arch=amd64     # amd64 or arm64
+archive="shevanio-ai_${version}_${os}_${arch}.tar.gz"
+release_url="https://github.com/Shevanio/shevanio-ai/releases/download/v${version}"
+
+curl --fail --location --remote-name "$release_url/$archive"
+curl --fail --location --remote-name "$release_url/checksums.txt"
+curl --fail --location --remote-name "$release_url/checksums.txt.minisig"
+```
+
+Obtain the public-key payload and verify its fingerprint through the maintained [release trust anchor](docs/release-trust-anchor.md), independently of the release assets. Do not copy the key only from the release being verified.
+
+```bash
+SHEVANIO_AI_MINISIGN_PUBLIC_KEY='<public-key-from-the-out-of-band-trust-anchor>'
+
+trusted_comment="$(minisign -VQm checksums.txt \
+  -x checksums.txt.minisig \
+  -P "$SHEVANIO_AI_MINISIGN_PUBLIC_KEY")"
+test "$trusted_comment" = "repo=Shevanio/shevanio-ai;tag=v${version}"
+
+awk -v name="$archive" '$2 == name' checksums.txt | sha256sum --check --strict
+tar -xzf "$archive" shevanio-ai
+mkdir -p "$HOME/.local/bin"
+install -m 0755 shevanio-ai "$HOME/.local/bin/shevanio-ai"
+"$HOME/.local/bin/shevanio-ai" version
+```
+
+On macOS, use `awk -v name="$archive" '$2 == name' checksums.txt | shasum -a 256 --check` if `sha256sum` is unavailable. Ensure `$HOME/.local/bin` is on `PATH` before the first run.
+
+</details>
+
+<details>
+<summary><strong>Install on Windows</strong></summary>
+
+Windows 10/11 on amd64 or arm64 uses the Go installation path only:
+
+```powershell
+go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@v2.5.0
+shevanio-ai version
+```
+
+Ensure `%USERPROFILE%\go\bin` is on `PATH`. Official Windows archives and Scoop publication remain unavailable until trusted Authenticode signing is in place; no unsigned executable or remote installer is offered.
+
+</details>
 
 ### Configure project context
 
@@ -113,23 +242,7 @@ These are **not required** for basic usage. The SDD orchestrator runs `/sdd-init
 Run `shevanio-ai doctor` at any time for a read-only health check of your ecosystem (tool binaries, `state.json`, Engram reachability, disk space).
 
 <details>
-<summary><strong>Future distribution and scope options</strong></summary>
-
-**Homebrew:** GoReleaser is configured for `Shevanio/homebrew-tap` and formula `shevanio-ai`, but the formula is not published. Do not run `brew install shevanio/tap/shevanio-ai` until a release announcement explicitly confirms availability.
-
-**Go install:** the canonical future module command is `go install github.com/shevanio/shevanio-ai/v2/cmd/shevanio-ai@<tag>`. There is no Shevanio AI tag to install yet.
-
-**Release security:** local/source builds carry no Minisign trust anchor, so binary auto-upgrade fails closed. Publication remains unavailable until Shevanio AI provisions its own signing key and trusted public-key channel; upstream Gentle AI signatures are not trusted.
-
-By default, `shevanio-ai install` writes agent-scoped files to each selected agent's global config directory. To keep the Gentleman stack isolated to one project, run:
-
-```bash
-shevanio-ai install --scope=workspace
-```
-
-Workspace scope applies to selected agents for agent-scoped files such as system prompts, skills, SDD agents, and persona files. Global-only integrations remain global by design.
-
-### RDD version policy
+<summary><strong>RDD version policy</strong></summary>
 
 RDD began upstream in Gentle AI `v1.47.0`, became its supported stable path in `v2.2.0`, and is inherited from the `v2.4.0` source baseline. These are upstream historical milestones, not Shevanio AI release claims.
 
@@ -249,17 +362,9 @@ Historical note: `v2.2.2` introduced the native delivery-gate `disabled/unmanage
 
 ### Release verification
 
-No Shevanio AI release archive is published. The release pipeline is prepared to require an authenticated `checksums.txt`, a Shevanio-owned Minisign trust anchor, the exact `Shevanio/shevanio-ai` + release-tag binding, and the selected archive checksum before replacing a binary. Local/source builds keep the trust anchor unset and therefore fail closed without changing the installed binary.
+[v2.5.0](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.5.0) is the current signed stable release. Its authenticated checksum manifest binds the exact `Shevanio/shevanio-ai` repository and tag before the selected archive checksum is trusted. Signed production binaries enforce the same checks before replacement; local/source builds without production trust anchors fail closed.
 
-To verify a release manually, obtain the production public-key payload and fingerprint from a maintainer-controlled channel, then download `checksums.txt` and `checksums.txt.minisig` from the same release:
-
-```bash
-minisign -VQm checksums.txt -x checksums.txt.minisig -P "$SHEVANIO_AI_MINISIGN_PUBLIC_KEY"
-# Expected output: repo=Shevanio/shevanio-ai;tag=vX.Y.Z
-sha256sum --check --strict --ignore-missing checksums.txt
-```
-
-Do not bootstrap trust from a public key downloaded only beside the artifacts it verifies. See [Release signing and key rotation](docs/release-signing.md) for the first-signed-release procedure, exact CI injection points, and rotation runbook.
+For the complete manual download and verification sequence, use the [official signed archive instructions](#other-installation-methods). See [Release signing and key rotation](docs/release-signing.md) for the trust model, updater limits, and key-rotation runbook.
 
 Windows archives and Scoop publication remain omitted until publicly trusted RSA Authenticode signing is provisioned (prefer managed OIDC with Azure Artifact Signing), both amd64 and arm64 executables are signed before archive and checksum generation, and release verification fails if either executable is unsigned.
 
