@@ -22,6 +22,7 @@ const (
 	BackupSourceUpgrade BackupSource = "upgrade"
 	// BackupSourceUninstall indicates the backup was created before an uninstall run.
 	BackupSourceUninstall BackupSource = "uninstall"
+	BackupSourceRetireGGA BackupSource = "retire-gga"
 )
 
 // Label returns a human-readable string for the BackupSource.
@@ -36,6 +37,8 @@ func (s BackupSource) Label() string {
 		return "upgrade"
 	case BackupSourceUninstall:
 		return "uninstall"
+	case BackupSourceRetireGGA:
+		return "retire-gga"
 	default:
 		return "unknown source"
 	}

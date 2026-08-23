@@ -21,6 +21,7 @@ func TestManifestSourceLabel(t *testing.T) {
 		{BackupSourceSync, "sync"},
 		{BackupSourceUpgrade, "upgrade"},
 		{BackupSourceUninstall, "uninstall"},
+		{BackupSourceRetireGGA, "retire-gga"},
 		{BackupSource(""), "unknown source"},
 		{BackupSource("other"), "unknown source"},
 	}
