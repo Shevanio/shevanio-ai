@@ -95,8 +95,8 @@ func TestAssetURLResolution(t *testing.T) {
 		},
 		{
 			name:       "linux amd64",
-			owner:      "Gentleman-Programming",
-			repo:       "gga",
+			owner:      "Example",
+			repo:       "example-tool",
 			version:    "2.0.0",
 			goos:       "linux",
 			goarch:     "amd64",

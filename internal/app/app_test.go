@@ -20,6 +20,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/shevanio/shevanio-ai/v2/internal/agents/codex"
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
+	"github.com/shevanio/shevanio-ai/v2/internal/cli"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
@@ -1573,6 +1574,86 @@ func TestRunArgs_TUISkipsSelfUpdate(t *testing.T) {
 	}
 	if tuiCalled != 1 {
 		t.Fatalf("runTUI should be called exactly once for TUI flow; got %d call(s)", tuiCalled)
+	}
+}
+
+func TestRunArgsActivatesLegacyGGAMigrationBeforeTUIStateRestoration(t *testing.T) {
+	home := t.TempDir()
+	setupMockHome(t, home)
+
+	origMigrate := migrateLegacyGGAFn
+	origDetect := detectSystem
+	origEnsure := ensureCurrentOSSupported
+	origRunTUI := runTUI
+	t.Cleanup(func() {
+		migrateLegacyGGAFn = origMigrate
+		detectSystem = origDetect
+		ensureCurrentOSSupported = origEnsure
+		runTUI = origRunTUI
+	})
+
+	ensureCurrentOSSupported = func() error { return nil }
+	detectSystem = func(context.Context) (system.DetectionResult, error) {
+		return system.DetectionResult{System: system.SystemInfo{Supported: true}}, nil
+	}
+
+	var events []string
+	migrateLegacyGGAFn = func(homeDir string, ggaRegistered bool) (cli.GGARetirementResult, error) {
+		events = append(events, "migrate")
+		if homeDir != home || ggaRegistered {
+			t.Fatalf("migration arguments = %q, %v; want %q, false", homeDir, ggaRegistered, home)
+		}
+		return cli.GGARetirementResult{}, nil
+	}
+	runTUI = func(m tea.Model, _ ...tea.ProgramOption) (tea.Model, error) {
+		events = append(events, "tui")
+		return m, nil
+	}
+
+	var buf bytes.Buffer
+	if err := RunArgs(nil, &buf); err != nil {
+		t.Fatalf("RunArgs(nil) error = %v", err)
+	}
+	if !slices.Equal(events, []string{"migrate", "tui"}) {
+		t.Fatalf("events = %v, want migration before TUI restoration", events)
+	}
+}
+
+func TestRunArgsActivatesLegacyGGAMigrationBeforeSyncDispatch(t *testing.T) {
+	home := t.TempDir()
+	setupMockHome(t, home)
+
+	origMigrate := migrateLegacyGGAFn
+	origDetect := detectSystem
+	origEnsure := ensureCurrentOSSupported
+	origSelfUpdate := selfUpdateFn
+	t.Cleanup(func() {
+		migrateLegacyGGAFn = origMigrate
+		detectSystem = origDetect
+		ensureCurrentOSSupported = origEnsure
+		selfUpdateFn = origSelfUpdate
+	})
+
+	ensureCurrentOSSupported = func() error { return nil }
+	detectSystem = func(context.Context) (system.DetectionResult, error) {
+		return system.DetectionResult{System: system.SystemInfo{Supported: true}}, nil
+	}
+	selfUpdateFn = func(context.Context, string, system.PlatformProfile, io.Writer) error { return nil }
+
+	called := false
+	migrateLegacyGGAFn = func(homeDir string, ggaRegistered bool) (cli.GGARetirementResult, error) {
+		called = true
+		if homeDir != home || ggaRegistered {
+			t.Fatalf("migration arguments = %q, %v; want %q, false", homeDir, ggaRegistered, home)
+		}
+		return cli.GGARetirementResult{}, nil
+	}
+
+	if err := RunArgs([]string{"sync", "--invalid"}, new(bytes.Buffer)); err == nil {
+		t.Fatal("RunArgs(sync) unexpectedly accepted invalid sync flags")
+	}
+	if !called {
+		t.Fatal("legacy GGA migration did not run before sync dispatch")
 	}
 }
 
