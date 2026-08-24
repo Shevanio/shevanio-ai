@@ -8,7 +8,7 @@ Shevanio AI sync refreshes managed agent configuration. Engram sync exports/impo
 
 | Flow | Command surface | Owner | What changes |
 |---|---|---|---|
-| Shevanio AI config sync | `shevanio-ai sync` | `internal/cli/sync.go`, components, adapters | Agent prompts, skills, MCP configs, SDD profiles, GGA assets, persona assets, and configured community tool guidance. |
+| Shevanio AI config sync | `shevanio-ai sync` | `internal/cli/sync.go`, components, adapters | Agent prompts, skills, MCP configs, SDD profiles, persona assets, and configured community tool guidance. |
 | Engram git-friendly sync | `engram sync`, `engram sync --import` | External Engram runtime | `.engram/` memory export/import for team sharing. |
 | Cloud sync | Not present in Shevanio AI source | External or future Engram capability | Do not document implementation here without source. |
 | Autosync | Not present in Shevanio AI source | External or future Engram capability | Do not imply background sync exists in this repo. |
@@ -27,7 +27,7 @@ shevanio-ai sync
 
 Important behavior from `internal/cli/sync.go`:
 
-- Default sync scope includes SDD, Engram, Context7, GGA, skills, and persona.
+- Default sync scope includes SDD, Engram, Context7, skills, and persona.
 - Persona sync resolves the persisted persona from `~/.shevanio-ai/state.json` when the selection does not set one explicitly; the safe fallback is neutral.
 - Permissions and theme are user-adjacent and not included by default.
 - OpenCode SDD profile flags preserve and update profile model assignments.
