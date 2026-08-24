@@ -89,7 +89,7 @@ See [Skill Registry](skill-registry.md) for the full index-first flow and diagra
 
 ### sync
 
-Refresh managed assets to the current version. Run it after replacing or upgrading the `shevanio-ai` binary, including with `brew upgrade`, `shevanio-ai upgrade`, or `go install`. It does NOT reinstall binaries (engram, GGA) — only updates prompt content, skills, MCP configs, and SDD orchestrators.
+Refresh managed assets to the current version. Run it after replacing or upgrading the `shevanio-ai` binary, including with `brew upgrade`, `shevanio-ai upgrade`, or `go install`. It does not reinstall external binaries; it updates prompt content, skills, MCP configs, SDD orchestrators, persona assets, and configured community-tool guidance.
 
 Managed reviewer and runtime assets are version-bound to the binary. Until sync succeeds, review lifecycle operations fail closed when managed writer provenance is missing or mismatched.
 
@@ -250,6 +250,9 @@ shevanio-ai -v
 | `--preset`                    | Preset: `full-gentleman`, `ecosystem-only`, `minimal`, `custom` (`custom` means manual component/skill selection) |
 | `--sdd-mode`                  | SDD orchestrator mode: `single` or `multi`                                                                        |
 | `--scope`                     | Install scope for agent-scoped files: `global` (default, writes to each selected agent's global config directory) or `workspace` (writes to the current project root). Also settable via `SHEVANIO_AI_INSTALL_SCOPE` env var for CI/non-interactive use. |
+| `--channel`                   | Release channel: `stable`, `beta`, or `nightly` (an alias for beta); also settable via `SHEVANIO_AI_CHANNEL`. |
+| `--opencode-background-subagents` | Resolve OpenCode background-subagent policy: `auto`, `on`, or `off`; only owned launchers are changed. |
+| `--pi-background-subagents`    | Project the resolved Pi background-subagent policy: `auto`, `on`, or `off`; only managed policy files are changed. |
 | `--dry-run`                   | Preview the install plan without applying changes                                                                 |
 
 ## CLI Flags (sync)
@@ -265,6 +268,8 @@ shevanio-ai -v
 | `--sdd-profile-strategy` | OpenCode profile sync strategy: `generated-multi` or `external-single-active`                        |
 | `--include-permissions`  | Include permissions sync (opt-in)                                                                    |
 | `--include-theme`        | Include theme sync (opt-in)                                                                          |
+| `--opencode-background-subagents` | Resolve OpenCode background-subagent policy: `auto`, `on`, or `off`; only owned launchers are changed. |
+| `--pi-background-subagents` | Project the resolved Pi background-subagent policy: `auto`, `on`, or `off`; only managed policy files are changed. |
 | `--dry-run`              | Preview the sync plan without applying changes                                                       |
 
 **Profile examples:**

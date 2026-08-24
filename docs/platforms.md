@@ -37,9 +37,8 @@ Restart OpenCode after enabling managed activation. Restart the shell if the lau
 - **npm global installs** do not require `sudo` on Windows (user-writable by default).
 - **curl** is pre-installed on Windows 10+ and does not require separate installation.
 - **PowerShell** is the default shell when `$SHELL` is not set.
-- **GGA on Windows** works from both Git Bash and PowerShell. shevanio-ai installs a `gga.ps1` shim that automatically delegates to Git Bash, so no manual shell switching is required.
 - **PowerShell source-installer output** is forced to UTF-8 and installs through Go's configured `GOBIN`/`GOPATH`.
-- **Fresh install detection** falls back to known Engram/GGA install locations when the running process has a stale `PATH`.
+- **Fresh install detection** falls back to known Engram locations when the running process has a stale `PATH`.
 
 ---
 

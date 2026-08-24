@@ -34,24 +34,24 @@ Shevanio AI is NOT an AI agent installer. It adapts the agent runtime(s) already
 
 ### Supported Agent Integrations
 
-| Agent               |         Delegation Model         | Key Feature                                                     |
-| ------------------- | :------------------------------: | --------------------------------------------------------------- |
-| **Claude Code**     |         Full (Task tool)         | Sub-agents, output styles                                       |
-| **OpenCode**        |    Full (multi-mode overlay)     | Per-phase model routing                                         |
-| **Kilo Code**       |    Full (multi-mode overlay)     | OpenCode-compatible config in `~/.config/kilo`                  |
-| **Gemini CLI**      |       Full (experimental)        | Custom agents in `~/.gemini/agents/`                            |
-| **Cursor**          |     Full (native subagents)      | 10 SDD agents in `~/.cursor/agents/`                            |
-| **VS Code Copilot** |        Full (runSubagent)        | Parallel execution                                              |
-| **Codex**           |            Solo-agent            | CLI-native, TOML config                                         |
-| **Windsurf**        |            Solo-agent            | Plan Mode, Code Mode, native workflows                          |
-| **Antigravity**     |   Solo-agent + Mission Control   | Built-in Browser/Terminal sub-agents                            |
-| **Kimi Code**       |   Full (native custom agents)    | Modular prompt templates in `~/.kimi`                           |
-| **Kiro IDE**        |     Full (native subagents)      | Native `~/.kiro/agents/` + steering orchestration               |
-| **Qwen Code**       |     Full (native sub-agents)     | Slash commands, `~/.qwen/commands/`, `auto_edit` mode           |
-| **OpenClaw**        |            Solo-agent            | Workspace-first `AGENTS.md` / `SOUL.md` with global MCP config  |
-| **Trae**            |            Solo-agent            | Desktop app by ByteDance; `~/.trae/skills/` + OS-specific rules |
-| **Pi**              | Full (package-managed subagents) | First-class `gentle-pi` harness with Pi-native persona/models, SDD, and Engram memory |
-| **Hermes**          |         Detect-only              | YAML MCP config, SOUL.md persona; install manually first        |
+| Agent | CLI ID | Delegation model | Key feature |
+| --- | --- | --- | --- |
+| **Claude Code** | `claude-code` | Full (Task tool) | Sub-agents and output styles |
+| **OpenCode** | `opencode` | Full (multi-mode overlay) | Per-phase model routing |
+| **Kilo Code** | `kilocode` | Full (multi-mode overlay) | OpenCode-compatible config in `~/.config/kilo` |
+| **Gemini CLI** | `gemini-cli` | Full (experimental) | Custom agents in `~/.gemini/agents/` |
+| **Cursor** | `cursor` | Full (native subagents) | SDD agents in `~/.cursor/agents/` |
+| **VS Code Copilot** | `vscode-copilot` | Full (`runSubagent`) | Parallel execution |
+| **Codex** | `codex` | Solo-agent | CLI-native TOML config |
+| **Windsurf** | `windsurf` | Solo-agent | Plan Mode, Code Mode, and native workflows |
+| **Antigravity** | `antigravity` | Solo-agent + Mission Control | Built-in browser/terminal sub-agents |
+| **Kimi Code** | `kimi` | Full (native custom agents) | Modular prompt templates in `~/.kimi` |
+| **Kiro IDE** | `kiro-ide` | Full (native subagents) | Native `~/.kiro/agents/` and steering orchestration |
+| **Qwen Code** | `qwen-code` | Full (native sub-agents) | Slash commands and `~/.qwen/commands/` |
+| **OpenClaw** | `openclaw` | Solo-agent | Workspace-first `AGENTS.md` / `SOUL.md` with global MCP config |
+| **Trae** | `trae-ide` | Solo-agent | Desktop app with `~/.trae/skills/` and OS-specific rules |
+| **Pi** | `pi` | Full (package-managed subagents) | `gentle-pi` harness with native persona, models, SDD, and memory |
+| **Hermes** | `hermes` | Detect-only | YAML MCP config and `SOUL.md`; install manually first |
 
 > **Pi is package-managed, not just configured.** Selecting Pi installs the first-class [`gentle-pi`](docs/pi.md) harness, which owns Pi-native persona and model controls, SDD assets, chains, and memory wiring.
 
@@ -241,6 +241,34 @@ These are **not required** for basic usage. The SDD orchestrator runs `/sdd-init
 
 Run `shevanio-ai doctor` at any time for a read-only health check of your ecosystem (tool binaries, `state.json`, Engram reachability, disk space).
 
+### Command reference
+
+README is the current command contract. The binary's `help` output remains the
+source for exact syntax and compatibility behavior; this table keeps the
+workflow discoverable without reproducing every protocol schema.
+
+| Command | Purpose |
+| --- | --- |
+| `install` | Configure selected agents, components, skills, persona, and preset. |
+| `uninstall` | Remove only Shevanio AI-managed configuration, with confirmation and backup. |
+| `sync` | Refresh managed assets for the stored or explicitly selected agents. |
+| `skill-registry refresh`, `skill-registry list` | Refresh or inspect the project skill index. |
+| `sdd-status`, `sdd-continue`, `sdd-attempt`, `sdd-verify-validate` | Inspect, route, execute, recover, or validate native SDD orchestration. |
+| `codegraph` | Inspect or reconcile the optional CodeGraph integration. |
+| `review start`, `review capture-result`, `review inspect-candidate`, `review finalize` | Run the native bounded review lifecycle. |
+| `review validate`, `review status`, `review repair`, `review mode` | Validate authority, inspect state, preflight repair, or control opt-in RDD. |
+| `review-start`, `review-step`, `review-resume`, `review-bundle-export`, `review-bundle-import`, `review-validate` | Read-only or compatibility transport paths for shipped review authority. |
+| `update`, `upgrade`, `restore`, `doctor`, `version` | Check/apply updates, restore backups, diagnose health, or print the version. |
+
+Install flags are `--agent` / `--agents`, `--component` / `--components`,
+`--skill` / `--skills`, `--persona`, `--preset`, `--sdd-mode`, `--scope`,
+`--channel`, `--opencode-background-subagents`,
+`--pi-background-subagents`, `--dry-run`, and `--help` / `-h`.
+Sync adds `--sdd-profile-strategy`, `--strict-tdd`, `--include-permissions`,
+`--include-theme`, `--profile`, and `--profile-phase`; it also supports the
+agent/skill, background-subagent, dry-run, and help flags above. See the
+[CLI usage reference](docs/usage.md) for examples and environment variables.
+
 <details>
 <summary><strong>RDD version policy</strong></summary>
 
@@ -387,6 +415,92 @@ Every install, sync, and upgrade automatically snapshots your config files. Back
 See [Backup & Rollback Guide](docs/rollback.md) for details.
 
 ---
+
+## Current product map
+
+The installer, sync path, and TUI use the same catalog. Select a preset for a
+known baseline or choose components and skills explicitly. The complete
+component and preset reference is [Components, Skills & Presets](docs/components.md).
+
+### Components
+
+| Component | ID | Current responsibility |
+| --- | --- | --- |
+| Engram | `engram` | Persistent cross-session memory and MCP wiring. |
+| SDD | `sdd` | Spec-Driven Development prompts, lifecycle, and native orchestration. |
+| Skills | `skills` | Curated workflow and coding skill files. |
+| Context7 | `context7` | MCP access to current framework and library documentation. |
+| Persona | `persona` | Managed Gentleman, neutral, or unmanaged custom behavior. |
+| Permissions | `permissions` | Security-first defaults and sensitive-path guardrails. |
+| OpenCode Theme | `theme` | OpenCode visual theme overlay. |
+| Claude Code Theme | `claude-theme` | Claude Code visual theme overlay. |
+| OpenCode Logo | `opencode-gentle-logo` | Managed OpenCode home-logo plugin. |
+
+### Presets
+
+| Preset | ID | Includes |
+| --- | --- | --- |
+| Memory Only | `minimal` | Engram plus SDD skills. |
+| Dev Stack | `ecosystem-only` | Engram, SDD, Skills, and Context7 plus the full bundled skill set. |
+| Dev Stack + Polish | `full-gentleman` | Dev Stack plus Persona, Permissions, and visual polish. |
+| Custom | `custom` | Explicit component and skill selection; existing persona/settings remain unmanaged. |
+
+### Bundled skills
+
+SDD: `sdd-init`, `sdd-apply`, `sdd-verify`, `sdd-explore`, `sdd-propose`,
+`sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-archive`, `sdd-onboard`.
+
+Foundation and workflow: `go-testing`, `shevanio-ai-bench`, `skill-creator`,
+`skill-improver`, `judgment-day`, `branch-pr`, `issue-creation`,
+`skill-registry`, `chained-pr`, `cognitive-doc-design`, `comment-writer`,
+`work-unit-commits`, `rdd-defect-workflow`, and `systemic-issue-triage`.
+
+### Capability boundaries
+
+- **Engram** stores durable decisions and context outside this repository. See
+  [Engram Commands](docs/engram.md) for the external memory CLI and MCP boundary.
+- **Context7** supplies current library and framework documentation through MCP;
+  it does not replace source-based verification.
+- **CodeGraph** is an optional community tool for indexed code intelligence and
+  agent guidance. Shevanio AI installs or reconciles its integration but does
+  not own the external runtime; see [Integrations](docs/codebase/integrations.md).
+- **SDD** is explicit planning: explore, propose, spec, design, tasks, apply,
+  verify, and archive. It may persist artifacts in Engram, OpenSpec, or both.
+  `/sdd-init` detects project context and testing capabilities; [Intended Usage](docs/intended-usage.md)
+  explains when to choose it.
+- **Model profiles and permissions** are native controls. OpenCode profiles map
+  models to phases, while permissions constrain sensitive paths. Project
+  instructions and skills remain project-owned and are refreshed through the
+  configured agent adapter.
+- **Judgment Day** is the bundled adversarial two-judge workflow. **RDD** is a
+  separate, user-owned receipt-driven review path and is off until explicitly
+  enabled. Review authority freezes one candidate, records one receipt, and
+  delivery gates validate that same content; see the [review authority threat model](docs/review-authority-threat-model.md).
+
+### State, scope, and lifecycle
+
+Shevanio AI records selected agents, components, skills, persona, model
+assignments, and pending sync state in `~/.shevanio-ai/state.json`. Install
+defaults to global agent configuration; `--scope=workspace` places agent-scoped
+files in the current project where the adapter supports it. Engram project data
+and external runtime state are separate ownership boundaries.
+
+Install, sync, uninstall, and upgrade snapshot managed files before mutation.
+Sync is idempotent and uses the stored agent selection unless `--agent` is
+provided. Uninstall removes managed configuration only; it does not remove
+external agent binaries, packages, repositories, hooks, or user-owned files.
+Use `restore` or the TUI backup screen to recover a snapshot. See [Usage](docs/usage.md)
+and [Backup & Rollback](docs/rollback.md) for operational detail.
+
+### TUI actions
+
+Running `shevanio-ai` opens the guided Bubbletea flow. It supports agent and
+component selection, preset and skill selection, persona selection, per-agent
+model configuration, community-tool and OpenCode-plugin registration, install
+progress, sync/upgrade, doctor, managed uninstall, backup listing, restore,
+rename, pin, deletion, and review-store reset survey/reset. TUI actions use the same planner and backup
+boundaries as the CLI; use CLI dry runs when an auditable non-interactive plan
+is preferred.
 
 ## Key Features You Should Know About
 

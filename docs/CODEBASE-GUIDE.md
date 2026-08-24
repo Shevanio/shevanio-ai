@@ -13,7 +13,7 @@ This guide helps maintainers find the right code path before changing Shevanio A
 
 ## 90-second mental model
 
-Shevanio AI is a Go CLI/TUI that configures AI coding agents. It installs and syncs managed assets such as SDD prompts, skills, MCP entries, permissions, personas, GGA support, Engram wiring, skill registries, and community tool/plugin helpers.
+Shevanio AI is a Go CLI/TUI that configures AI coding agents. It installs and syncs managed assets such as SDD prompts, skills, MCP entries, permissions, personas, Engram wiring, skill registries, and community tool/plugin helpers.
 
 ```text
 User
@@ -30,7 +30,7 @@ shevanio-ai CLI / Bubbletea TUI
 Agent config roots (~/.claude, ~/.config/opencode, ~/.cursor, ...)
   |
   v
-External tools and agents: Engram, Context7, GGA, supported AI CLIs/IDEs
+External tools and agents: Engram, Context7, CodeGraph, supported AI CLIs/IDEs
 ```
 
 Golden rule: **agent-specific paths belong in adapters; reusable behavior belongs in components or shared orchestration packages.**
