@@ -187,12 +187,15 @@ func RunArgs(args []string, stdout io.Writer) error {
 		}
 	}
 
-	if len(args) == 0 {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("resolve user home directory: %w", err)
-		}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resolve user home directory: %w", err)
+	}
+	if _, err := migrateLegacyGGAFn(homeDir, false); err != nil {
+		return fmt.Errorf("migrate legacy GGA state: %w", err)
+	}
 
+	if len(args) == 0 {
 		// Load persisted state so the TUI pre-selects the agents the user
 		// previously chose instead of re-selecting every detected config dir.
 		// A missing or unreadable state file is not an error — NewModel falls
@@ -486,7 +489,7 @@ func runUpdate(ctx context.Context, currentVersion string, profile system.Platfo
 // runUpgrade handles the `shevanio-ai upgrade [--dry-run] [tool...]` command.
 //
 // This command:
-//   - Checks for available updates for managed tools (shevanio-ai, engram, gga)
+//   - Checks for available updates for managed tools (shevanio-ai and engram)
 //   - Snapshots agent config paths before execution (config preservation by design)
 //   - Executes binary-only upgrades; does NOT invoke install or sync pipelines
 //   - Skips shevanio-ai itself when running as a dev build (version="dev")

@@ -22,7 +22,7 @@ func ComponentsForPreset(preset PresetID, persona PersonaID) []ComponentID {
 	case PresetMinimal:
 		components = []ComponentID{ComponentEngram}
 	case PresetEcosystemOnly:
-		components = []ComponentID{ComponentEngram, ComponentSDD, ComponentSkills, ComponentContext7, ComponentGGA}
+		components = []ComponentID{ComponentEngram, ComponentSDD, ComponentSkills, ComponentContext7}
 	case PresetCustom:
 		return nil
 	default: // full-gentleman
@@ -32,7 +32,6 @@ func ComponentsForPreset(preset PresetID, persona PersonaID) []ComponentID {
 			ComponentSkills,
 			ComponentContext7,
 			ComponentPermission,
-			ComponentGGA,
 		}
 		components = append(components, installSafePresetVisualComponents()...)
 	}

@@ -23,7 +23,6 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
-	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/mcp"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodeplugin"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/permissions"
@@ -349,7 +348,7 @@ func parseModelSpec(spec string) (model.ModelAssignment, error) {
 
 // BuildSyncSelection builds a model.Selection for the sync command.
 //
-// Default sync scope: SDD, Engram, Context7, GGA, Skills, Persona.
+// Default sync scope: SDD, Engram, Context7, Skills, Persona.
 // Excluded by default: Permissions, Theme (no markers; managed via JSON
 // overlays where user customization cannot be safely diff-merged).
 // Permissions and Theme can be opted-in via flags.
@@ -372,7 +371,6 @@ func BuildSyncSelection(flags SyncFlags, agentIDs []model.AgentID) model.Selecti
 		model.ComponentSDD,
 		model.ComponentEngram,
 		model.ComponentContext7,
-		model.ComponentGGA,
 		model.ComponentSkills,
 	}
 
@@ -1131,33 +1129,6 @@ func (s componentSyncStep) Run() error {
 			}
 			s.countChanged(boolToInt(res.Changed), res.Files...)
 		}
-		return nil
-
-	case model.ComponentGGA:
-		// Sync: ensure runtime assets are current and inject config.
-		// NO binary install.
-		if err := gga.EnsureRuntimeAssets(s.homeDir); err != nil {
-			return fmt.Errorf("sync gga runtime assets: %w", err)
-		}
-		if runtime.GOOS == "windows" {
-			if err := gga.EnsurePowerShellShim(s.homeDir); err != nil {
-				return fmt.Errorf("ensure gga powershell shim: %w", err)
-			}
-		}
-		res, err := gga.Inject(s.homeDir, s.agents)
-		if err != nil {
-			return fmt.Errorf("sync gga config: %w", err)
-		}
-		// Count GGA files changed based on individual Changed flags.
-		total := boolToInt(res.ConfigChanged) + boolToInt(res.AgentsChanged)
-		var ggaFiles []string
-		if res.ConfigChanged && res.ConfigFile != "" {
-			ggaFiles = append(ggaFiles, res.ConfigFile)
-		}
-		if res.AgentsChanged && res.AgentsFile != "" {
-			ggaFiles = append(ggaFiles, res.AgentsFile)
-		}
-		s.countChanged(total, ggaFiles...)
 		return nil
 
 	case model.ComponentPermission:

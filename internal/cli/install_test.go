@@ -78,7 +78,6 @@ func TestNormalizeInstallFlagsDefaults(t *testing.T) {
 			model.ComponentSkills,
 			model.ComponentContext7,
 			model.ComponentPermission,
-			model.ComponentGGA,
 			model.ComponentClaudeTheme,
 			model.ComponentOpenCodeGentleLogo,
 			model.ComponentPersona,
@@ -90,6 +89,13 @@ func TestNormalizeInstallFlagsDefaults(t *testing.T) {
 	}
 	if input.Channel != ChannelStable {
 		t.Fatalf("Channel = %q, want %q", input.Channel, ChannelStable)
+	}
+}
+
+func TestNormalizeInstallFlagsRejectsRetiredGGA(t *testing.T) {
+	_, err := NormalizeInstallFlags(InstallFlags{Components: []string{"gga"}}, system.DetectionResult{})
+	if err == nil || err.Error() != `unsupported component "gga"` {
+		t.Fatalf("NormalizeInstallFlags() error = %v, want unsupported component error", err)
 	}
 }
 

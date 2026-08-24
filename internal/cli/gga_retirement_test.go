@@ -4,24 +4,90 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/shevanio/shevanio-ai/v2/internal/assets"
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
-	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
+	"github.com/shevanio/shevanio-ai/v2/internal/catalog"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
+
+func TestRetiredGGAIsAbsentFromActiveSurfaces(t *testing.T) {
+	for _, component := range catalog.MVPComponents() {
+		if component.ID == legacyGGAComponentID {
+			t.Fatalf("active catalog still exposes retired component: %#v", component)
+		}
+	}
+	for _, preset := range []model.PresetID{model.PresetFullGentleman, model.PresetEcosystemOnly} {
+		for _, component := range model.ComponentsForPreset(preset, model.PersonaGentleman) {
+			if component == legacyGGAComponentID {
+				t.Fatalf("preset %q still exposes retired component", preset)
+			}
+		}
+	}
+	if planner.MVPGraph().Has(legacyGGAComponentID) {
+		t.Fatal("planner still exposes retired component")
+	}
+	selection := BuildSyncSelection(SyncFlags{}, []model.AgentID{model.AgentOpenCode})
+	for _, component := range selection.Components {
+		if component == legacyGGAComponentID {
+			t.Fatal("sync selection still exposes retired component")
+		}
+	}
+	for _, tool := range requiredDoctorTools(nil) {
+		if tool == string(legacyGGAComponentID) {
+			t.Fatal("doctor still checks retired GGA binary")
+		}
+	}
+	for _, tool := range update.Tools {
+		if tool.Name == string(legacyGGAComponentID) {
+			t.Fatal("update registry still exposes retired GGA tool")
+		}
+	}
+}
+
+func TestRunInstallRejectsRetiredGGAWithoutCommandsOrStateMutation(t *testing.T) {
+	home := t.TempDir()
+	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{"unknown"}}))
+
+	originalHome := osUserHomeDir
+	originalCommand := runCommand
+	t.Cleanup(func() {
+		osUserHomeDir = originalHome
+		runCommand = originalCommand
+	})
+	osUserHomeDir = func() (string, error) { return home, nil }
+	var commands []string
+	runCommand = func(name string, args ...string) error {
+		commands = append(commands, name+" "+strings.Join(args, " "))
+		return nil
+	}
+
+	_, err := RunInstall([]string{"--agent", "opencode", "--component", string(legacyGGAComponentID)}, macOSDetectionResult())
+	if err == nil || err.Error() != `unsupported component "gga"` {
+		t.Fatalf("RunInstall() error = %v, want retired-component error", err)
+	}
+	if len(commands) != 0 {
+		t.Fatalf("retired component triggered commands: %v", commands)
+	}
+	got, readErr := state.Read(home)
+	if readErr != nil || len(got.Components) != 1 || got.Components[0] != "unknown" {
+		t.Fatalf("retired component mutated state: %#v, err = %v", got, readErr)
+	}
+}
 
 func TestMigrateLegacyGGASuccessBacksUpCleansParentsAndStaysDormant(t *testing.T) {
 	home := t.TempDir()
-	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{model.ComponentGGA, "gga-extra", "unknown", model.ComponentGGA}}))
+	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "gga-extra", "unknown", legacyGGAComponentID}}))
 	writeOwnedGGAFiles(t, home)
 	if result, err := MigrateLegacyGGA(home, true); err != nil || result.Changed {
 		t.Fatalf("registered migration = %#v, err = %v", result, err)
 	}
-	requirePath(t, gga.ConfigPath(home), "")
+	requirePath(t, legacyGGAConfigPath(home), "")
 	result, err := MigrateLegacyGGA(home, false)
 	if err != nil {
 		t.Fatal(err)
@@ -33,15 +99,11 @@ func TestMigrateLegacyGGASuccessBacksUpCleansParentsAndStaysDormant(t *testing.T
 	if err != nil || len(got.Components) != 2 || got.Components[0] != "gga-extra" || got.Components[1] != "unknown" {
 		t.Fatalf("state = %#v, err = %v", got, err)
 	}
-	for _, path := range []string{gga.ConfigPath(home), gga.AgentsTemplatePath(home), gga.RuntimePRModePath(home), gga.RuntimePS1Path(home), gga.RuntimeCMDPath(home)} {
-		requirePath(t, path, "absent")
-	}
-	for _, path := range []string{filepath.Join(home, ".config", "gga"), filepath.Join(home, ".local", "share", "gga", "lib"), filepath.Join(home, ".local", "share", "gga")} {
-		requirePath(t, path, "absent")
-	}
+	requirePath(t, legacyGGAConfigPath(home), "absent")
+	requirePath(t, legacyGGARootDir(home), "absent")
 	backupDir := filepath.Join(home, ".shevanio-ai", "backups", result.BackupID)
 	manifest, err := backup.ReadManifest(filepath.Join(backupDir, backup.ManifestFilename))
-	if err != nil || manifest.FileCount != 5 || !manifest.Compressed {
+	if err != nil || manifest.FileCount != 1 || !manifest.Compressed {
 		t.Fatalf("backup manifest = %#v, err = %v", manifest, err)
 	}
 	requirePath(t, filepath.Join(backupDir, backup.ArchiveFilename), "")
@@ -49,18 +111,22 @@ func TestMigrateLegacyGGASuccessBacksUpCleansParentsAndStaysDormant(t *testing.T
 
 func TestMigrateLegacyGGAPreservesUnownedCandidatesAndExternalState(t *testing.T) {
 	home := migrationHome(t)
-	configPath := gga.ConfigPath(home)
+	managed := legacyGGAManagedFiles(home)
+	configPath := managed[0].path
 	mustWrite(t, configPath, []byte("user edited"), 0o644)
-	must(t, os.Remove(gga.RuntimePRModePath(home)))
 	target := filepath.Join(home, "external-pr-mode.sh")
 	mustWrite(t, target, []byte("external"), 0o755)
-	must(t, os.Symlink(target, gga.RuntimePRModePath(home)))
-	must(t, os.Remove(gga.RuntimeCMDPath(home)))
-	must(t, os.MkdirAll(gga.RuntimeCMDPath(home), 0o755))
+	must(t, os.MkdirAll(filepath.Dir(managed[2].path), 0o755))
+	must(t, os.Symlink(target, managed[2].path))
+	must(t, os.MkdirAll(managed[4].path, 0o755))
 	protected := map[string][]byte{
-		filepath.Join(home, "bin", "external-tool"): []byte("binary"), filepath.Join(home, ".local", "share", "homebrew", "Cellar", "gga", "1", "bin", "gga"): []byte("package"),
-		filepath.Join(home, ".brew", "taps", "vendor", "tap"): []byte("tap"), filepath.Join(home, ".profile"): []byte("PATH=$HOME/bin:$PATH\n"),
-		filepath.Join(home, "repo", ".git", "hooks", "pre-commit"): []byte("hook"), filepath.Join(home, ".config", "gga", "user-notes"): []byte("unknown"), target: []byte("external"),
+		filepath.Join(home, "bin", "external-tool"):                                            []byte("binary"),
+		filepath.Join(home, ".local", "share", "homebrew", "Cellar", "gga", "1", "bin", "gga"): []byte("package"),
+		filepath.Join(home, ".brew", "taps", "vendor", "tap"):                                  []byte("tap"),
+		filepath.Join(home, ".profile"):                                                        []byte("PATH=$HOME/bin:$PATH\n"),
+		filepath.Join(home, "repo", ".git", "hooks", "pre-commit"):                             []byte("hook"),
+		filepath.Join(home, ".config", "gga", "user-notes"):                                    []byte("unknown"),
+		target: []byte("external"),
 	}
 	writeFiles(t, protected)
 	first, err := MigrateLegacyGGA(home, false)
@@ -78,8 +144,8 @@ func TestMigrateLegacyGGAPreservesUnownedCandidatesAndExternalState(t *testing.T
 		requirePath(t, path, string(want))
 	}
 	requirePath(t, configPath, "user edited")
-	requirePath(t, gga.RuntimePRModePath(home), "symlink")
-	requirePath(t, gga.RuntimeCMDPath(home), "dir")
+	requirePath(t, managed[2].path, "symlink")
+	requirePath(t, managed[4].path, "dir")
 }
 
 func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
@@ -106,11 +172,10 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var held *reviewtransaction.AuthorityFileLock
 			if tc.lock {
-				held, err = reviewtransaction.AcquireAuthorityFileLock(installStateLockPath(home))
-				if err != nil {
-					t.Fatal(err)
+				held, lockErr := reviewtransaction.AcquireAuthorityFileLock(installStateLockPath(home))
+				if lockErr != nil {
+					t.Fatal(lockErr)
 				}
 				defer held.Release()
 			}
@@ -130,7 +195,7 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 			}
 			if tc.retry {
 				failed, err := state.Read(home)
-				if err != nil || len(failed.Components) != 2 || failed.Components[0] != model.ComponentGGA {
+				if err != nil || len(failed.Components) != 2 || failed.Components[0] != legacyGGAComponentID {
 					t.Fatalf("state after failure = %#v, err = %v", failed, err)
 				}
 				result, err := MigrateLegacyGGA(home, false)
@@ -143,41 +208,43 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 			if err != nil || string(after) != string(before) {
 				t.Fatalf("state changed: %v", err)
 			}
-			requirePath(t, gga.ConfigPath(home), "")
+			requirePath(t, legacyGGAConfigPath(home), "")
 		})
 	}
 }
 
 func migrationHome(t *testing.T) string {
 	home := t.TempDir()
-	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{model.ComponentGGA, "unknown"}}))
+	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "unknown"}}))
 	writeOwnedGGAFiles(t, home)
 	return home
 }
+
 func writeOwnedGGAFiles(t *testing.T, home string) {
-	writeFiles(t, map[string][]byte{gga.ConfigPath(home): gga.BuildConfig("claude"), gga.AgentsTemplatePath(home): readAsset(t, "gga/AGENTS.md"), gga.RuntimePRModePath(home): readAsset(t, "gga/pr_mode.sh"), gga.RuntimePS1Path(home): readAsset(t, "gga/gga.ps1"), gga.RuntimeCMDPath(home): readAsset(t, "gga/gga.cmd")})
+	writeFiles(t, map[string][]byte{legacyGGAConfigPath(home): legacyGGAConfig()})
 }
+
+func legacyGGAConfig() []byte {
+	return []byte("# Gentleman Guardian Angel Configuration\n# Generated by shevanio-ai\n\n# AI Provider for code review\n# Options: claude, gemini, codex, opencode, ollama:<model>\nPROVIDER=\"claude\"\n\n# File patterns to review (comma-separated globs)\nFILE_PATTERNS=\"*.ts,*.tsx,*.js,*.jsx,*.py,*.go\"\n\n# Patterns to exclude\nEXCLUDE_PATTERNS=\"*.test.*,*.spec.*,*.d.ts,dist/*,build/*,node_modules/*\"\n\n# Rules file\nRULES_FILE=\"AGENTS.md\"\n\n# Strict mode (fail on ambiguous AI responses)\nSTRICT_MODE=\"true\"\n\n# Review timeout in seconds\nTIMEOUT=\"300\"\n")
+}
+
 func writeFiles(t *testing.T, files map[string][]byte) {
 	for path, content := range files {
 		mustWrite(t, path, content, 0o755)
 	}
 }
-func readAsset(t *testing.T, name string) []byte {
-	content, err := assets.Read(name)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return []byte(content)
-}
+
 func mustWrite(t *testing.T, path string, content []byte, mode os.FileMode) {
 	must(t, os.MkdirAll(filepath.Dir(path), 0o755))
 	must(t, os.WriteFile(path, content, mode))
 }
+
 func must(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
 }
+
 func requirePath(t *testing.T, path, want string) {
 	info, err := os.Lstat(path)
 	switch {

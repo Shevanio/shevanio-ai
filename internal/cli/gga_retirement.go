@@ -4,15 +4,18 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/shevanio/shevanio-ai/v2/internal/backup"
-	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
-	"github.com/shevanio/shevanio-ai/v2/internal/model"
-	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"os"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/shevanio/shevanio-ai/v2/internal/backup"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
+
+const legacyGGAComponentID model.ComponentID = "gga"
 
 type GGARetirementResult struct {
 	Changed        bool
@@ -75,7 +78,7 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (GGARetirementResult, 
 func filterLegacyGGAComponents(components []model.ComponentID) []model.ComponentID {
 	filtered := make([]model.ComponentID, 0, len(components))
 	for _, component := range components {
-		if component != model.ComponentGGA {
+		if component != legacyGGAComponentID {
 			filtered = append(filtered, component)
 		}
 	}
@@ -89,10 +92,26 @@ type ggaManagedFile struct {
 
 func legacyGGAManagedFiles(homeDir string) []ggaManagedFile {
 	return []ggaManagedFile{
-		{gga.ConfigPath(homeDir), map[string]struct{}{"98ddd3a5af86dddcd5abaf247d2269d3c8d3efbd0cc3b6fcc37185d3c51de296": {}, "cdce9c0a004c313bb2ef5286873db74476e1a7707a061b877a456daeb9804487": {}, "878768d613def5adb784557fb0be93a4543da7ba86e4747611c079737beebf38": {}, "c8dc7e4f1ccd67402b78e4b7d72b066c5c39786c08fd9f2a49ed40650eed056a": {}}},
-		{gga.AgentsTemplatePath(homeDir), map[string]struct{}{"b8d688b95e7d26ad51d4cdbbe9f226fe8056a0f806f1e459fe66589aa060b3a4": {}}}, {gga.RuntimePRModePath(homeDir), map[string]struct{}{"a4335d2167ba3530cf56c7a328f0a5ad18921a8896217f1263b4d497f5fdb9fb": {}}},
-		{gga.RuntimePS1Path(homeDir), map[string]struct{}{"3b354091415658e97200e5ccf0bd1abb77c39e7d3dff7d80e9def78a56507abd": {}}}, {gga.RuntimeCMDPath(homeDir), map[string]struct{}{"2d266e6e48fe77ea3365b5aee343148b7a735686caa94aae60e06cf7fa87648c": {}}},
+		{legacyGGAConfigPath(homeDir), map[string]struct{}{"98ddd3a5af86dddcd5abaf247d2269d3c8d3efbd0cc3b6fcc37185d3c51de296": {}, "cdce9c0a004c313bb2ef5286873db74476e1a7707a061b877a456daeb9804487": {}, "878768d613def5adb784557fb0be93a4543da7ba86e4747611c079737beebf38": {}, "c8dc7e4f1ccd67402b78e4b7d72b066c5c39786c08fd9f2a49ed40650eed056a": {}}},
+		{filepath.Join(legacyGGARootDir(homeDir), "AGENTS.md"), map[string]struct{}{"b8d688b95e7d26ad51d4cdbbe9f226fe8056a0f806f1e459fe66589aa060b3a4": {}}},
+		{filepath.Join(legacyGGARootDir(homeDir), "lib", "pr_mode.sh"), map[string]struct{}{"a4335d2167ba3530cf56c7a328f0a5ad18921a8896217f1263b4d497f5fdb9fb": {}}},
+		{filepath.Join(homeDir, "bin", "gga.ps1"), map[string]struct{}{"3b354091415658e97200e5ccf0bd1abb77c39e7d3dff7d80e9def78a56507abd": {}}},
+		{filepath.Join(homeDir, "bin", "gga.cmd"), map[string]struct{}{"2d266e6e48fe77ea3365b5aee343148b7a735686caa94aae60e06cf7fa87648c": {}}},
 	}
+}
+
+func legacyGGARootDir(homeDir string) string {
+	if runtime.GOOS == "windows" {
+		if appData := os.Getenv("APPDATA"); appData != "" {
+			return filepath.Join(appData, "gga")
+		}
+		return filepath.Join(homeDir, "AppData", "Roaming", "gga")
+	}
+	return filepath.Join(homeDir, ".config", "gga")
+}
+
+func legacyGGAConfigPath(homeDir string) string {
+	return filepath.Join(legacyGGARootDir(homeDir), "config")
 }
 func findOwnedGGAFiles(homeDir string) ([]ggaManagedFile, []string, error) {
 	var owned []ggaManagedFile

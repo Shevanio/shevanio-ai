@@ -50,15 +50,15 @@ func TestCheckFailures(t *testing.T) {
 	results := []UpdateResult{
 		{Tool: ToolInfo{Name: "shevanio-ai"}, Status: UpToDate},
 		{Tool: ToolInfo{Name: "engram"}, Status: CheckFailed},
-		{Tool: ToolInfo{Name: "gga"}, Status: CheckFailed},
+		{Tool: ToolInfo{Name: "opencode-subagent-statusline"}, Status: CheckFailed},
 	}
 
 	failed := CheckFailures(results)
 	if len(failed) != 2 {
 		t.Fatalf("len(CheckFailures) = %d, want 2", len(failed))
 	}
-	if failed[0] != "engram" || failed[1] != "gga" {
-		t.Fatalf("CheckFailures() = %v, want [engram gga]", failed)
+	if failed[0] != "engram" || failed[1] != "opencode-subagent-statusline" {
+		t.Fatalf("CheckFailures() = %v, want [engram opencode-subagent-statusline]", failed)
 	}
 	if !HasCheckFailures(results) {
 		t.Fatalf("HasCheckFailures() = false, want true")

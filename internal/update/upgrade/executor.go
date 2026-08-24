@@ -24,7 +24,6 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/agents/claude"
 	"github.com/shevanio/shevanio-ai/v2/internal/assets"
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
-	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/skills"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
@@ -261,10 +260,6 @@ func managedAgentBackupPaths(homeDir string, adapter agents.Adapter, diagnostics
 func managedGlobalBackupPaths(homeDir string) []string {
 	return []string{
 		state.Path(homeDir),
-		gga.ConfigPath(homeDir),
-		gga.AgentsTemplatePath(homeDir),
-		gga.RuntimePRModePath(homeDir),
-		gga.RuntimePS1Path(homeDir),
 	}
 }
 

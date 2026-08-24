@@ -20,7 +20,6 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
-	"github.com/shevanio/shevanio-ai/v2/internal/components/gga"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/sdd"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
@@ -98,7 +97,6 @@ var (
 		model.ComponentTheme,
 		model.ComponentClaudeTheme,
 		model.ComponentOpenCodeGentleLogo,
-		model.ComponentGGA,
 	}
 	fullAgentRemovalComponents = []model.ComponentID{
 		model.ComponentPersona,
@@ -385,16 +383,6 @@ func (s *Service) buildPlan(agentIDs []model.AgentID, componentIDs []model.Compo
 				existing.agents = appendUniqueAgents(existing.agents, op.agents...)
 				operationsByKey[key] = existing
 			}
-		}
-	}
-
-	for _, target := range globalBackupTargets(s.homeDir) {
-		files, err := expandBackupTarget(target)
-		if err != nil {
-			return plan{}, fmt.Errorf("expand backup target %q: %w", target, err)
-		}
-		for _, file := range files {
-			backupTargets[file] = struct{}{}
 		}
 	}
 
@@ -855,12 +843,6 @@ func (s *Service) componentOperations(adapter agents.Adapter, componentID model.
 			}
 			ops = append(ops, removeDirIfEmpty(agentsDir))
 		}
-	case model.ComponentGGA:
-		for _, path := range globalBackupTargets(homeDir) {
-			targets = append(targets, path)
-			ops = append(ops, removeFile(path))
-		}
-		ops = append(ops, removeDirIfEmpty(filepath.Dir(gga.ConfigPath(homeDir))))
 	default:
 		return nil, nil, fmt.Errorf("unsupported component ID %q", componentID)
 	}
@@ -1501,13 +1483,6 @@ func removesAllAgentComponents(componentIDs []model.ComponentID) bool {
 		}
 	}
 	return true
-}
-
-func globalBackupTargets(homeDir string) []string {
-	return []string{
-		gga.ConfigPath(homeDir),
-		gga.AgentsTemplatePath(homeDir),
-	}
 }
 
 func removeOwnedOpenCodeLauncher(path string) operation {
