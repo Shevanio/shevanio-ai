@@ -215,13 +215,13 @@ test_preset_minimal_with_default_persona_includes_persona() {
 }
 
 test_preset_ecosystem_components() {
-    log_test "Preset ecosystem-only with persona=custom produces 5 components"
+    log_test "Preset ecosystem-only with persona=custom produces 4 components"
 
     # Use persona=custom to test the preset alone, since persona is now
     # driven by Selection.Persona (decoupled from preset).
     output=$($BINARY install --preset ecosystem-only --persona custom --agent claude-code --dry-run 2>&1) || true
 
-    # ecosystem-only (without persona) = engram, sdd, skills, context7, gga
+    # ecosystem-only (without persona) = engram, sdd, skills, context7
     local components_line
     components_line=$(echo "$output" | grep "Components order:")
 
@@ -229,7 +229,7 @@ test_preset_ecosystem_components() {
     assert_output_contains "$components_line" "sdd" "Ecosystem includes sdd"
     assert_output_contains "$components_line" "skills" "Ecosystem includes skills"
     assert_output_contains "$components_line" "context7" "Ecosystem includes context7"
-    assert_output_contains "$components_line" "gga" "Ecosystem includes gga"
+    assert_output_not_contains "$components_line" "gga" "Ecosystem excludes retired gga"
     assert_output_not_contains "$components_line" "persona" "Ecosystem + persona=custom excludes persona"
     assert_output_not_contains "$components_line" "permissions" "Ecosystem excludes permissions"
 }
@@ -263,7 +263,7 @@ test_preset_full_components() {
     assert_output_contains "$components_line" "context7" "Full includes context7"
     assert_output_contains "$components_line" "persona" "Full includes persona"
     assert_output_contains "$components_line" "permissions" "Full includes permissions"
-    assert_output_contains "$components_line" "gga" "Full includes gga"
+    assert_output_not_contains "$components_line" "gga" "Full excludes retired gga"
     assert_output_contains "$components_line" "claude-theme" "Full includes Claude Gentleman theme"
     assert_output_contains "$components_line" "opencode-gentle-logo" "Full includes OpenCode Gentle logo"
 }
