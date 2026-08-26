@@ -10,6 +10,9 @@ import (
 )
 
 func TestNormalizePersonaRemapsGentlemanNeutralArtifacts(t *testing.T) {
+	if got, _, err := normalizePersona("Gentleman"); err != nil || got != model.PersonaShevanio {
+		t.Fatalf("normalizePersona(\"Gentleman\") = %q, %v; want %q", got, err, model.PersonaShevanio)
+	}
 	got, remapped, err := normalizePersona("gentleman-neutral-artifacts")
 	if err != nil {
 		t.Fatalf("normalizePersona() error = %v", err)

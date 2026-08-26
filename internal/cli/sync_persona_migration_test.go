@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -49,6 +50,59 @@ func TestMigratePersistedPersonaAliasRewritesStateOnce(t *testing.T) {
 	}
 }
 
+func TestCanonicalPersonaStateMigration(t *testing.T) {
+	profile := model.Profile{Name: "review-safe"}
+	assignments := map[string]model.ModelAssignment{
+		"sdd-apply": {ProviderID: "openai", ModelID: "gpt-5.6"},
+	}
+	tests := []struct {
+		name        string
+		selection   model.Selection
+		persisted   state.InstallState
+		wantPersona model.PersonaID
+		wantPreset  model.PresetID
+		wantMode    model.SDDModeID
+	}{
+		{
+			name:        "empty managed defaults converge",
+			selection:   model.Selection{},
+			persisted:   state.InstallState{},
+			wantPersona: model.PersonaShevanio,
+			wantPreset:  model.PresetFullShevanio,
+		},
+		{
+			name: "legacy selection converges without losing policy",
+			selection: model.Selection{
+				Profiles:         []model.Profile{profile},
+				ModelAssignments: assignments,
+				Persona:          model.PersonaNeutral,
+			},
+			persisted: state.InstallState{
+				SelectionConfigured: true,
+				Preset:              model.PresetFullGentleman,
+				Persona:             "Gentleman",
+				SDDMode:             model.SDDModeMulti,
+			},
+			wantPersona: model.PersonaNeutral,
+			wantPreset:  model.PresetFullShevanio,
+			wantMode:    model.SDDModeMulti,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			selection := tt.selection
+			RestorePersistedSelection(&selection, tt.persisted, SyncFlags{})
+			applyResolvedPersona(&selection, tt.persisted.Persona)
+			if selection.Persona != tt.wantPersona || selection.Preset != tt.wantPreset || selection.SDDMode != tt.wantMode {
+				t.Fatalf("selection identity/state = %+v, want %q/%q/%q", selection, tt.wantPersona, tt.wantPreset, tt.wantMode)
+			}
+			if !reflect.DeepEqual(selection.Profiles, tt.selection.Profiles) || !reflect.DeepEqual(selection.ModelAssignments, tt.selection.ModelAssignments) {
+				t.Fatalf("selection policy fields changed: %+v/%v", selection.Profiles, selection.ModelAssignments)
+			}
+		})
+	}
+}
 func TestMigratePersistedPersonaAliasSkipsUnreadableState(t *testing.T) {
 	persisted := state.InstallState{Persona: string(model.PersonaGentlemanNeutralArtifacts)}
 	if err := migratePersistedPersonaAlias(t.TempDir(), &persisted, errStateUnreadableForTest); err != nil {
@@ -57,8 +111,8 @@ func TestMigratePersistedPersonaAliasSkipsUnreadableState(t *testing.T) {
 }
 
 // TestApplyResolvedPersonaAliasResolution covers only what this change owns:
-// a persisted legacy alias resolves to neutral, valid persisted personas are
-// honored unchanged, an explicit selection wins over persisted state, and the
+// a persisted legacy alias resolves to its canonical identity, valid persisted
+// personas are honored or canonicalized, an explicit selection wins over persisted state, and the
 // documented missing-field compatibility default still applies to state files
 // written before persona persistence existed.
 //
@@ -74,10 +128,10 @@ func TestApplyResolvedPersonaAliasResolution(t *testing.T) {
 		want      model.PersonaID
 	}{
 		{name: "persisted legacy alias resolves to neutral", persisted: string(model.PersonaGentlemanNeutralArtifacts), want: model.PersonaNeutral},
-		{name: "persisted gentleman is honored", persisted: string(model.PersonaGentleman), want: model.PersonaGentleman},
+		{name: "persisted gentleman alias resolves to shevanio", persisted: string(model.PersonaGentleman), want: model.PersonaShevanio},
 		{name: "persisted neutral is honored", persisted: string(model.PersonaNeutral), want: model.PersonaNeutral},
 		{name: "explicit selection wins over persisted alias", selection: model.Selection{Persona: model.PersonaGentleman}, persisted: string(model.PersonaGentlemanNeutralArtifacts), want: model.PersonaGentleman},
-		{name: "missing persona field uses the documented compatibility default", persisted: "", want: model.PersonaNeutral},
+		{name: "missing persona field uses the canonical managed default", persisted: "", want: model.PersonaShevanio},
 	}
 
 	for _, tc := range cases {

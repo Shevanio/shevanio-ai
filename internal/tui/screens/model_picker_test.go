@@ -35,6 +35,9 @@ func makeTestState(phaseIdx int) *ModelPickerState {
 
 func TestModelPickerRows_Count(t *testing.T) {
 	rows := ModelPickerRows()
+	if rows[0] != string(model.CanonicalManagedIdentity.Actor) {
+		t.Fatalf("ModelPickerRows()[0] = %q, want %q", rows[0], model.CanonicalManagedIdentity.Actor)
+	}
 	want := 2 + len(opencode.SDDPhases()) + 1 + len(opencode.JDPhases()) + 1 + len(opencode.ReviewPhases())
 	if len(rows) != want {
 		t.Fatalf("ModelPickerRows() len = %d, want %d; rows = %v", len(rows), want, rows)
@@ -68,8 +71,8 @@ func TestRenderModelPickerScrollsToReviewAgents(t *testing.T) {
 
 func TestModelPickerRows_OrchestratorIsFirst(t *testing.T) {
 	rows := ModelPickerRows()
-	if rows[0] != "gentle-orchestrator" {
-		t.Fatalf("ModelPickerRows()[0] = %q, want %q", rows[0], "gentle-orchestrator")
+	if rows[0] != "shevanio-orchestrator" {
+		t.Fatalf("ModelPickerRows()[0] = %q, want %q", rows[0], "shevanio-orchestrator")
 	}
 }
 
@@ -220,8 +223,8 @@ func TestHandleModelNav_SubAgentRow_AssignsCorrectPhase(t *testing.T) {
 // ─── SDDOrchestratorPhase constant ────────────────────────────────────────
 
 func TestSDDOrchestratorPhaseConstant(t *testing.T) {
-	if SDDOrchestratorPhase != "gentle-orchestrator" {
-		t.Fatalf("SDDOrchestratorPhase = %q, want %q", SDDOrchestratorPhase, "gentle-orchestrator")
+	if SDDOrchestratorPhase != "shevanio-orchestrator" {
+		t.Fatalf("SDDOrchestratorPhase = %q, want %q", SDDOrchestratorPhase, "shevanio-orchestrator")
 	}
 }
 

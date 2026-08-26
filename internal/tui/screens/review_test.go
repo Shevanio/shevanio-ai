@@ -17,8 +17,8 @@ import (
 func TestRenderReviewShowsSkillNames(t *testing.T) {
 	payload := planner.ReviewPayload{
 		Agents:  []model.AgentID{model.AgentClaudeCode},
-		Persona: model.PersonaGentleman,
-		Preset:  model.PresetFullGentleman,
+		Persona: model.PersonaShevanio,
+		Preset:  model.PresetFullShevanio,
 		Components: []planner.ComponentAction{
 			{ID: model.ComponentSkills, Action: "selected"},
 		},
@@ -157,7 +157,7 @@ func TestRenderReviewSummarizesPersonaConversationAndArtifacts(t *testing.T) {
 		persona model.PersonaID
 		want    string
 	}{
-		{name: "Gentleman", persona: model.PersonaGentleman, want: "Voseo conversation; English technical artifacts"},
+		{name: "Gentleman alias", persona: model.PersonaGentleman, want: "Mentor conversation; English technical artifacts"},
 		{name: "Gentleman with English artifacts", persona: model.PersonaGentlemanNeutralArtifacts, want: "No regional conversation tone; English technical artifacts (legacy alias, remapped)"},
 		{name: "Neutral", persona: model.PersonaNeutral, want: "No regional conversation tone; English technical artifacts"},
 	}

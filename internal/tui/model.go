@@ -723,15 +723,15 @@ func NewModel(detection system.DetectionResult, version string, installState ...
 		s = installState[0]
 	}
 	agents := preselectedAgents(detection, s)
-	components := componentsForPreset(model.PresetFullGentleman, model.PersonaGentleman)
+	components := componentsForPreset(model.PresetFullShevanio, model.PersonaShevanio)
 	if isPiOnlyAgents(agents) {
 		components = piOnlyComponents()
 	}
 
 	selection := model.Selection{
 		Agents:                 agents,
-		Persona:                model.PersonaGentleman,
-		Preset:                 model.PresetFullGentleman,
+		Persona:                model.PersonaShevanio,
+		Preset:                 model.PresetFullShevanio,
 		Components:             components,
 		ClaudeModelAssignments: installStateClaudeAssignments(s.ClaudeModelAssignments),
 		ClaudePhaseAssignments: installStateClaudePhaseAssignments(s.ClaudePhaseAssignments),
@@ -1775,6 +1775,16 @@ func (m Model) confirmSelection() (tea.Model, tea.Cmd) {
 	case ScreenWelcome:
 		switch m.Cursor {
 		case 0:
+			if m.Selection.Persona == "" {
+				m.Selection.Persona = model.PersonaShevanio
+			} else if persona, class := model.NormalizePersonaRead(string(m.Selection.Persona)); class != model.IdentityUnknown {
+				m.Selection.Persona = persona
+			}
+			if m.Selection.Preset == "" {
+				m.Selection.Preset = model.PresetFullShevanio
+			} else if preset, class := model.NormalizePresetRead(string(m.Selection.Preset)); class != model.IdentityUnknown {
+				m.Selection.Preset = preset
+			}
 			m.InstallFlowActive = true
 			m.setScreen(ScreenDetection)
 		case 1:
@@ -2203,8 +2213,12 @@ func (m Model) confirmSelection() (tea.Model, tea.Cmd) {
 	case ScreenPreset:
 		options := screens.PresetOptions()
 		if m.Cursor < len(options) {
-			m.Selection.Preset = options[m.Cursor]
-			m.Selection.Components = componentsForPreset(options[m.Cursor], m.Selection.Persona)
+			selectedPreset := options[m.Cursor]
+			if normalized, class := model.NormalizePresetRead(string(selectedPreset)); class != model.IdentityUnknown {
+				selectedPreset = normalized
+			}
+			m.Selection.Preset = selectedPreset
+			m.Selection.Components = componentsForPreset(selectedPreset, m.Selection.Persona)
 			// Enter the conditional picker chain through the single source of
 			// truth. pickerNextScreen(ScreenPreset) returns the first chain member
 			// for the current selection (Claude → Kiro → Codex → SDDMode →

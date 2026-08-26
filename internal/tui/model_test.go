@@ -43,6 +43,9 @@ func TestNavigationWelcomeToDetection(t *testing.T) {
 	if !state.InstallFlowActive {
 		t.Fatal("expected Start installation to activate the install flow")
 	}
+	if state.Selection.Persona != model.PersonaShevanio || state.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("selection defaults = %q/%q, want %q/%q", state.Selection.Persona, state.Selection.Preset, model.PersonaShevanio, model.PresetFullShevanio)
+	}
 }
 
 func TestCodexCustomDiscoveryStartsAsCommandWithFallback(t *testing.T) {
