@@ -146,6 +146,7 @@ const (
 type PersonaID string
 
 const (
+	PersonaShevanio  PersonaID = "shevanio"
 	PersonaGentleman PersonaID = "gentleman"
 	// PersonaGentlemanNeutralArtifacts is a legacy alias accepted for backward
 	// compatibility. The CLI and sync normalization treat it as PersonaNeutral,
@@ -197,6 +198,7 @@ const (
 type PresetID string
 
 const (
+	PresetFullShevanio  PresetID = "full-shevanio"
 	PresetFullGentleman PresetID = "full-gentleman"
 	PresetEcosystemOnly PresetID = "ecosystem-only"
 	PresetMinimal       PresetID = "minimal"
