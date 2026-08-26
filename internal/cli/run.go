@@ -216,12 +216,11 @@ func RunInstall(args []string, detection system.DetectionResult) (InstallResult,
 
 	orchestrator := pipeline.NewOrchestrator(pipeline.DefaultRollbackPolicy())
 	result.Execution = orchestrator.Execute(stagePlan)
-	runtime.state.cleanupRollbackSnapshot()
 	if result.Execution.Err != nil {
 		return result, fmt.Errorf("execute install pipeline: %w", result.Execution.Err)
 	}
 	result.PiCodeGraph = runtime.state.piCodeGraph
-	result.Verify = runPostApplyVerification(postApplyVerificationInput{
+	result.Verify = postApplyVerification(postApplyVerificationInput{
 		HomeDir:      homeDir,
 		WorkspaceDir: runtime.workspaceDir,
 		Scope:        input.Scope,
@@ -293,6 +292,9 @@ func RunInstall(args []string, detection system.DetectionResult) (InstallResult,
 			persistErr = errors.Join(persistErr, rollback.Err)
 		}
 		return result, persistErr
+	}
+	if err := runtime.state.removeRollbackSnapshot(); err != nil {
+		return result, fmt.Errorf("remove install rollback snapshot: %w", err)
 	}
 
 	return result, nil
@@ -662,14 +664,20 @@ type runtimeState struct {
 }
 
 func (s *runtimeState) cleanupRollbackSnapshot() {
+	if err := s.removeRollbackSnapshot(); err != nil {
+		log.Printf("backup: remove transaction snapshot: %v", err)
+	}
+}
+
+func (s *runtimeState) removeRollbackSnapshot() error {
 	if s == nil || s.rollbackSnapshotDir == "" {
-		return
+		return nil
 	}
 	if err := os.RemoveAll(s.rollbackSnapshotDir); err != nil {
-		log.Printf("backup: remove transaction snapshot: %v", err)
-		return
+		return fmt.Errorf("remove transaction snapshot: %w", err)
 	}
 	s.rollbackSnapshotDir = ""
+	return nil
 }
 
 func (s *runtimeState) cleanupCompatibilityTransaction() {
@@ -1175,12 +1183,17 @@ func (s rollbackRestoreStep) Run() error {
 }
 
 func (s rollbackRestoreStep) Rollback() error {
-	defer s.state.cleanupRollbackSnapshot()
-	if len(s.state.manifest.Entries) == 0 {
+	if s.state == nil {
 		return nil
 	}
+	if len(s.state.manifest.Entries) == 0 {
+		return s.state.removeRollbackSnapshot()
+	}
 
-	return backup.RestoreService{Roots: rollbackRoots(s.homeDir, s.workspaceDir)}.Restore(s.state.manifest)
+	if err := (backup.RestoreService{Roots: rollbackRoots(s.homeDir, s.workspaceDir)}).Restore(s.state.manifest); err != nil {
+		return err
+	}
+	return s.state.removeRollbackSnapshot()
 }
 
 // rollbackRoots returns the directories this install/sync run could
@@ -1717,6 +1730,14 @@ var tuiInstallStagePlan = func(runtime *installRuntime) pipeline.StagePlan {
 	return runtime.stagePlan()
 }
 
+var postApplyVerification = runPostApplyVerification
+
+var tuiInstallFinalizer = func() error { return nil }
+
+func FinalizeTUIInstall() error {
+	return tuiInstallFinalizer()
+}
+
 // ExecuteTUIInstallWithBackgroundAndOrchestrator runs a TUI install and returns
 // the orchestrator so a downstream state-persistence failure can be compensated.
 func ExecuteTUIInstallWithBackgroundAndOrchestrator(homeDir string, selection model.Selection, resolved planner.ResolvedPlan, profile system.PlatformProfile, background model.OpenCodeBackgroundIntent, piBackground model.PiBackgroundIntent, onProgress pipeline.ProgressFunc) (pipeline.ExecutionResult, *pipeline.Orchestrator) {
@@ -1729,12 +1750,14 @@ func executeTUIInstallWithBackground(homeDir string, selection model.Selection, 
 		return pipeline.ExecutionResult{Err: err}, nil
 	}
 	defer runtime.state.cleanupCompatibilityTransaction()
+	tuiInstallFinalizer = runtime.state.removeRollbackSnapshot
 	backgroundResolution := OpenCodeBackgroundResolution{
 		Intent:    background,
 		Effective: background,
 	}
 	backgroundActivation, err := prepareOpenCodeBackgroundActivation(homeDir, &backgroundResolution, containsAgent(resolved.Agents, model.AgentOpenCode))
 	if err != nil {
+		runtime.state.cleanupRollbackSnapshot()
 		return pipeline.ExecutionResult{Err: fmt.Errorf("prepare OpenCode background activation: %w", err)}, nil
 	}
 	runtime.background = backgroundResolution
@@ -1748,7 +1771,6 @@ func executeTUIInstallWithBackground(homeDir string, selection model.Selection, 
 	runtime.piBackgroundProjection = preparePiBackgroundProjection(homeDir, &piBackgroundResolution, containsAgent(resolved.Agents, model.AgentPi))
 	orchestrator := pipeline.NewOrchestrator(pipeline.DefaultRollbackPolicy(), pipeline.WithFailurePolicy(pipeline.ContinueOnError), pipeline.WithProgressFunc(onProgress))
 	result := orchestrator.Execute(tuiInstallStagePlan(runtime))
-	runtime.state.cleanupRollbackSnapshot()
 	if runtime.state.piCodeGraph != nil {
 		result.ManualActions = append(result.ManualActions, runtime.state.piCodeGraph.ManualActions...)
 	}

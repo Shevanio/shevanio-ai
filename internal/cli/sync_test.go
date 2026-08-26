@@ -31,6 +31,63 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
 
+func TestRunSyncPostSyncVerificationCharacterization(t *testing.T) {
+	home := t.TempDir()
+	selection := model.Selection{
+		Agents:     []model.AgentID{model.AgentClaudeCode},
+		Components: []model.ComponentID{model.ComponentPersona},
+		Persona:    model.PersonaNeutral,
+	}
+	report := runPostSyncVerification(home, "", selection)
+
+	if report.Ready {
+		t.Fatal("runPostSyncVerification() is ready for a missing managed persona file")
+	}
+	if report.Failed == 0 || report.Failed != len(report.Checks) {
+		t.Fatalf("runPostSyncVerification() report = %#v, want every check to fail", report)
+	}
+	if report.FinalNote != verify.VerificationIssuesMessage {
+		t.Fatalf("runPostSyncVerification() final note = %q, want %q", report.FinalNote, verify.VerificationIssuesMessage)
+	}
+}
+
+func TestSyncVerifierFailureRetainsRollbackSnapshot(t *testing.T) {
+	home := t.TempDir()
+	path := filepath.Join(home, ".claude", "CLAUDE.md")
+	mustWriteFile(t, path, []byte("stale prompt\n"))
+	selection := model.Selection{
+		Agents:     []model.AgentID{model.AgentClaudeCode},
+		Components: []model.ComponentID{model.ComponentPersona},
+		Persona:    model.PersonaNeutral,
+	}
+
+	originalVerification := postSyncVerification
+	postSyncVerification = func(homeDir, workspaceDir string, selection model.Selection) verify.Report {
+		outside := filepath.Join(t.TempDir(), "outside-prompt")
+		mustWriteFile(t, outside, []byte("outside\n"))
+		if err := os.Remove(filepath.Join(homeDir, ".claude", "CLAUDE.md")); err != nil {
+			t.Fatalf("remove synced prompt: %v", err)
+		}
+		if err := os.Symlink(outside, filepath.Join(homeDir, ".claude", "CLAUDE.md")); err != nil {
+			t.Fatalf("symlink synced prompt: %v", err)
+		}
+		return verify.Report{FinalNote: "forced verifier failure"}
+	}
+	t.Cleanup(func() { postSyncVerification = originalVerification })
+
+	_, err := RunSyncWithSelection(home, selection)
+	if err == nil {
+		t.Fatal("RunSyncWithSelection() error = nil, want verifier failure")
+	}
+	entries, readErr := os.ReadDir(filepath.Join(home, ".shevanio-ai", "backups"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if len(entries) == 0 {
+		t.Fatal("verifier failure did not retain the rollback snapshot")
+	}
+}
+
 // ─── Phase 1: ParseSyncFlags ───────────────────────────────────────────────
 
 func TestParseSyncFlagsDefaults(t *testing.T) {

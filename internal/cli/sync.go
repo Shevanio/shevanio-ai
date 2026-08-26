@@ -1574,7 +1574,6 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	orchestrator := pipeline.NewOrchestrator(pipeline.DefaultRollbackPolicy())
 	result.Execution = orchestrator.Execute(stagePlan)
 	compatibilityChanged := rt.state.compatibilityChangedFiles()
-	rt.state.cleanupRollbackSnapshot()
 	if result.Execution.Err != nil {
 		return result, fmt.Errorf("execute sync pipeline: %w", result.Execution.Err)
 	}
@@ -1604,7 +1603,7 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	}
 
 	// Post-apply verification reuses the same component paths as install.
-	result.Verify = runPostSyncVerification(homeDir, rt.workspaceDir, selection)
+	result.Verify = postSyncVerification(homeDir, rt.workspaceDir, selection)
 	result.Verify = withFailedSyncVerificationNote(result.Verify)
 	result.BackgroundPolicyEnabled = rt.runtimeReady && background.Effective == model.OpenCodeBackgroundOn
 	if background.activationPlan != nil {
@@ -1630,6 +1629,9 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 			persistErr = errors.Join(persistErr, rollback.Err)
 		}
 		return result, persistErr
+	}
+	if err := rt.state.removeRollbackSnapshot(); err != nil {
+		return result, fmt.Errorf("remove sync rollback snapshot: %w", err)
 	}
 
 	return result, nil
@@ -2077,3 +2079,5 @@ func runPostSyncVerification(homeDir, workspaceDir string, selection model.Selec
 
 	return verify.BuildReport(verify.RunChecks(context.Background(), checks))
 }
+
+var postSyncVerification = runPostSyncVerification

@@ -6,10 +6,117 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/shevanio/shevanio-ai/v2/internal/backup"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
+	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
+
+func TestRunInstallPostApplyVerificationCharacterization(t *testing.T) {
+	home := t.TempDir()
+	selection := model.Selection{
+		Agents:  []model.AgentID{model.AgentClaudeCode},
+		Persona: model.PersonaNeutral,
+	}
+	report := runPostApplyVerification(postApplyVerificationInput{
+		HomeDir:   home,
+		Selection: selection,
+		Resolved: planner.ResolvedPlan{
+			Agents:            selection.Agents,
+			OrderedComponents: []model.ComponentID{model.ComponentPersona},
+		},
+	})
+
+	if report.Ready {
+		t.Fatal("runPostApplyVerification() is ready for a missing managed persona file")
+	}
+	if report.Failed == 0 || report.Failed != len(report.Checks) {
+		t.Fatalf("runPostApplyVerification() report = %#v, want every check to fail", report)
+	}
+	if report.FinalNote != verify.VerificationIssuesMessage {
+		t.Fatalf("runPostApplyVerification() final note = %q, want %q", report.FinalNote, verify.VerificationIssuesMessage)
+	}
+}
+
+func TestInstallVerifierFailureRetainsRollbackSnapshot(t *testing.T) {
+	home := t.TempDir()
+	originalHomeDir := osUserHomeDir
+	osUserHomeDir = func() (string, error) { return home, nil }
+	t.Cleanup(func() { osUserHomeDir = originalHomeDir })
+	if err := os.MkdirAll(filepath.Join(home, ".cursor"), 0o755); err != nil {
+		t.Fatalf("MkdirAll(.cursor): %v", err)
+	}
+
+	var captured *runtimeState
+	originalVerification := postApplyVerification
+	postApplyVerification = func(input postApplyVerificationInput) verify.Report {
+		captured = input.State
+		captured.manifest.Entries = []backup.ManifestEntry{{OriginalPath: filepath.Join(t.TempDir(), "outside")}}
+		return verify.Report{FinalNote: "forced verifier failure"}
+	}
+	t.Cleanup(func() { postApplyVerification = originalVerification })
+
+	_, err := RunInstall([]string{"--agent", "cursor", "--preset", "custom", "--components", "persona", "--persona", "neutral"}, system.DetectionResult{})
+	if err == nil {
+		t.Fatal("RunInstall() error = nil, want verifier failure")
+	}
+	if captured == nil || captured.manifest.RootDir == "" {
+		t.Fatalf("verifier failure did not retain the rollback snapshot: state=%#v", captured)
+	}
+	if _, statErr := os.Stat(captured.manifest.RootDir); statErr != nil {
+		t.Fatalf("retained rollback snapshot stat error = %v", statErr)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(captured.manifest.RootDir) })
+}
+
+func TestRollbackCleanupFailureIsObservableAndRetrySafe(t *testing.T) {
+	invalidPath := filepath.Join(t.TempDir(), "snapshot\x00")
+	runtime := &runtimeState{rollbackSnapshotDir: invalidPath}
+	step := rollbackRestoreStep{state: runtime, homeDir: t.TempDir()}
+
+	if err := step.Rollback(); err == nil {
+		t.Fatal("rollback cleanup error = nil, want an observable removal failure")
+	}
+	if runtime.rollbackSnapshotDir != invalidPath {
+		t.Fatalf("rollback snapshot path = %q, want retained failed-removal path %q", runtime.rollbackSnapshotDir, invalidPath)
+	}
+}
+
+func TestFailedRestoreRetainsRollbackSnapshot(t *testing.T) {
+	snapshotDir := t.TempDir()
+	runtime := &runtimeState{
+		rollbackSnapshotDir: snapshotDir,
+		manifest: backup.Manifest{
+			Entries: []backup.ManifestEntry{{OriginalPath: filepath.Join(t.TempDir(), "outside")}},
+		},
+	}
+
+	if err := (rollbackRestoreStep{state: runtime, homeDir: t.TempDir()}).Rollback(); err == nil {
+		t.Fatal("rollback restore error = nil, want an invalid-root refusal")
+	}
+	if runtime.rollbackSnapshotDir != snapshotDir {
+		t.Fatalf("rollback snapshot path = %q, want retained path %q", runtime.rollbackSnapshotDir, snapshotDir)
+	}
+	if _, err := os.Stat(snapshotDir); err != nil {
+		t.Fatalf("retained rollback snapshot stat error = %v", err)
+	}
+}
+
+func TestRollbackCleanupRetrySucceeds(t *testing.T) {
+	snapshotDir := t.TempDir()
+	runtime := &runtimeState{rollbackSnapshotDir: snapshotDir}
+	if err := (rollbackRestoreStep{state: runtime, homeDir: t.TempDir()}).Rollback(); err != nil {
+		t.Fatalf("rollback cleanup retry error = %v", err)
+	}
+	if runtime.rollbackSnapshotDir != "" {
+		t.Fatalf("rollback snapshot path = %q, want empty after successful retry", runtime.rollbackSnapshotDir)
+	}
+	if _, err := os.Stat(snapshotDir); !os.IsNotExist(err) {
+		t.Fatalf("rollback snapshot stat error = %v, want removed snapshot", err)
+	}
+}
 
 func TestMergeExplicitAgentInstallStatePreservesExistingAssignmentsWhenFreshStateIsEmpty(t *testing.T) {
 	home := t.TempDir()
