@@ -406,11 +406,17 @@ func BuildSyncSelection(flags SyncFlags, agentIDs []model.AgentID) model.Selecti
 }
 
 func RestorePersistedSelection(selection *model.Selection, persisted state.InstallState, flags SyncFlags) {
+	if preset, err := normalizePreset(string(selection.Preset)); err == nil {
+		selection.Preset = preset
+	}
 	if !persisted.SelectionConfigured {
 		return
 	}
 	explicit := *selection
 	persisted.RestoreSelection(selection)
+	if preset, err := normalizePreset(string(selection.Preset)); err == nil {
+		selection.Preset = preset
+	}
 	if flags.skillsSet {
 		selection.Skills = explicit.Skills
 		setSelectionComponent(selection, model.ComponentSkills, true, true)
@@ -1430,27 +1436,48 @@ func applyResolvedPersona(selection *model.Selection, persisted string) {
 			selection.Persona = id
 			return
 		}
-		// The sync entry points reject unknown persisted values before resolution.
+		// The sync entry points reject unknown persisted values before resolution;
+		// direct callers still retain the value rather than silently changing it.
+		selection.Persona = model.PersonaID(persisted)
+		return
 	}
 	// Default-safe fallback for state files written before persona persistence.
-	selection.Persona = model.PersonaNeutral
+	selection.Persona = model.PersonaShevanio
 }
 
-// migratePersistedPersonaAlias rewrites a persisted legacy
-// gentleman-neutral-artifacts persona to neutral, printing the remap notice
-// once. State that predates persona persistence, explicit gentleman state,
-// and unreadable state are untouched.
+// migratePersistedPersonaAlias rewrites persisted managed persona aliases to
+// the canonical persona, printing the historical remap notice only for the
+// gentleman-neutral-artifacts language alias. State that predates persona
+// persistence, unknown values, and unreadable state are untouched.
 func migratePersistedPersonaAlias(homeDir string, persisted *state.InstallState, persistedErr error) error {
-	if persistedErr != nil || persisted == nil || persisted.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
+	if persistedErr != nil || persisted == nil || persisted.Persona == "" {
 		return nil
 	}
-	persisted.Persona = string(model.PersonaNeutral)
+	normalizedPersona, _, personaErr := normalizePersona(persisted.Persona)
+	normalizedPreset, presetErr := normalizePreset(string(persisted.Preset))
+	personaChanged := personaErr == nil && string(normalizedPersona) != persisted.Persona
+	presetChanged := presetErr == nil && normalizedPreset != persisted.Preset
+	if persisted.Preset == "" && !persisted.SelectionConfigured {
+		presetChanged = false
+	}
+	if !personaChanged && !presetChanged {
+		return nil
+	}
+	legacy := persisted.Persona
+	if personaChanged {
+		persisted.Persona = string(normalizedPersona)
+	}
+	if presetChanged {
+		persisted.Preset = normalizedPreset
+	}
 	if err := state.Write(homeDir, *persisted); err != nil {
 		return fmt.Errorf("persist remapped persona: %w", err)
 	}
 	// Notice only after the rewrite is durably persisted: a failed write must
 	// not tell the user the remap happened.
-	fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
+	if legacy == string(model.PersonaGentlemanNeutralArtifacts) {
+		fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
+	}
 	return nil
 }
 

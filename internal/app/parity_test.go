@@ -9,6 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/shevanio/shevanio-ai/v2/internal/cli"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/tui"
@@ -32,26 +33,32 @@ func TestInstallDefaultsMatchTUIModelDefaults(t *testing.T) {
 		t.Fatalf("NormalizeInstallFlags() error = %v", err)
 	}
 
-	model := tui.NewModel(detection, "dev")
-	if !reflect.DeepEqual(input.Selection, model.Selection) {
-		t.Fatalf("selection mismatch\ncli=%#v\ntui=%#v", input.Selection, model.Selection)
+	tuiModel := tui.NewModel(detection, "dev")
+	if !reflect.DeepEqual(input.Selection, tuiModel.Selection) {
+		t.Fatalf("selection mismatch\ncli=%#v\ntui=%#v", input.Selection, tuiModel.Selection)
+	}
+	if input.Selection.Persona != model.PersonaShevanio || input.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("defaults = %q/%q, want %q/%q", input.Selection.Persona, input.Selection.Preset, model.PersonaShevanio, model.PresetFullShevanio)
 	}
 }
 
 func TestInstallPlannerParityWithTUISelection(t *testing.T) {
 	detection := system.DetectionResult{}
-	model := tui.NewModel(detection, "dev")
+	tuiModel := tui.NewModel(detection, "dev")
 
 	result, err := cli.RunInstall([]string{"--dry-run"}, detection)
 	if err != nil {
 		t.Fatalf("RunInstall() error = %v", err)
 	}
 
-	if !reflect.DeepEqual(result.Selection, model.Selection) {
-		t.Fatalf("selection mismatch\ncli=%#v\ntui=%#v", result.Selection, model.Selection)
+	if !reflect.DeepEqual(result.Selection, tuiModel.Selection) {
+		t.Fatalf("selection mismatch\ncli=%#v\ntui=%#v", result.Selection, tuiModel.Selection)
+	}
+	if result.Selection.Persona != model.PersonaShevanio || result.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("planner defaults = %q/%q, want %q/%q", result.Selection.Persona, result.Selection.Preset, model.PersonaShevanio, model.PresetFullShevanio)
 	}
 
-	wantResolved, err := planner.NewResolver(planner.MVPGraph()).Resolve(model.Selection)
+	wantResolved, err := planner.NewResolver(planner.MVPGraph()).Resolve(tuiModel.Selection)
 	if err != nil {
 		t.Fatalf("Resolve() error = %v", err)
 	}
@@ -61,7 +68,7 @@ func TestInstallPlannerParityWithTUISelection(t *testing.T) {
 		t.Fatalf("resolved mismatch\ncli=%#v\ntui=%#v", result.Resolved, wantResolved)
 	}
 
-	wantReview := planner.BuildReviewPayload(model.Selection, wantResolved)
+	wantReview := planner.BuildReviewPayload(tuiModel.Selection, wantResolved)
 	if !reflect.DeepEqual(result.Review, wantReview) {
 		t.Fatalf("review mismatch\ncli=%#v\ntui=%#v", result.Review, wantReview)
 	}

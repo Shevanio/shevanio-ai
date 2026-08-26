@@ -3455,7 +3455,7 @@ func TestRunSyncRestoresConfiguredSelectionAndExplicitOverrides(t *testing.T) {
 		t.Fatal(err)
 	}
 	result, err := RunSync([]string{"--dry-run"})
-	if err != nil || result.Selection.Preset != model.PresetFullGentleman || !result.Selection.HasComponent(model.ComponentSkills) {
+	if err != nil || result.Selection.Preset != model.PresetFullShevanio || !result.Selection.HasComponent(model.ComponentSkills) {
 		t.Fatalf("legacy sync selection = %#v, err = %v", result.Selection, err)
 	}
 }
@@ -4131,9 +4131,8 @@ func TestRunSyncReadsPersonaFromState(t *testing.T) {
 	}
 }
 
-// TestRunSyncFallsBackToNeutralWhenStateLacksPersona verifies missing persona
-// state resolves to neutral/default-safe behavior instead of reactivating
-// Gentleman regional voice.
+// TestRunSyncFallsBackToCanonicalPersonaWhenStateLacksPersona verifies missing
+// persona state resolves to the canonical managed default.
 func TestRunSyncFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	home := t.TempDir()
 	setSyncTestHome(t, home)
@@ -4152,7 +4151,7 @@ func TestRunSyncFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunSync() error = %v", err)
 	}
-	if got, want := res.Selection.Persona, model.PersonaNeutral; got != want {
+	if got, want := res.Selection.Persona, model.PersonaShevanio; got != want {
 		t.Errorf("Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
 	}
 }
@@ -4172,10 +4171,10 @@ func TestRunSyncWithSelectionPiUsesNeutralForMissingPersonaField(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunSyncWithSelection() error = %v", err)
 	}
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
 		t.Fatalf("Selection.Persona = %q, want %q", got, want)
 	}
-	if got, want := readTextFile(t, piPath), "{\n  \"mode\": \"neutral\"\n}\n"; got != want {
+	if got, want := readTextFile(t, piPath), "{\n  \"mode\": \"shevanio\"\n}\n"; got != want {
 		t.Fatalf("Pi persona config = %q, want %q", got, want)
 	}
 }
@@ -4348,8 +4347,8 @@ func TestRunSyncWithSelection_PersonaResolvesFromStateCustom(t *testing.T) {
 	}
 }
 
-// TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone verifies
-// missing state persona resolves to neutral/default-safe behavior.
+// TestRunSyncWithSelection_PersonaFallsBackToCanonicalWhenStateHasNone verifies
+// missing state persona resolves to the canonical managed default.
 func TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone(t *testing.T) {
 	home := t.TempDir()
 	setSyncTestHome(t, home)
@@ -4377,7 +4376,7 @@ func TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone(t *testi
 		t.Fatalf("RunSyncWithSelection() error = %v", err)
 	}
 
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
 		t.Errorf("result.Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
 	}
 }
@@ -4487,7 +4486,7 @@ func TestRunSyncWithSelection_UnknownPersistedPersonaFailsClosed(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(state.Path(home)), 0o755); err != nil {
 		t.Fatalf("MkdirAll state: %v", err)
 	}
-	if err := os.WriteFile(state.Path(home), []byte(`{"installed_agents":["claude-code"],"persona":"Gentleman"}`), 0o644); err != nil {
+	if err := os.WriteFile(state.Path(home), []byte(`{"installed_agents":["claude-code"],"persona":"unsupported-persona"}`), 0o644); err != nil {
 		t.Fatalf("WriteFile state: %v", err)
 	}
 
@@ -4801,8 +4800,8 @@ func TestRunSyncDryRunResolvesPersonaFromState(t *testing.T) {
 	}
 }
 
-// TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona verifies that
-// --dry-run mode falls back to neutral/default-safe behavior when state has no
+// TestRunSyncDryRunFallsBackToCanonicalPersonaWhenStateLacksPersona verifies
+// that --dry-run mode uses the canonical managed default when state has no
 // recorded persona.
 func TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	home := t.TempDir()
@@ -4835,7 +4834,7 @@ func TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	if !result.DryRun {
 		t.Fatalf("DryRun = false, want true")
 	}
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
 		t.Errorf("dry-run fallback: Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
 	}
 }

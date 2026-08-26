@@ -95,13 +95,15 @@ var personaNoticeWriter io.Writer = os.Stderr
 // name now wins; users who want voseo have --persona gentleman.
 func normalizePersona(value string) (model.PersonaID, bool, error) {
 	if strings.TrimSpace(value) == "" {
-		return model.PersonaGentleman, false, nil
+		return model.PersonaShevanio, false, nil
 	}
 
 	switch model.PersonaID(value) {
 	case model.PersonaGentlemanNeutralArtifacts:
 		return model.PersonaNeutral, true, nil
-	case model.PersonaGentleman, model.PersonaNeutral, model.PersonaCustom:
+	case model.PersonaShevanio, model.PersonaGentleman, "Shevanio", "Gentleman":
+		return model.PersonaShevanio, false, nil
+	case model.PersonaNeutral, model.PersonaCustom:
 		return model.PersonaID(value), false, nil
 	default:
 		return "", false, fmt.Errorf("unsupported persona %q", value)
@@ -110,11 +112,13 @@ func normalizePersona(value string) (model.PersonaID, bool, error) {
 
 func normalizePreset(value string) (model.PresetID, error) {
 	if strings.TrimSpace(value) == "" {
-		return model.PresetFullGentleman, nil
+		return model.PresetFullShevanio, nil
 	}
 
 	switch model.PresetID(value) {
-	case model.PresetFullGentleman, model.PresetEcosystemOnly, model.PresetMinimal, model.PresetCustom:
+	case model.PresetFullGentleman, model.PresetFullShevanio:
+		return model.PresetFullShevanio, nil
+	case model.PresetEcosystemOnly, model.PresetMinimal, model.PresetCustom:
 		return model.PresetID(value), nil
 	default:
 		return "", fmt.Errorf("unsupported preset %q", value)

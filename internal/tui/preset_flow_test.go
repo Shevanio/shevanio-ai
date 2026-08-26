@@ -30,7 +30,7 @@ func TestPresetSelectionNextScreenFlowMatrix(t *testing.T) {
 		golden     string
 	}{
 		{
-			name:       "full gentleman with opencode enters SDD mode before plugins",
+			name:       "full shevanio with opencode enters SDD mode before plugins",
 			agents:     []model.AgentID{model.AgentOpenCode},
 			preset:     model.PresetFullGentleman,
 			wantScreen: ScreenSDDMode,
@@ -58,7 +58,7 @@ func TestPresetSelectionNextScreenFlowMatrix(t *testing.T) {
 			golden:     "preset-custom-opencode-next.golden",
 		},
 		{
-			name:       "full gentleman without opencode enters strict TDD",
+			name:       "full shevanio without opencode enters strict TDD",
 			agents:     []model.AgentID{model.AgentCursor},
 			preset:     model.PresetFullGentleman,
 			wantScreen: ScreenStrictTDD,
@@ -102,6 +102,35 @@ func TestPresetSelectionNextScreenFlowMatrix(t *testing.T) {
 			}
 			assertTUIGolden(t, tt.golden, state.View())
 		})
+	}
+}
+
+func TestCanonicalPersonaAndPresetSelection(t *testing.T) {
+	m := NewModel(system.DetectionResult{}, "dev")
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	state := updated.(Model)
+	if state.Screen != ScreenDetection {
+		t.Fatalf("welcome Enter screen = %v, want %v", state.Screen, ScreenDetection)
+	}
+	if state.Selection.Persona != model.PersonaShevanio || state.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("empty install defaults = %q/%q, want %q/%q", state.Selection.Persona, state.Selection.Preset, model.PersonaShevanio, model.PresetFullShevanio)
+	}
+
+	state.Screen = ScreenPersona
+	state.Cursor = 0
+	updated, _ = state.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	state = updated.(Model)
+	if state.Selection.Persona != model.PersonaShevanio {
+		t.Fatalf("persona selection = %q, want %q", state.Selection.Persona, model.PersonaShevanio)
+	}
+
+	state.Screen = ScreenPreset
+	state.Cursor = 0
+	updated, _ = state.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	state = updated.(Model)
+	if state.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("preset selection = %q, want %q", state.Selection.Preset, model.PresetFullShevanio)
 	}
 }
 

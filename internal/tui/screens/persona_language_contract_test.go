@@ -9,8 +9,8 @@ import (
 
 func TestPersonaOptionsExcludeGentlemanNeutralArtifacts(t *testing.T) {
 	for _, option := range PersonaOptions() {
-		if option == model.PersonaGentlemanNeutralArtifacts {
-			t.Fatalf("PersonaOptions() still offers the remapped legacy alias %q", option)
+		if option == model.PersonaGentlemanNeutralArtifacts || option == model.PersonaGentleman {
+			t.Fatalf("PersonaOptions() still offers a legacy alias %q", option)
 		}
 	}
 }
@@ -69,7 +69,7 @@ func TestPersonaDescriptionsSeparateToneFromArtifactLanguage(t *testing.T) {
 // screen.
 func TestRenderPersonaShowsEveryManagedDescription(t *testing.T) {
 	for _, persona := range []model.PersonaID{
-		model.PersonaGentleman,
+		model.PersonaShevanio,
 		model.PersonaNeutral,
 	} {
 		out := RenderPersona(persona, 0)
@@ -86,17 +86,21 @@ func TestRenderPersonaShowsEveryManagedDescription(t *testing.T) {
 // variants share a description apart from the alias suffix, so dropping the ID
 // would make them indistinguishable at the point of no return.
 func TestReviewPersonaLabelKeepsThePersonaID(t *testing.T) {
-	for _, persona := range []model.PersonaID{
-		model.PersonaGentleman,
-		model.PersonaGentlemanNeutralArtifacts,
-		model.PersonaNeutral,
-	} {
-		label := reviewPersonaLabel(persona)
-		if !strings.Contains(label, string(persona)) {
-			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the persona ID", persona, label)
+	cases := []struct {
+		input model.PersonaID
+		want  model.PersonaID
+	}{
+		{input: model.PersonaGentleman, want: model.PersonaShevanio},
+		{input: model.PersonaGentlemanNeutralArtifacts, want: model.PersonaGentlemanNeutralArtifacts},
+		{input: model.PersonaNeutral, want: model.PersonaNeutral},
+	}
+	for _, tc := range cases {
+		label := reviewPersonaLabel(tc.input)
+		if !strings.Contains(label, string(tc.want)) {
+			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the effective persona ID %q", tc.input, label, tc.want)
 		}
-		if !strings.Contains(label, personaDescriptions[persona]) {
-			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the description", persona, label)
+		if !strings.Contains(label, personaDescriptions[tc.want]) {
+			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the description for %q", tc.input, label, tc.want)
 		}
 	}
 }

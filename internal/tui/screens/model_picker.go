@@ -297,7 +297,7 @@ func appendConfigWarning(existing, warning string) string {
 }
 
 // SDDOrchestratorPhase is the key used for the base OpenCode SDD coordinator model assignment.
-const SDDOrchestratorPhase = "gentle-orchestrator"
+const SDDOrchestratorPhase = "shevanio-orchestrator"
 
 // ModelPickerRows returns the row labels for the model picker screen.
 // Row 0 is "gentle-orchestrator" (coordinator), row 1 is "Set all phases",

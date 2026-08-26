@@ -86,6 +86,9 @@ func joinIDs[T ~string](values []T) string {
 }
 
 func reviewPersonaLabel(persona model.PersonaID) string {
+	if normalized, class := model.NormalizePersonaRead(string(persona)); class != model.IdentityUnknown {
+		persona = normalized
+	}
 	if persona == model.PersonaCustom {
 		return "keep existing persona unmanaged"
 	}
