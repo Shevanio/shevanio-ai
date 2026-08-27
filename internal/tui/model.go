@@ -3324,7 +3324,7 @@ func (m Model) startUpgradeSync() tea.Cmd {
 			// present — skip writing to avoid dropping installed_agents, model
 			// assignments, and other persisted fields.
 			if h := homeDir(); h != "" {
-				_, _ = statestore.WithLock(h, func(s *state.InstallState) error {
+				_, _ = statestore.Mutate(h, func(s *state.InstallState) error {
 					s.PendingSync = true
 					return nil
 				})

@@ -1537,7 +1537,7 @@ func updateStateAfterUninstall(homeDir string, toRemove []model.AgentID) ([]mode
 	}
 
 	removed := make([]model.AgentID, 0, len(toRemove))
-	_, err := statestore.WithLock(homeDir, func(current *state.InstallState) error {
+	_, err := statestore.Mutate(homeDir, func(current *state.InstallState) error {
 		current.InstalledAgents = slices.DeleteFunc(current.InstalledAgents, func(installed string) bool {
 			if _, ok := removeSet[installed]; ok {
 				removed = append(removed, model.AgentID(installed))

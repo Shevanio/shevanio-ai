@@ -36,9 +36,9 @@ type writerEntry struct{ path, function, call string }
 
 func approvedWriterEntries() []writerEntry {
 	return []writerEntry{
-		{"internal/update/cooldown.go", "CheckAllWithCooldown", "statestore.WithLock"}, {"internal/app/selfupdate.go", "selfUpdate", "statestore.WithLock"},
-		{"internal/app/app.go", "RunArgs", "statestore.WithLock"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.WithLock"}, {"internal/app/app.go", "persistAssignments", "statestore.WithLock"},
-		{"internal/tui/model.go", "startUpgradeSync", "statestore.WithLock"}, {"internal/cli/review_mode.go", "writeGlobalRDDMode", "statestore.WithLock"}, {"internal/components/uninstall/service.go", "updateStateAfterUninstall", "statestore.WithLock"},
+		{"internal/update/cooldown.go", "CheckAllWithCooldown", "statestore.Mutate"}, {"internal/app/selfupdate.go", "selfUpdate", "statestore.Mutate"},
+		{"internal/app/app.go", "RunArgs", "statestore.Mutate"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.WithLock"}, {"internal/app/app.go", "persistAssignments", "statestore.WithLock"},
+		{"internal/tui/model.go", "startUpgradeSync", "statestore.Mutate"}, {"internal/cli/review_mode.go", "writeGlobalRDDMode", "statestore.Mutate"}, {"internal/components/uninstall/service.go", "updateStateAfterUninstall", "statestore.Mutate"},
 		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.WithLock"}, {"internal/cli/run.go", "persistInstallState", "withInstallStateLock"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "withInstallStateLock"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "withInstallStateLock"},
 	}
 }

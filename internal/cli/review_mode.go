@@ -401,7 +401,7 @@ func writeGlobalRDDMode(operation string) error {
 	if operation == "enable" {
 		mode = reviewtransaction.RDDModeOn
 	}
-	if _, err := statestore.WithLock(home, func(persisted *state.InstallState) error {
+	if _, err := statestore.Mutate(home, func(persisted *state.InstallState) error {
 		recorded := time.Now().UTC()
 		persisted.RDDMode = string(mode)
 		persisted.RDDModeRecordedAt = &recorded
