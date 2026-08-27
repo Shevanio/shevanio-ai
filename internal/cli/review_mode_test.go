@@ -16,6 +16,30 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
+func TestWriteGlobalRDDMode_BridgeContentionPropagates(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"opencode"}, RDDMode: string(reviewtransaction.RDDModeOff)}); err != nil {
+		t.Fatal(err)
+	}
+	locked, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	writeErr := writeGlobalRDDMode("enable")
+	if err := locked.Release(); err != nil {
+		t.Fatal(err)
+	}
+	after, err := state.Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if writeErr == nil || after.RDDMode != string(reviewtransaction.RDDModeOff) || len(after.InstalledAgents) != 1 {
+		t.Fatalf("behavior mismatch: TestWriteGlobalRDDMode_BridgeContentionPropagates")
+	}
+}
+
 func TestReviewModeStatusReportsBothSourcesWithoutMutating(t *testing.T) {
 	home := reviewModeHome(t)
 	repo := initReviewCLIRepo(t)

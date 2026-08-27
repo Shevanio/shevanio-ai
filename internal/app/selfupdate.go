@@ -3,7 +3,6 @@ package app
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"github.com/mattn/go-isatty"
 
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/update"
 	"github.com/shevanio/shevanio-ai/v2/internal/update/upgrade"
@@ -176,14 +176,10 @@ func selfUpdate(ctx context.Context, version string, profile system.PlatformProf
 	// JSON, permission denied) means an existing file is present — do not
 	// overwrite it and risk dropping unrelated persisted fields.
 	if homeDir != "" {
-		s, readErr := state.Read(homeDir)
-		if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
-			// File exists but is unreadable/corrupt — skip this round to avoid
-			// clobbering installed_agents, model assignments, etc.
-		} else {
+		_, _ = statestore.WithLock(homeDir, func(s *state.InstallState) error {
 			s.PendingSync = true
-			_ = state.Write(homeDir, s)
-		}
+			return nil
+		})
 	}
 
 	return restartAfterShevanioAIUpgrade(target.LatestVersion, stdout)

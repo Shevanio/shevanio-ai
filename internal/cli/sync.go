@@ -34,6 +34,7 @@ import (
 	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
@@ -1444,9 +1445,20 @@ func migratePersistedPersonaAlias(homeDir string, persisted *state.InstallState,
 	if persistedErr != nil || persisted == nil || persisted.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
 		return nil
 	}
-	persisted.Persona = string(model.PersonaNeutral)
-	if err := state.Write(homeDir, *persisted); err != nil {
+	migrated := false
+	if _, err := statestore.WithLock(homeDir, func(latest *state.InstallState) error {
+		if latest.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
+			return nil
+		}
+		latest.Persona = string(model.PersonaNeutral)
+		migrated = true
+		return nil
+	}); err != nil {
 		return fmt.Errorf("persist remapped persona: %w", err)
+	}
+	persisted.Persona = string(model.PersonaNeutral)
+	if !migrated {
+		return nil
 	}
 	// Notice only after the rewrite is durably persisted: a failed write must
 	// not tell the user the remap happened.

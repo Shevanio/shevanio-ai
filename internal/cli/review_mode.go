@@ -17,6 +17,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/pathquote"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 )
 
 // ReviewModeSchema identifies the user-facing kill-switch projection.
@@ -396,18 +397,16 @@ func writeGlobalRDDMode(operation string) error {
 	if err != nil {
 		return fmt.Errorf("resolve user home directory: %w", err)
 	}
-	persisted, err := state.Read(home)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("read global review mode: %w", err)
-	}
 	mode := reviewtransaction.RDDModeOff
 	if operation == "enable" {
 		mode = reviewtransaction.RDDModeOn
 	}
-	recorded := time.Now().UTC()
-	persisted.RDDMode = string(mode)
-	persisted.RDDModeRecordedAt = &recorded
-	if err := state.Write(home, persisted); err != nil {
+	if _, err := statestore.WithLock(home, func(persisted *state.InstallState) error {
+		recorded := time.Now().UTC()
+		persisted.RDDMode = string(mode)
+		persisted.RDDModeRecordedAt = &recorded
+		return nil
+	}); err != nil {
 		return fmt.Errorf("persist global review mode: %w", err)
 	}
 	return nil

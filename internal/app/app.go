@@ -21,6 +21,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/skillregistry"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/tui"
 	"github.com/shevanio/shevanio-ai/v2/internal/update"
@@ -212,8 +213,11 @@ func RunArgs(args []string, stdout io.Writer) error {
 				_, _ = fmt.Fprintf(stdout, "Warning: deferred sync failed: %v\n", err)
 				// Leave PendingSync=true so the next launch retries.
 			} else {
-				installedState.PendingSync = false
-				if writeErr := state.Write(homeDir, installedState); writeErr != nil {
+				_, writeErr := statestore.WithLock(homeDir, func(latest *state.InstallState) error {
+					latest.PendingSync = false
+					return nil
+				})
+				if writeErr != nil {
 					// Best-effort: surface the failure so it's not silently swallowed.
 					// Idempotent re-sync on the next launch is acceptable.
 					_, _ = fmt.Fprintf(stdout, "Warning: failed to clear PendingSync flag: %v\n", writeErr)
@@ -601,40 +605,17 @@ func tuiExecuteWithBackground(
 			agentIDs = append(agentIDs, string(a))
 		}
 		claudePhaseState := claudePhaseAssignmentsToState(selection.ClaudePhaseAssignments)
-		installState, readErr := state.Read(homeDir)
-		if errors.Is(readErr, os.ErrNotExist) {
-			installState = state.InstallState{}
-		} else if readErr != nil {
-			execResult.Err = fmt.Errorf("read persisted install state: %w", readErr)
-			if orchestrator != nil {
-				rollback := orchestrator.Rollback(execResult)
-				if rollback.Err != nil {
-					execResult.Err = errors.Join(execResult.Err, rollback.Err)
-				}
+		_, writeErr := statestore.WithLock(homeDir, func(installState *state.InstallState) error {
+			applyTUIInstallState(installState, selection, agentIDs, claudePhaseState, backgroundPersist, piBackgroundPersist)
+			return nil
+		})
+		if writeErr != nil {
+			message := "persist install state"
+			var syntaxErr *json.SyntaxError
+			if errors.As(writeErr, &syntaxErr) {
+				message = "read persisted install state"
 			}
-			return execResult
-		}
-		installState.InstalledAgents = agentIDs
-		installState.CommunityTools = appCommunityToolIDsToStrings(selection.CommunityTools)
-		installState.CommunityToolsConfigured = true
-		installState.ClaudeModelAssignments = claudeLegacyAssignmentsForState(selection.ClaudeModelAssignments, claudePhaseState)
-		installState.ClaudePhaseAssignments = claudePhaseState
-		installState.KiroModelAssignments = kiroAliasesToStrings(selection.KiroModelAssignments)
-		installState.CodexModelAssignments = codexEffortsToStrings(selection.CodexModelAssignments)
-		installState.CodexOrchestratorAssignment = codexOrchestratorToState(selection.CodexOrchestratorAssignment)
-		installState.CodexCarrilModelAssignments = selection.CodexCarrilModelAssignments
-		installState.CodexPhaseModelAssignments = selection.CodexPhaseModelAssignments
-		installState.ModelAssignments = modelAssignmentsToState(selection.ModelAssignments)
-		installState.Persona = string(selection.Persona)
-		installState.SetSelection(selection)
-		if backgroundPersist != "" {
-			installState.BackgroundIntent = backgroundPersist
-		}
-		if piBackgroundPersist != "" {
-			installState.PiBackgroundIntent = piBackgroundPersist
-		}
-		if writeErr := state.WriteReconciled(homeDir, installState); writeErr != nil {
-			execResult.Err = fmt.Errorf("persist install state: %w", writeErr)
+			execResult.Err = fmt.Errorf("%s: %w", message, writeErr)
 			if orchestrator != nil {
 				rollback := orchestrator.Rollback(execResult)
 				if rollback.Err != nil {
@@ -647,6 +628,28 @@ func tuiExecuteWithBackground(
 	}
 
 	return execResult
+}
+
+func applyTUIInstallState(installState *state.InstallState, selection model.Selection, agentIDs []string, claudePhaseState map[string]state.ClaudePhaseAssignmentState, backgroundPersist model.OpenCodeBackgroundIntent, piBackgroundPersist model.PiBackgroundIntent) {
+	installState.InstalledAgents = agentIDs
+	installState.CommunityTools = appCommunityToolIDsToStrings(selection.CommunityTools)
+	installState.CommunityToolsConfigured = true
+	installState.ClaudeModelAssignments = claudeLegacyAssignmentsForState(selection.ClaudeModelAssignments, claudePhaseState)
+	installState.ClaudePhaseAssignments = claudePhaseState
+	installState.KiroModelAssignments = kiroAliasesToStrings(selection.KiroModelAssignments)
+	installState.CodexModelAssignments = codexEffortsToStrings(selection.CodexModelAssignments)
+	installState.CodexOrchestratorAssignment = codexOrchestratorToState(selection.CodexOrchestratorAssignment)
+	installState.CodexCarrilModelAssignments = selection.CodexCarrilModelAssignments
+	installState.CodexPhaseModelAssignments = selection.CodexPhaseModelAssignments
+	installState.ModelAssignments = modelAssignmentsToState(selection.ModelAssignments)
+	installState.Persona = string(selection.Persona)
+	installState.SetSelection(selection)
+	if backgroundPersist != "" {
+		installState.BackgroundIntent = backgroundPersist
+	}
+	if piBackgroundPersist != "" {
+		installState.PiBackgroundIntent = piBackgroundPersist
+	}
 }
 
 func appCommunityToolIDsToStrings(tools []model.CommunityToolID) []string {
@@ -917,36 +920,23 @@ func persistAssignments(homeDir string, selection model.Selection) error {
 	if len(selection.ClaudeModelAssignments) == 0 && len(selection.ClaudePhaseAssignments) == 0 && len(selection.KiroModelAssignments) == 0 && len(selection.ModelAssignments) == 0 && len(selection.CodexModelAssignments) == 0 && len(selection.CodexCarrilModelAssignments) == 0 && len(selection.CodexPhaseModelAssignments) == 0 && !hasAssignmentSignal {
 		return nil
 	}
-	current, err := state.Read(homeDir)
-	if err != nil {
-		// State file may not exist yet (e.g. pre-state users). Other read
-		// failures, such as invalid JSON, must not overwrite existing state.
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		current = state.InstallState{}
-	}
+	_, err := statestore.WithLock(homeDir, func(current *state.InstallState) error {
+		applyAssignments(current, selection)
+		return nil
+	})
+	return err
+}
+
+func applyAssignments(current *state.InstallState, selection model.Selection) {
 	if selection.ClaudeModelAssignments != nil {
-		if len(selection.ClaudeModelAssignments) > 0 {
-			current.ClaudeModelAssignments = claudeAliasesToStrings(selection.ClaudeModelAssignments)
-		} else {
-			current.ClaudeModelAssignments = nil
-		}
+		current.ClaudeModelAssignments = claudeAliasesToStrings(selection.ClaudeModelAssignments)
 	}
 	if selection.ClaudePhaseAssignments != nil {
-		if len(selection.ClaudePhaseAssignments) > 0 {
-			current.ClaudePhaseAssignments = claudePhaseAssignmentsToState(selection.ClaudePhaseAssignments)
-		} else {
-			current.ClaudePhaseAssignments = nil
-		}
+		current.ClaudePhaseAssignments = claudePhaseAssignmentsToState(selection.ClaudePhaseAssignments)
 		current.ClaudeModelAssignments = nil
 	}
 	if selection.KiroModelAssignments != nil {
-		if len(selection.KiroModelAssignments) > 0 {
-			current.KiroModelAssignments = kiroAliasesToStrings(selection.KiroModelAssignments)
-		} else {
-			current.KiroModelAssignments = nil
-		}
+		current.KiroModelAssignments = kiroAliasesToStrings(selection.KiroModelAssignments)
 	}
 	if selection.ClearCodexOrchestratorAssignment {
 		current.CodexOrchestratorAssignment = nil
@@ -954,35 +944,18 @@ func persistAssignments(homeDir string, selection model.Selection) error {
 		current.CodexOrchestratorAssignment = codexOrchestratorToState(selection.CodexOrchestratorAssignment)
 	}
 	if selection.CodexModelAssignments != nil {
-		if len(selection.CodexModelAssignments) > 0 {
-			current.CodexModelAssignments = codexEffortsToStrings(selection.CodexModelAssignments)
-		} else {
-			current.CodexModelAssignments = nil
-		}
+		current.CodexModelAssignments = codexEffortsToStrings(selection.CodexModelAssignments)
 	}
 	if selection.CodexCarrilModelAssignments != nil {
-		if len(selection.CodexCarrilModelAssignments) > 0 {
-			current.CodexCarrilModelAssignments = selection.CodexCarrilModelAssignments
-		} else {
-			current.CodexCarrilModelAssignments = nil
-		}
+		current.CodexCarrilModelAssignments = selection.CodexCarrilModelAssignments
 	}
 	// non-nil, len > 0 → write; non-nil, len == 0 → clear (explicit preset signal); nil → leave untouched.
 	if selection.CodexPhaseModelAssignments != nil {
-		if len(selection.CodexPhaseModelAssignments) > 0 {
-			current.CodexPhaseModelAssignments = selection.CodexPhaseModelAssignments
-		} else {
-			current.CodexPhaseModelAssignments = nil
-		}
+		current.CodexPhaseModelAssignments = selection.CodexPhaseModelAssignments
 	}
 	if selection.ModelAssignments != nil {
-		if len(selection.ModelAssignments) > 0 {
-			current.ModelAssignments = modelAssignmentsToState(selection.ModelAssignments)
-		} else {
-			current.ModelAssignments = nil
-		}
+		current.ModelAssignments = modelAssignmentsToState(selection.ModelAssignments)
 	}
-	return state.Write(homeDir, current)
 }
 
 // claudeAliasesToStrings converts a typed ClaudeModelAlias map to plain strings
