@@ -39,6 +39,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
@@ -301,7 +302,7 @@ func RunInstall(args []string, detection system.DetectionResult) (InstallResult,
 }
 
 func persistInstallState(homeDir string, newState state.InstallState, agentIDs []string, flags InstallFlags, writer string) error {
-	return withInstallStateLock(homeDir, func() error {
+	_, err := statestore.Mutate(homeDir, func(current *state.InstallState) error {
 		if len(flags.Agents) > 0 {
 			merged, mergeErr := mergeExplicitAgentInstallState(homeDir, newState, agentIDs, flags)
 			if mergeErr != nil {
@@ -309,17 +310,13 @@ func persistInstallState(homeDir string, newState state.InstallState, agentIDs [
 			}
 			newState = merged
 		} else {
-			existing, err := state.Read(homeDir)
-			if errors.Is(err, os.ErrNotExist) {
-				existing = state.InstallState{}
-			} else if err != nil {
-				return err
-			}
-			newState = mergeFullInstallState(existing, newState)
+			newState = mergeFullInstallState(*current, newState)
 		}
-		newState.ManagedAssetDigest = writer
-		return state.WriteReconciled(homeDir, newState)
+		*current = newState
+		current.ManagedAssetDigest = writer
+		return nil
 	})
+	return err
 }
 
 func mergeFullInstallState(existing, fresh state.InstallState) state.InstallState {

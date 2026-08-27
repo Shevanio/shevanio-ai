@@ -37,9 +37,9 @@ type writerEntry struct{ path, function, call string }
 func approvedWriterEntries() []writerEntry {
 	return []writerEntry{
 		{"internal/update/cooldown.go", "CheckAllWithCooldown", "statestore.Mutate"}, {"internal/app/selfupdate.go", "selfUpdate", "statestore.Mutate"},
-		{"internal/app/app.go", "RunArgs", "statestore.Mutate"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.WithLock"}, {"internal/app/app.go", "persistAssignments", "statestore.WithLock"},
+		{"internal/app/app.go", "RunArgs", "statestore.Mutate"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.Mutate"}, {"internal/app/app.go", "persistAssignments", "statestore.Mutate"},
 		{"internal/tui/model.go", "startUpgradeSync", "statestore.Mutate"}, {"internal/cli/review_mode.go", "writeGlobalRDDMode", "statestore.Mutate"}, {"internal/components/uninstall/service.go", "updateStateAfterUninstall", "statestore.Mutate"},
-		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.WithLock"}, {"internal/cli/run.go", "persistInstallState", "withInstallStateLock"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "withInstallStateLock"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "withInstallStateLock"},
+		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.Mutate"}, {"internal/cli/run.go", "persistInstallState", "statestore.Mutate"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "statestore.Mutate"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "withInstallStateLock"},
 	}
 }
 func validateWriterInventory(root string, want []writerEntry) error {

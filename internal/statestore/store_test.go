@@ -126,7 +126,7 @@ func TestMutateContentionAndReentry(t *testing.T) {
 	for _, x := range []struct {
 		n    string
 		call func(string, Mutator) (Result, error)
-	}{{"Mutate", Mutate}, {"WithLock", WithLock}} {
+	}{{"Mutate", Mutate}} {
 		t.Run(x.n, func(t *testing.T) { contentionCase(t, x.call) })
 	}
 	t.Run("retry preserves distinct fields", func(t *testing.T) {

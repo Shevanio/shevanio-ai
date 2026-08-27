@@ -1446,7 +1446,7 @@ func migratePersistedPersonaAlias(homeDir string, persisted *state.InstallState,
 		return nil
 	}
 	migrated := false
-	if _, err := statestore.WithLock(homeDir, func(latest *state.InstallState) error {
+	if _, err := statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 		if latest.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
 			return nil
 		}
@@ -1650,16 +1650,7 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 }
 
 func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.Selection, writer string, background model.OpenCodeBackgroundIntent, piBackground model.PiBackgroundIntent) error {
-	return withInstallStateLock(homeDir, func() error {
-		latest, err := state.Read(homeDir)
-		if errors.Is(err, os.ErrNotExist) {
-			latest = state.InstallState{}
-		} else if err != nil {
-			return fmt.Errorf(
-				"read install state for managed asset provenance: %w; run `shevanio-ai install` to rewrite %s",
-				err, state.Path(homeDir))
-		}
-
+	_, err := statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 		shouldWrite := false
 		// #2685: stamp the binary version that performed this sync, so doctor
 		// can report managed assets older than the running binary instead of
@@ -1688,11 +1679,18 @@ func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.
 		if !shouldWrite {
 			return nil
 		}
-		if err := state.WriteReconciled(homeDir, latest); err != nil {
-			return fmt.Errorf("persist managed asset provenance: %w", err)
-		}
 		return nil
 	})
+	if err != nil {
+		var syntaxErr *json.SyntaxError
+		if errors.As(err, &syntaxErr) {
+			return fmt.Errorf(
+				"read install state for managed asset provenance: %w; run `shevanio-ai install` to rewrite %s",
+				err, state.Path(homeDir))
+		}
+		return fmt.Errorf("persist managed asset provenance: %w", err)
+	}
+	return nil
 }
 
 // RunSync is the top-level sync entry point, parallel to RunInstall.

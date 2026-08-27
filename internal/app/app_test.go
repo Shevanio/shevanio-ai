@@ -26,6 +26,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/tui"
 	"github.com/shevanio/shevanio-ai/v2/internal/update"
@@ -1222,6 +1223,56 @@ func TestPersistAssignmentsPreservesInstalledAgents(t *testing.T) {
 	}
 	if got.ClaudeModelAssignments["sdd-apply"] != "sonnet" {
 		t.Errorf("ClaudeModelAssignments[sdd-apply] = %q, want %q", got.ClaudeModelAssignments["sdd-apply"], "sonnet")
+	}
+}
+
+func TestPersistAssignmentsMutateContentionRetryPreservesDistinctFields(t *testing.T) {
+	home := t.TempDir()
+	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"opencode"}, Persona: "kept"}); err != nil {
+		t.Fatalf("state.Write: %v", err)
+	}
+
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	released := false
+	defer func() {
+		if !released {
+			close(release)
+		}
+	}()
+	ownerDone := make(chan error, 1)
+	go func() {
+		_, err := statestore.Mutate(home, func(current *state.InstallState) error {
+			close(entered)
+			<-release
+			current.RDDMode = "off"
+			return nil
+		})
+		ownerDone <- err
+	}()
+	<-entered
+
+	selection := model.Selection{ModelAssignments: map[string]model.ModelAssignment{
+		"sdd-apply": {ProviderID: "anthropic", ModelID: "claude-sonnet-4"},
+	}}
+	if err := persistAssignments(home, selection); !errors.Is(err, reviewtransaction.ErrStoreLockContended) {
+		t.Fatalf("contended persistAssignments() error = %v, want lock contention", err)
+	}
+	close(release)
+	released = true
+	if err := <-ownerDone; err != nil {
+		t.Fatalf("held mutation: %v", err)
+	}
+
+	if err := persistAssignments(home, selection); err != nil {
+		t.Fatalf("retry persistAssignments(): %v", err)
+	}
+	got, err := state.Read(home)
+	if err != nil {
+		t.Fatalf("state.Read: %v", err)
+	}
+	if got.Persona != "kept" || got.RDDMode != "off" || len(got.InstalledAgents) != 1 || got.InstalledAgents[0] != "opencode" || got.ModelAssignments["sdd-apply"].ModelID != "claude-sonnet-4" {
+		t.Fatalf("retry lost distinct state fields: %#v", got)
 	}
 }
 
