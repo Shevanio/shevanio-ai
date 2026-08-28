@@ -30,6 +30,7 @@ var (
 	ggaLeaseCommitFn         = func(lease *statestore.Lease, next state.InstallState) (statestore.Result, error) {
 		return lease.Commit(next)
 	}
+	ggaRemoveOwnedFilesFn = removeOwnedGGAFiles
 )
 
 func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementResult, err error) {
@@ -64,11 +65,11 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 			return result, err
 		}
 		result.BackupID = manifest.ID
-		preserved, err := removeOwnedGGAFiles(owned)
+		preserved, err := ggaRemoveOwnedFilesFn(owned)
+		result.PreservedPaths = append(result.PreservedPaths, preserved...)
 		if err != nil {
 			return result, err
 		}
-		result.PreservedPaths = append(result.PreservedPaths, preserved...)
 		if err := removeEmptyGGADirectories(homeDir); err != nil {
 			return result, err
 		}

@@ -214,6 +214,25 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 	}
 }
 
+func TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError(t *testing.T) {
+	home := migrationHome(t)
+	original := ggaRemoveOwnedFilesFn
+	t.Cleanup(func() { ggaRemoveOwnedFilesFn = original })
+	sentinel := errors.New("sentinel removal failure")
+	preservedPath := filepath.Join(home, ".config", "gga", "user-owned")
+	ggaRemoveOwnedFilesFn = func([]ggaManagedFile) ([]string, error) {
+		return []string{preservedPath}, sentinel
+	}
+
+	result, err := MigrateLegacyGGA(home, false)
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("behavior mismatch: TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError: error = %v", err)
+	}
+	if len(result.PreservedPaths) != 1 || result.PreservedPaths[0] != preservedPath {
+		t.Fatalf("behavior mismatch: TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError: preserved paths = %#v", result.PreservedPaths)
+	}
+}
+
 func migrationHome(t *testing.T) string {
 	home := t.TempDir()
 	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "unknown"}}))
