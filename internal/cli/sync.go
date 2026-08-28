@@ -1437,35 +1437,6 @@ func applyResolvedPersona(selection *model.Selection, persisted string) {
 	selection.Persona = model.PersonaNeutral
 }
 
-// migratePersistedPersonaAlias rewrites a persisted legacy
-// gentleman-neutral-artifacts persona to neutral, printing the remap notice
-// once. State that predates persona persistence, explicit gentleman state,
-// and unreadable state are untouched.
-func migratePersistedPersonaAlias(homeDir string, persisted *state.InstallState, persistedErr error) error {
-	if persistedErr != nil || persisted == nil || persisted.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
-		return nil
-	}
-	migrated := false
-	if _, err := statestore.Mutate(homeDir, func(latest *state.InstallState) error {
-		if latest.Persona != string(model.PersonaGentlemanNeutralArtifacts) {
-			return nil
-		}
-		latest.Persona = string(model.PersonaNeutral)
-		migrated = true
-		return nil
-	}); err != nil {
-		return fmt.Errorf("persist remapped persona: %w", err)
-	}
-	persisted.Persona = string(model.PersonaNeutral)
-	if !migrated {
-		return nil
-	}
-	// Notice only after the rewrite is durably persisted: a failed write must
-	// not tell the user the remap happened.
-	fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
-	return nil
-}
-
 // validatePersistedSyncState rejects state that cannot safely drive sync.
 // A missing state file is allowed for fresh homes; a decoded state without a
 // persona remains compatible with legacy installations.
@@ -1520,9 +1491,6 @@ func RunSyncWithSelection(homeDir string, selection model.Selection) (SyncResult
 
 func runSyncWithSelection(homeDir string, selection model.Selection, background OpenCodeBackgroundResolution, piBackground PiBackgroundResolution) (SyncResult, error) {
 	agentIDs := selection.Agents
-	// The read error is captured, not discarded: the persona alias migration
-	// below must not rewrite state it could not read. Managed-asset provenance
-	// re-reads under its own lock later (#2685), so this read stays advisory.
 	persistedState, persistedStateErr := state.Read(homeDir)
 	if err := validatePersistedSyncState(persistedState, persistedStateErr); err != nil {
 		return SyncResult{Agents: agentIDs, Selection: selection}, err
@@ -1540,13 +1508,7 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 		applyResolvedPersona(&selection, persistedPersona)
 	}
 
-	// Migrate a persisted legacy alias BEFORE any early return: a no-agent
-	// no-op sync and a failing pipeline must still leave state.json remapped,
-	// otherwise the one-time migration never fires for those users. State
-	// records intent — the next sync applies the neutral assets.
-	if err := migratePersistedPersonaAlias(homeDir, &persistedState, persistedStateErr); err != nil {
-		return SyncResult{Agents: agentIDs, Selection: selection}, err
-	}
+	personaAliasPending := persistedStateErr == nil && persistedState.Persona == string(model.PersonaGentlemanNeutralArtifacts)
 
 	result := SyncResult{
 		Agents:       agentIDs,
@@ -1556,8 +1518,15 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	}
 
 	result, noOp, err := zeroAgentSyncNoOp(homeDir, selection, result)
-	if err != nil || noOp {
+	if err != nil {
 		return result, err
+	}
+	if noOp {
+		if !personaAliasPending {
+			return result, nil
+		}
+		publication, publishErr := publishSyncState(homeDir, selection, "", "", "", false)
+		return finishSyncPublication(result, publication, publishErr, nil, nil, nil)
 	}
 
 	rt, err := newSyncRuntime(homeDir, selection)
@@ -1634,45 +1603,76 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	if err != nil {
 		return result, fmt.Errorf("derive managed asset writer identity: %w", err)
 	}
-	if err := persistSyncManagedAssetStateWithBackground(homeDir, selection, writer, background.Persist, piBackground.Persist); err != nil {
-		persistErr := fmt.Errorf("persist sync managed asset state: %w", err)
-		rollback := orchestrator.Rollback(result.Execution)
+	publication, publishErr := publishSyncState(homeDir, selection, writer, background.Persist, piBackground.Persist, true)
+	return finishSyncPublication(result, publication, publishErr, orchestrator, &result.Execution, rt.state.removeRollbackSnapshot)
+}
+
+type syncStatePublication struct {
+	statestore.Result
+}
+
+var publishSyncState = persistSyncManagedAssetStateWithBackground
+
+func finishSyncPublication(result SyncResult, publication syncStatePublication, publishErr error, orchestrator *pipeline.Orchestrator, execution *pipeline.ExecutionResult, removeSnapshot func() error) (SyncResult, error) {
+	if publication.Result.Outcome == statestore.Committed {
+		if removeSnapshot != nil && execution != nil {
+			if cleanupErr := removeSnapshot(); cleanupErr != nil {
+				publishErr = errors.Join(publishErr, cleanupErr)
+			}
+		}
+		if publishErr != nil {
+			return result, fmt.Errorf("persist sync managed asset state: %w", publishErr)
+		}
+		return result, nil
+	}
+	if publishErr == nil {
+		publishErr = errors.New("state publication did not commit; rerun `shevanio-ai sync`")
+	}
+	if publication.Result.Outcome == statestore.Unknown {
+		return result, fmt.Errorf("persist sync managed asset state outcome unknown: %w", publishErr)
+	}
+	persistErr := fmt.Errorf("persist sync managed asset state: %w", publishErr)
+	if orchestrator != nil && execution != nil {
+		rollback := orchestrator.Rollback(*execution)
 		if rollback.Err != nil {
 			persistErr = errors.Join(persistErr, rollback.Err)
 		}
-		return result, persistErr
 	}
-	if err := rt.state.removeRollbackSnapshot(); err != nil {
-		return result, fmt.Errorf("remove sync rollback snapshot: %w", err)
-	}
-
-	return result, nil
+	return result, persistErr
 }
 
-func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.Selection, writer string, background model.OpenCodeBackgroundIntent, piBackground model.PiBackgroundIntent) error {
-	_, err := statestore.Mutate(homeDir, func(latest *state.InstallState) error {
+func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.Selection, writer string, background model.OpenCodeBackgroundIntent, piBackground model.PiBackgroundIntent, publishProvenance bool) (syncStatePublication, error) {
+	publication := syncStatePublication{}
+	normalized := false
+	var err error
+	publication.Result, err = statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 		shouldWrite := false
+		if latest.Persona == string(model.PersonaGentlemanNeutralArtifacts) {
+			latest.Persona = string(model.PersonaNeutral)
+			normalized = true
+			shouldWrite = true
+		}
 		// #2685: stamp the binary version that performed this sync, so doctor
 		// can report managed assets older than the running binary instead of
 		// the user discovering the skew mid-review at START preflight.
-		if latest.InstalledBinaryVersion != AppVersion {
+		if publishProvenance && latest.InstalledBinaryVersion != AppVersion {
 			latest.InstalledBinaryVersion = AppVersion
 			shouldWrite = true
 		}
-		if latest.ManagedAssetDigest != writer {
+		if publishProvenance && latest.ManagedAssetDigest != writer {
 			latest.ManagedAssetDigest = writer
 			shouldWrite = true
 		}
-		if !latest.CommunityToolsConfigured && selection.CommunityTools != nil {
+		if publishProvenance && !latest.CommunityToolsConfigured && selection.CommunityTools != nil {
 			latest.CommunityTools = communityToolIDsToStrings(selection.CommunityTools)
 			latest.CommunityToolsConfigured = true
 			shouldWrite = true
 		}
-		if background != "" && latest.BackgroundIntent != background {
+		if publishProvenance && background != "" && latest.BackgroundIntent != background {
 			latest.BackgroundIntent = background
 			shouldWrite = true
 		}
-		if piBackground != "" && latest.PiBackgroundIntent != piBackground {
+		if publishProvenance && piBackground != "" && latest.PiBackgroundIntent != piBackground {
 			latest.PiBackgroundIntent = piBackground
 			shouldWrite = true
 		}
@@ -1684,13 +1684,16 @@ func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.
 	if err != nil {
 		var syntaxErr *json.SyntaxError
 		if errors.As(err, &syntaxErr) {
-			return fmt.Errorf(
+			return publication, fmt.Errorf(
 				"read install state for managed asset provenance: %w; run `shevanio-ai install` to rewrite %s",
 				err, state.Path(homeDir))
 		}
-		return fmt.Errorf("persist managed asset provenance: %w", err)
+		return publication, fmt.Errorf("persist managed asset provenance: %w", err)
 	}
-	return nil
+	if normalized {
+		fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
+	}
+	return publication, nil
 }
 
 // RunSync is the top-level sync entry point, parallel to RunInstall.

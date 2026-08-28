@@ -2,59 +2,12 @@ package cli
 
 import (
 	"bytes"
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
-
-var errStateUnreadableForTest = errors.New("state unreadable")
-
-func TestMigratePersistedPersonaAliasRewritesStateOnce(t *testing.T) {
-	var buf bytes.Buffer
-	previous := personaNoticeWriter
-	personaNoticeWriter = &buf
-	defer func() { personaNoticeWriter = previous }()
-
-	homeDir := t.TempDir()
-	persisted := state.InstallState{Persona: string(model.PersonaGentlemanNeutralArtifacts)}
-	if err := state.Write(homeDir, persisted); err != nil {
-		t.Fatalf("seed state: %v", err)
-	}
-
-	if err := migratePersistedPersonaAlias(homeDir, &persisted, nil); err != nil {
-		t.Fatalf("migratePersistedPersonaAlias() error = %v", err)
-	}
-
-	reread, err := state.Read(homeDir)
-	if err != nil {
-		t.Fatalf("re-read state: %v", err)
-	}
-	if reread.Persona != string(model.PersonaNeutral) {
-		t.Fatalf("persisted persona = %q, want %q", reread.Persona, model.PersonaNeutral)
-	}
-	if !strings.Contains(buf.String(), personaAliasRemapNotice) {
-		t.Fatalf("notice not printed; got %q", buf.String())
-	}
-
-	// Second run: state already neutral — no notice, no rewrite.
-	buf.Reset()
-	if err := migratePersistedPersonaAlias(homeDir, &reread, nil); err != nil {
-		t.Fatalf("second migrate: %v", err)
-	}
-	if buf.Len() != 0 {
-		t.Fatalf("second run printed %q, want silence", buf.String())
-	}
-}
-
-func TestMigratePersistedPersonaAliasSkipsUnreadableState(t *testing.T) {
-	persisted := state.InstallState{Persona: string(model.PersonaGentlemanNeutralArtifacts)}
-	if err := migratePersistedPersonaAlias(t.TempDir(), &persisted, errStateUnreadableForTest); err != nil {
-		t.Fatalf("migrate with read error must be a no-op, got %v", err)
-	}
-}
 
 // TestApplyResolvedPersonaAliasResolution covers only what this change owns:
 // a persisted legacy alias resolves to neutral, valid persisted personas are
@@ -91,10 +44,9 @@ func TestApplyResolvedPersonaAliasResolution(t *testing.T) {
 	}
 }
 
-// TestRunSyncWithSelectionMigratesAliasOnNoOpSync pins the early-return path:
-// a sync that discovers zero agents must still migrate a persisted legacy
-// alias, otherwise the one-time migration never fires for those users.
-func TestRunSyncWithSelectionMigratesAliasOnNoOpSync(t *testing.T) {
+// TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp pins the early-return path:
+// a sync that discovers zero agents must still migrate a persisted legacy alias.
+func TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp(t *testing.T) {
 	var buf bytes.Buffer
 	previous := personaNoticeWriter
 	personaNoticeWriter = &buf
@@ -112,7 +64,6 @@ func TestRunSyncWithSelectionMigratesAliasOnNoOpSync(t *testing.T) {
 	if !result.NoOp {
 		t.Fatal("zero-agent sync must report NoOp")
 	}
-
 	reread, err := state.Read(homeDir)
 	if err != nil {
 		t.Fatalf("re-read state: %v", err)
