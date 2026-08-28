@@ -1,12 +1,16 @@
 package cli
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -39,7 +43,7 @@ func (err *GGARetirementRecoveryError) Unwrap() error { return err.Err }
 type ggaRecoveryEvidence struct {
 	backupDir string
 	manifest  backup.Manifest
-	dirs      map[string]os.FileMode
+	dirs      map[string]*os.FileMode
 }
 
 var (
@@ -50,8 +54,10 @@ var (
 	}
 	ggaRemoveOwnedFilesFn     = removeOwnedGGAFiles
 	ggaRetirementDurabilityFn = durableGGABackup
-	ggaRetirementRestoreFn    = restoreGGASnapshot
-	ggaSyncFn                 = syncGGA
+	ggaRestoreServiceFn       = func(homeDir string, manifest backup.Manifest) error {
+		return (backup.RestoreService{Roots: []string{homeDir}}).Restore(manifest)
+	}
+	ggaSyncFn = syncGGA
 )
 
 func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementResult, err error) {
@@ -72,12 +78,37 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 		return result, fmt.Errorf("read install state: %w", err)
 	}
 	filtered := filterLegacyGGAComponents(persisted.Components)
-	evidence, ok := loadGGARetirementEvidence(homeDir)
-	if ok && ggaRetired(evidence) {
+	if len(filtered) == len(persisted.Components) {
+		return result, nil
+	}
+	evidence, ok, evidenceErr := loadGGARetirementEvidence(homeDir)
+	if ok {
 		result.BackupID, result.RecoveryPaths = evidence.manifest.ID, evidence.paths()
-		if len(filtered) == len(persisted.Components) {
-			result.Outcome = statestore.Committed
-			return result, nil
+		if evidenceErr != nil {
+			return result, unknownGGARetirement(&result, evidence, evidenceErr)
+		}
+		retired, verifyErr := ggaRetired(homeDir, evidence)
+		if verifyErr != nil {
+			return result, unknownGGARetirement(&result, evidence, verifyErr)
+		}
+		if !retired {
+			owned, preserved, retryErr := findOwnedGGAFiles(homeDir)
+			if retryErr != nil {
+				return result, unknownGGARetirement(&result, evidence, retryErr)
+			}
+			result.PreservedPaths = preserved
+			preserved, retryErr = ggaRemoveOwnedFilesFn(owned)
+			result.PreservedPaths = append(result.PreservedPaths, preserved...)
+			if retryErr != nil {
+				return result, recoverGGA(&result, homeDir, evidence, retryErr)
+			}
+			if retryErr = removeEmptyGGADirectories(homeDir); retryErr != nil {
+				return result, recoverGGA(&result, homeDir, evidence, retryErr)
+			}
+			retired, retryErr = ggaRetired(homeDir, evidence)
+			if retryErr != nil || !retired {
+				return result, unknownGGARetirement(&result, evidence, retryErr)
+			}
 		}
 		next := persisted
 		next.Components = filtered
@@ -92,19 +123,21 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 		result.Outcome = statestore.Unknown
 		return result, errors.New("GGA retirement state publication was not committed") // refusal:by-design operator-knowledge: an absent commit outcome cannot be classified as success.
 	}
-	if len(filtered) == len(persisted.Components) {
-		return result, nil
-	}
 	owned, preserved, err := findOwnedGGAFiles(homeDir)
 	if err != nil {
 		return result, err
 	}
 	result.PreservedPaths = preserved
 	if len(owned) > 0 {
-		evidence.dirs = map[string]os.FileMode{}
+		evidence.dirs = make(map[string]*os.FileMode, len(ggaDirs(homeDir)))
 		for _, dir := range ggaDirs(homeDir) {
-			if info, err := os.Stat(dir); err == nil {
-				evidence.dirs[dir] = info.Mode().Perm()
+			if info, statErr := os.Stat(dir); statErr == nil {
+				mode := info.Mode().Perm()
+				evidence.dirs[dir] = &mode
+			} else if errors.Is(statErr, os.ErrNotExist) {
+				evidence.dirs[dir] = nil
+			} else {
+				return result, statErr
 			}
 		}
 		manifest, err := backupLegacyGGAFiles(homeDir, owned)
@@ -114,6 +147,14 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 		}
 		evidence.backupDir, evidence.manifest = manifest.RootDir, manifest
 		result.BackupID = manifest.ID
+		stored, err := backup.ReadManifest(filepath.Join(manifest.RootDir, backup.ManifestFilename))
+		if err != nil {
+			return result, unknownGGARetirement(&result, evidence, err)
+		}
+		evidence.manifest = stored
+		if err := verifyGGARetirementEvidence(homeDir, evidence, owned, true); err != nil {
+			return result, unknownGGARetirement(&result, evidence, err)
+		}
 		preserved, err := ggaRemoveOwnedFilesFn(owned)
 		result.PreservedPaths = append(result.PreservedPaths, preserved...)
 		if err != nil {
@@ -121,6 +162,13 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 		}
 		if err := removeEmptyGGADirectories(homeDir); err != nil {
 			return result, recoverGGA(&result, homeDir, evidence, err)
+		}
+		retired, verifyErr := ggaRetired(homeDir, evidence)
+		if verifyErr != nil {
+			return result, recoverGGA(&result, homeDir, evidence, verifyErr)
+		}
+		if !retired {
+			return result, recoverGGA(&result, homeDir, evidence, ggaRefusal("verify GGA retirement"))
 		}
 	}
 	next := persisted
@@ -135,10 +183,6 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 		}
 		result.Outcome = statestore.Uncommitted
 		return result, fmt.Errorf("persist retired GGA state: %w", commitErr)
-	}
-	if len(owned) > 0 && !ggaRetired(evidence) {
-		result.RecoveryPaths, result.Outcome = evidence.paths(), statestore.Unknown
-		return result, &GGARetirementRecoveryError{Outcome: result.Outcome, RecoveryPaths: result.RecoveryPaths, Err: errors.New("verify GGA retirement")} // refusal:by-design operator-knowledge: external retirement cannot be proven safe.
 	}
 	result.Changed, result.Outcome = true, statestore.Committed
 	return result, commitErr
@@ -345,41 +389,162 @@ func (e ggaRecoveryEvidence) paths() []string {
 func ggaDirs(homeDir string) []string {
 	return []string{filepath.Join(homeDir, ".config", "gga"), filepath.Join(homeDir, ".local", "share", "gga", "lib"), filepath.Join(homeDir, ".local", "share", "gga")}
 }
-func loadGGARetirementEvidence(homeDir string) (ggaRecoveryEvidence, bool) {
+func loadGGARetirementEvidence(homeDir string) (ggaRecoveryEvidence, bool, error) {
 	root := filepath.Join(homeDir, ".shevanio-ai", "backups")
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		return ggaRecoveryEvidence{}, false
+		if errors.Is(err, os.ErrNotExist) {
+			return ggaRecoveryEvidence{}, false, nil
+		}
+		return ggaRecoveryEvidence{backupDir: root}, true, err
 	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() > entries[j].Name() })
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "retire-gga-") {
 			continue
 		}
 		dir := filepath.Join(root, entry.Name())
 		manifest, err := backup.ReadManifest(filepath.Join(dir, backup.ManifestFilename))
-		if err == nil && manifest.Source == backup.BackupSourceRetireGGA && manifest.RootDir == dir {
-			return ggaRecoveryEvidence{backupDir: dir, manifest: manifest}, true
-		}
+		return ggaRecoveryEvidence{backupDir: dir, manifest: manifest}, true, err
 	}
-	return ggaRecoveryEvidence{}, false
+	return ggaRecoveryEvidence{}, false, nil
 }
-func ggaRetired(evidence ggaRecoveryEvidence) bool {
-	for _, entry := range evidence.manifest.Entries {
-		if entry.Existed {
-			if _, err := os.Lstat(entry.OriginalPath); !errors.Is(err, os.ErrNotExist) {
-				return false
-			}
+func ggaRetired(homeDir string, evidence ggaRecoveryEvidence) (bool, error) {
+	if err := verifyGGARetirementEvidence(homeDir, evidence, nil, false); err != nil {
+		return false, err
+	}
+	owned, _, err := findOwnedGGAFiles(homeDir)
+	return len(owned) == 0, err
+}
+func verifyGGARetirementEvidence(homeDir string, evidence ggaRecoveryEvidence, files []ggaManagedFile, live bool) error {
+	manifest := evidence.manifest
+	if manifest.Source != backup.BackupSourceRetireGGA || filepath.Clean(manifest.RootDir) != filepath.Clean(evidence.backupDir) || !manifest.Compressed || manifest.FileCount != len(manifest.Entries) {
+		return ggaRefusal("GGA retirement manifest archive metadata mismatch")
+	}
+	allowed := make(map[string]ggaManagedFile)
+	for _, candidate := range legacyGGAManagedFiles(homeDir) {
+		allowed[candidate.path] = candidate
+	}
+	for _, entry := range manifest.Entries {
+		if _, ok := allowed[entry.OriginalPath]; !ok || !entry.Existed || entry.Mode&^uint32(os.ModePerm) != 0 || entry.SnapshotPath == "." || filepath.IsAbs(entry.SnapshotPath) || filepath.VolumeName(entry.SnapshotPath) != "" || strings.Contains(entry.SnapshotPath, "\\") || path.Clean(entry.SnapshotPath) != entry.SnapshotPath || strings.Contains(entry.SnapshotPath, ":") {
+			return ggaRefusal("GGA retirement manifest entry mismatch")
 		}
 	}
-	return true
+	archive, err := inspectGGAArchive(manifest, allowed)
+	if err != nil {
+		return err
+	}
+	if len(archive) != len(manifest.Entries) || ggaCompositeChecksum(archive) != manifest.Checksum {
+		return ggaRefusal("GGA retirement archive inventory or checksum mismatch")
+	}
+	if !live {
+		return nil
+	}
+	var livePaths []string
+	for _, entry := range manifest.Entries {
+		info, err := os.Lstat(entry.OriginalPath)
+		if err != nil || !info.Mode().IsRegular() {
+			return fmt.Errorf("GGA retirement live path mismatch %q: %w", entry.OriginalPath, err)
+		}
+		data, err := os.ReadFile(entry.OriginalPath)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(data, archive[entry.OriginalPath]) || info.Mode().Perm() != os.FileMode(entry.Mode).Perm() {
+			return ggaRefusal("GGA retirement live snapshot mismatch")
+		}
+		livePaths = append(livePaths, entry.OriginalPath)
+	}
+	checksum, err := backup.ComputeChecksum(livePaths)
+	if err != nil || checksum != manifest.Checksum {
+		return ggaRefusal("GGA retirement live checksum mismatch")
+	}
+	return nil
+}
+func inspectGGAArchive(manifest backup.Manifest, allowed map[string]ggaManagedFile) (snapshots map[string][]byte, err error) {
+	tempDir, err := os.MkdirTemp("", "shevanio-ai-gga-verify-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if cleanupErr := os.RemoveAll(tempDir); cleanupErr != nil {
+			err = errors.Join(err, fmt.Errorf("cleanup GGA verification directory: %w", cleanupErr))
+		}
+	}()
+	extracted, err := backup.ExtractArchive(filepath.Join(manifest.RootDir, backup.ArchiveFilename), tempDir)
+	if err != nil {
+		return nil, err
+	}
+	bySnapshot := make(map[string]backup.ManifestEntry, len(manifest.Entries))
+	for _, entry := range manifest.Entries {
+		bySnapshot[entry.SnapshotPath] = entry
+	}
+	snapshots = make(map[string][]byte, len(extracted))
+	for _, extractedEntry := range extracted {
+		entry, ok := bySnapshot[extractedEntry.RelPath]
+		_, duplicate := snapshots[entry.OriginalPath]
+		if !ok || duplicate {
+			return nil, ggaRefusal("GGA retirement extracted inventory mismatch")
+		}
+		info, err := os.Lstat(extractedEntry.SourcePath)
+		if err != nil || !info.Mode().IsRegular() {
+			return nil, ggaRefusal("GGA retirement extracted file type mismatch")
+		}
+		data, err := os.ReadFile(extractedEntry.SourcePath)
+		if err != nil {
+			return nil, err
+		}
+		fingerprint := fmt.Sprintf("%x", sha256.Sum256(data))
+		candidate := allowed[entry.OriginalPath]
+		if _, ok := candidate.fingerprints[fingerprint]; !ok || info.Mode().Perm() != os.FileMode(entry.Mode).Perm() {
+			return nil, ggaRefusal("GGA retirement extracted snapshot mismatch")
+		}
+		snapshots[entry.OriginalPath] = data
+	}
+	return snapshots, nil
+}
+func ggaCompositeChecksum(snapshots map[string][]byte) string {
+	paths := make([]string, 0, len(snapshots))
+	for originalPath := range snapshots {
+		paths = append(paths, originalPath)
+	}
+	sort.Strings(paths)
+	var content strings.Builder
+	for _, originalPath := range paths {
+		sum := sha256.Sum256(snapshots[originalPath])
+		fmt.Fprintf(&content, "%s:%x\n", originalPath, sum)
+	}
+	sum := sha256.Sum256([]byte(content.String()))
+	return fmt.Sprintf("%x", sum)
+}
+func unknownGGARetirement(result *GGARetirementResult, evidence ggaRecoveryEvidence, err error) error {
+	if err == nil {
+		err = ggaRefusal("GGA retirement proof failed")
+	}
+	result.RecoveryPaths, result.Outcome = evidence.paths(), statestore.Unknown
+	return &GGARetirementRecoveryError{Outcome: result.Outcome, RecoveryPaths: result.RecoveryPaths, Err: err}
+}
+func ggaRefusal(message string) error {
+	return fmt.Errorf("%s", message) // refusal:by-design operator-knowledge: semantic recovery evidence requires a code-level correction before mutation.
 }
 func restoreGGASnapshot(homeDir string, evidence ggaRecoveryEvidence) error {
-	if err := (backup.RestoreService{Roots: []string{homeDir}}).Restore(evidence.manifest); err != nil {
+	if err := verifyGGARetirementEvidence(homeDir, evidence, nil, false); err != nil {
+		return err
+	}
+	if len(evidence.dirs) != len(ggaDirs(homeDir)) {
+		return ggaRefusal("GGA recovery directory evidence incomplete")
+	}
+	manifest := evidence.manifest
+	manifest.Entries = append([]backup.ManifestEntry(nil), manifest.Entries...)
+	for i := range manifest.Entries {
+		manifest.Entries[i].Mode &= uint32(os.ModePerm)
+	}
+	if err := ggaRestoreServiceFn(homeDir, manifest); err != nil {
 		return err
 	}
 	for _, dir := range ggaDirs(homeDir) {
-		mode, exists := evidence.dirs[dir]
-		if exists {
+		mode := evidence.dirs[dir]
+		if mode != nil {
 			if err := os.MkdirAll(dir, mode.Perm()); err != nil {
 				return err
 			}
@@ -388,19 +553,18 @@ func restoreGGASnapshot(homeDir string, evidence ggaRecoveryEvidence) error {
 			}
 		}
 		info, err := os.Stat(dir)
-		if exists && (err != nil || info.Mode().Perm() != mode.Perm()) {
-			// refusal:by-design operator-knowledge: recovery metadata drift requires operator review.
-			return errors.New("GGA recovery directory mismatch")
+		if mode != nil && (err != nil || info.Mode().Perm() != mode.Perm()) {
+			return ggaRefusal("GGA recovery directory mismatch")
 		}
-		if !exists && !errors.Is(err, os.ErrNotExist) {
+		if mode == nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("GGA recovery directory absence mismatch: %w", err)
 		}
 	}
-	return nil
+	return verifyGGARetirementEvidence(homeDir, evidence, nil, true)
 }
 func recoverGGA(result *GGARetirementResult, homeDir string, evidence ggaRecoveryEvidence, primary error) error {
 	result.RecoveryPaths = evidence.paths()
-	if recoveryErr := ggaRetirementRestoreFn(homeDir, evidence); recoveryErr != nil {
+	if recoveryErr := restoreGGASnapshot(homeDir, evidence); recoveryErr != nil {
 		result.Outcome = statestore.Unknown
 		return errors.Join(primary, &GGARetirementRecoveryError{Outcome: result.Outcome, RecoveryPaths: result.RecoveryPaths, Err: recoveryErr})
 	}
