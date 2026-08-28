@@ -12,6 +12,7 @@ import (
 
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 )
@@ -50,6 +51,7 @@ var (
 	ggaRemoveOwnedFilesFn     = removeOwnedGGAFiles
 	ggaRetirementDurabilityFn = durableGGABackup
 	ggaRetirementRestoreFn    = restoreGGASnapshot
+	ggaSyncFn                 = syncGGA
 )
 
 func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementResult, err error) {
@@ -88,8 +90,7 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 			return result, recoverGGA(&result, homeDir, evidence, commitErr)
 		}
 		result.Outcome = statestore.Unknown
-		// refusal:by-design operator-knowledge: an absent commit outcome cannot be classified as success.
-		return result, errors.New("GGA retirement state publication was not committed")
+		return result, errors.New("GGA retirement state publication was not committed") // refusal:by-design operator-knowledge: an absent commit outcome cannot be classified as success.
 	}
 	if len(filtered) == len(persisted.Components) {
 		return result, nil
@@ -127,8 +128,7 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 	committed, commitErr := ggaLeaseCommitFn(lease, next)
 	if committed.Outcome != statestore.Committed {
 		if commitErr == nil {
-			// refusal:by-design operator-knowledge: an absent commit outcome cannot be classified as success.
-			commitErr = errors.New("GGA retirement state publication was not committed")
+			commitErr = errors.New("GGA retirement state publication was not committed") // refusal:by-design operator-knowledge: an absent commit outcome cannot be classified as success.
 		}
 		if len(owned) > 0 {
 			return result, recoverGGA(&result, homeDir, evidence, fmt.Errorf("persist retired GGA state: %w", commitErr))
@@ -138,8 +138,7 @@ func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementR
 	}
 	if len(owned) > 0 && !ggaRetired(evidence) {
 		result.RecoveryPaths, result.Outcome = evidence.paths(), statestore.Unknown
-		// refusal:by-design operator-knowledge: external retirement cannot be proven safe.
-		return result, &GGARetirementRecoveryError{Outcome: result.Outcome, RecoveryPaths: result.RecoveryPaths, Err: errors.New("verify GGA retirement")}
+		return result, &GGARetirementRecoveryError{Outcome: result.Outcome, RecoveryPaths: result.RecoveryPaths, Err: errors.New("verify GGA retirement")} // refusal:by-design operator-knowledge: external retirement cannot be proven safe.
 	}
 	result.Changed, result.Outcome = true, statestore.Committed
 	return result, commitErr
@@ -233,11 +232,14 @@ func backupLegacyGGAFiles(homeDir string, files []ggaManagedFile) (backup.Manife
 }
 func durableGGABackup(_ string, files []ggaManagedFile, manifest backup.Manifest) error {
 	for _, name := range []string{backup.ArchiveFilename, backup.ManifestFilename} {
-		if err := syncGGA(filepath.Join(manifest.RootDir, name), false); err != nil {
+		if err := ggaSyncFn(filepath.Join(manifest.RootDir, name), false); err != nil {
 			return err
 		}
 	}
-	if err := syncGGA(manifest.RootDir, true); err != nil {
+	if err := ggaSyncFn(manifest.RootDir, true); err != nil {
+		return err
+	}
+	if err := ggaSyncFn(filepath.Dir(manifest.RootDir), true); err != nil {
 		return err
 	}
 	got, err := backup.ReadManifest(filepath.Join(manifest.RootDir, backup.ManifestFilename))
@@ -245,8 +247,7 @@ func durableGGABackup(_ string, files []ggaManagedFile, manifest backup.Manifest
 		return err
 	}
 	if got.Source != backup.BackupSourceRetireGGA {
-		// refusal:by-design operator-knowledge: a tampered manifest cannot authorize removal.
-		return fmt.Errorf("GGA retirement manifest source mismatch")
+		return fmt.Errorf("GGA retirement manifest source mismatch") // refusal:by-design operator-knowledge: a tampered manifest cannot authorize removal.
 	}
 	want := map[string]bool{}
 	for _, file := range files {
@@ -258,16 +259,16 @@ func durableGGABackup(_ string, files []ggaManagedFile, manifest backup.Manifest
 		}
 	}
 	if len(want) != 0 || len(got.Entries) != len(files) {
-		// refusal:by-design operator-knowledge: an unverifiable archive inventory cannot be safely removed.
-		return errors.New("GGA retirement backup inventory mismatch")
+		return errors.New("GGA retirement backup inventory mismatch") // refusal:by-design operator-knowledge: an unverifiable archive inventory cannot be safely removed.
 	}
 	return nil
 }
 func syncGGA(path string, directory bool) error {
-	flags := os.O_RDWR
 	if directory {
-		flags = os.O_RDONLY
+		// Unsupported handles are a lower durability claim; SyncReviewDirectory propagates real failures.
+		return reviewtransaction.SyncReviewDirectory(path)
 	}
+	flags := os.O_RDWR
 	f, err := os.OpenFile(path, flags, 0)
 	if err != nil {
 		return err
@@ -279,9 +280,6 @@ func syncGGA(path string, directory bool) error {
 	err = f.Close()
 	if err != nil {
 		return err
-	}
-	if directory {
-		return nil
 	}
 	_, err = os.ReadFile(path)
 	return err
