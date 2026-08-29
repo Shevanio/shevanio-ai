@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,6 +18,9 @@ const (
 	stateDir       = ".shevanio-ai"
 	legacyStateDir = ".gentle-ai"
 	stateFile      = "state.json"
+
+	// StateSchemaVersion is the newest state shape this binary can read and write.
+	StateSchemaVersion = 1
 )
 
 // ModelAssignmentState is the JSON-serialisable form of a provider+model pair
@@ -147,24 +151,96 @@ type InstallState struct {
 	// persisted separately from the OpenCode field because each key is part of
 	// an independent state contract.
 	PiBackgroundIntent model.PiBackgroundIntent `json:"pi_background_subagents,omitempty"`
+
+	unknownFields map[string]json.RawMessage
 }
 
-// UnmarshalJSON preserves whether the persisted persona field was present.
-// The value itself is still decoded into the public InstallState field.
+var installStateJSONFields = map[string]struct{}{
+	"schema_version": {}, "installed_agents": {}, "installed_binary_version": {},
+	"managed_asset_digest": {}, "selection_configured": {}, "components": {},
+	"skills": {}, "preset": {}, "sdd_mode": {}, "strict_tdd": {},
+	"community_tools": {}, "community_tools_configured": {},
+	"claude_model_assignments": {}, "claude_phase_assignments": {},
+	"kiro_model_assignments": {}, "codexModelAssignments": {},
+	"codexOrchestratorAssignment": {}, "codexCarrilModelAssignments": {},
+	"codexPhaseModelAssignments": {}, "model_assignments": {}, "persona": {},
+	"last_update_check": {}, "pending_sync": {}, "rdd_mode": {},
+	"rdd_mode_recorded_at": {}, "opencode_background_subagents": {},
+	"pi_background_subagents": {},
+}
+
+// UnmarshalJSON validates the persisted schema before mutating the receiver,
+// accepts absent and v0 state as the oldest supported shape, and retains fields
+// unknown to this binary for the next reconciliation.
 func (s *InstallState) UnmarshalJSON(data []byte) error {
 	type plainInstallState InstallState
-	var decoded plainInstallState
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		return err
-	}
-
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(data, &fields); err != nil {
 		return err
 	}
 
+	version := 0
+	if raw, ok := fields["schema_version"]; ok {
+		if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+			return errors.New("state: schema_version must be an integer")
+		}
+		if err := json.Unmarshal(raw, &version); err != nil {
+			return fmt.Errorf("state: invalid schema_version: %w", err)
+		}
+	}
+	if err := validateStateSchemaVersion(version); err != nil {
+		return err
+	}
+
+	var decoded plainInstallState
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	var unknown map[string]json.RawMessage
+	for key, raw := range fields {
+		if _, known := installStateJSONFields[key]; !known {
+			if unknown == nil {
+				unknown = make(map[string]json.RawMessage)
+			}
+			unknown[key] = append(json.RawMessage(nil), raw...)
+		}
+	}
+	decoded.unknownFields = unknown
+	decoded.PersonaPresent = fields["persona"] != nil
 	*s = InstallState(decoded)
-	_, s.PersonaPresent = fields["persona"]
+	return nil
+}
+
+// MarshalJSON writes the current schema version and carries retained unknown
+// fields through normal JSON serialization without allowing them to shadow a
+// field understood by this version.
+func (s InstallState) MarshalJSON() ([]byte, error) {
+	type plainInstallState InstallState
+	known, err := json.Marshal(plainInstallState(s))
+	if err != nil {
+		return nil, err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(known, &fields); err != nil {
+		return nil, err
+	}
+	fields["schema_version"] = json.RawMessage(fmt.Sprintf("%d", StateSchemaVersion))
+	for key, raw := range s.unknownFields {
+		if _, known := installStateJSONFields[key]; !known {
+			fields[key] = append(json.RawMessage(nil), raw...)
+		}
+	}
+	return json.Marshal(fields)
+}
+
+func validateStateSchemaVersion(version int) error {
+	if version < 0 {
+		return fmt.Errorf("state: schema_version %d is negative", version)
+	}
+	if version > StateSchemaVersion {
+		return fmt.Errorf("state: schema_version %d is newer than supported version %d", version, StateSchemaVersion)
+	}
 	return nil
 }
 
@@ -262,7 +338,19 @@ func MergeAgents(existing InstallState, newAgents []string) InstallState {
 
 		BackgroundIntent:   existing.BackgroundIntent,
 		PiBackgroundIntent: existing.PiBackgroundIntent,
+		unknownFields:      cloneUnknownFields(existing.unknownFields),
 	}
+}
+
+func cloneUnknownFields(fields map[string]json.RawMessage) map[string]json.RawMessage {
+	if fields == nil {
+		return nil
+	}
+	cloned := make(map[string]json.RawMessage, len(fields))
+	for key, raw := range fields {
+		cloned[key] = append(json.RawMessage(nil), raw...)
+	}
+	return cloned
 }
 
 // Write persists the full install state to disk under the given home directory.

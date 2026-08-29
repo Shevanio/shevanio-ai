@@ -1,6 +1,8 @@
 package state
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -123,6 +125,153 @@ func TestInstallStatePreservesEveryField(t *testing.T) {
 			got := tt.run(t, want)
 			if !reflect.DeepEqual(got, wantAfter) {
 				t.Fatalf("InstallState = %#v, want %#v", got, wantAfter)
+			}
+		})
+	}
+
+	t.Run("MergeAgents preserves unknown fields", func(t *testing.T) {
+		var existing InstallState
+		if err := json.Unmarshal([]byte(`{"schema_version":0,"installed_agents":["claude-code"],"future_state":{"raw":[1,2]}}`), &existing); err != nil {
+			t.Fatal(err)
+		}
+
+		merged := MergeAgents(existing, []string{"opencode"})
+		data, err := marshal(merged)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(data, &fields); err != nil {
+			t.Fatal(err)
+		}
+		var compact bytes.Buffer
+		if err := json.Compact(&compact, fields["future_state"]); err != nil {
+			t.Fatal(err)
+		}
+		if got := compact.String(); got != `{"raw":[1,2]}` {
+			t.Fatalf("future_state = %s, want %s", got, `{"raw":[1,2]}`)
+		}
+		if got := merged.InstalledAgents; !slices.Equal(got, []string{"claude-code", "opencode"}) {
+			t.Fatalf("InstalledAgents = %v, want [claude-code opencode]", got)
+		}
+	})
+}
+
+func TestStateSchemaVersionTable(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		wantAgents   []string
+		wantErr      bool
+		wantUnknown  bool
+		unknownKey   string
+		unknownValue string
+		wantStable   bool
+		wantNoMutate bool
+	}{
+		{name: "absent version migrates from v0", input: `{"installed_agents":["pi"]}`, wantAgents: []string{"pi"}},
+		{name: "explicit v0 migrates", input: `{"schema_version":0,"installed_agents":["codex"]}`, wantAgents: []string{"codex"}},
+		{name: "unknown field round-trips", input: `{"schema_version":0,"installed_agents":["pi"],"future_state":{"raw":[1,2]}}`, wantAgents: []string{"pi"}, wantUnknown: true, unknownKey: "future_state", unknownValue: `{"raw":[1,2]}`},
+		{name: "current version keeps unknown scalar", input: `{"schema_version":1,"installed_agents":["vscode"],"future_scalar":"keep-me"}`, wantAgents: []string{"vscode"}, wantUnknown: true, unknownKey: "future_scalar", unknownValue: `"keep-me"`},
+		{name: "malformed version is refused", input: `{"schema_version":"one"}`, wantErr: true},
+		{name: "negative version is refused", input: `{"schema_version":-1}`, wantErr: true},
+		{name: "non-integer version is refused", input: `{"schema_version":1.5}`, wantErr: true},
+		{name: "newer version is refused without mutation", input: `{"schema_version":2,"installed_agents":["new"]}`, wantErr: true, wantNoMutate: true},
+		{name: "reconciliation is byte-stable", input: `{"installed_agents":["pi"],"future_state":{"raw":[1,2]}}`, wantAgents: []string{"pi"}, wantUnknown: true, unknownKey: "future_state", unknownValue: `{"raw":[1,2]}`, wantStable: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got InstallState
+			before := InstallState{InstalledAgents: []string{"keep"}}
+			got = before
+			err := json.Unmarshal([]byte(tt.input), &got)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("UnmarshalJSON() error = nil, want refusal")
+				}
+				if tt.wantNoMutate && !reflect.DeepEqual(got, before) {
+					t.Fatalf("state mutated on refusal: got %#v, want %#v", got, before)
+				}
+				if tt.wantNoMutate {
+					home := t.TempDir()
+					if err := os.MkdirAll(filepath.Dir(Path(home)), 0o755); err != nil {
+						t.Fatal(err)
+					}
+					beforeBytes := []byte(tt.input)
+					if err := os.WriteFile(Path(home), beforeBytes, 0o644); err != nil {
+						t.Fatal(err)
+					}
+					if _, err := Read(home); err == nil {
+						t.Fatal("Read() error = nil, want newer-schema refusal")
+					}
+					afterBytes, err := os.ReadFile(Path(home))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !bytes.Equal(afterBytes, beforeBytes) {
+						t.Fatalf("state file mutated on refusal: got %s, want %s", afterBytes, beforeBytes)
+					}
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("UnmarshalJSON() error = %v", err)
+			}
+			if !slices.Equal(got.InstalledAgents, tt.wantAgents) {
+				t.Fatalf("InstalledAgents = %v, want %v", got.InstalledAgents, tt.wantAgents)
+			}
+			if tt.wantUnknown && string(got.unknownFields[tt.unknownKey]) != tt.unknownValue {
+				t.Fatalf("%s = %s, want raw bytes %s", tt.unknownKey, got.unknownFields[tt.unknownKey], tt.unknownValue)
+			}
+
+			data, err := marshal(got)
+			if err != nil {
+				t.Fatalf("marshal() error = %v", err)
+			}
+			var persisted map[string]json.RawMessage
+			if err := json.Unmarshal(data, &persisted); err != nil {
+				t.Fatal(err)
+			}
+			if string(persisted["schema_version"]) != `1` {
+				t.Fatalf("persisted schema_version = %s, want 1", persisted["schema_version"])
+			}
+			if tt.wantUnknown && !bytes.Contains(data, []byte(`"`+tt.unknownKey+`"`)) {
+				t.Fatalf("marshaled state lost %s: %s", tt.unknownKey, data)
+			}
+			if tt.wantStable {
+				home := t.TempDir()
+				if err := os.MkdirAll(filepath.Dir(Path(home)), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(Path(home), []byte(tt.input), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				first, err := Read(home)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := WriteReconciled(home, first); err != nil {
+					t.Fatal(err)
+				}
+				firstBytes, err := os.ReadFile(Path(home))
+				if err != nil {
+					t.Fatal(err)
+				}
+				second, err := Read(home)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := WriteReconciled(home, second); err != nil {
+					t.Fatal(err)
+				}
+				secondBytes, err := os.ReadFile(Path(home))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !bytes.Equal(firstBytes, secondBytes) {
+					t.Fatalf("reconciliation changed bytes:\nfirst %s\nsecond %s", firstBytes, secondBytes)
+				}
 			}
 		})
 	}
