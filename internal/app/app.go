@@ -605,7 +605,7 @@ func tuiExecuteWithBackground(
 			agentIDs = append(agentIDs, string(a))
 		}
 		claudePhaseState := claudePhaseAssignmentsToState(selection.ClaudePhaseAssignments)
-		_, writeErr := statestore.WithLock(homeDir, func(installState *state.InstallState) error {
+		_, writeErr := statestore.Mutate(homeDir, func(installState *state.InstallState) error {
 			applyTUIInstallState(installState, selection, agentIDs, claudePhaseState, backgroundPersist, piBackgroundPersist)
 			return nil
 		})
@@ -920,7 +920,7 @@ func persistAssignments(homeDir string, selection model.Selection) error {
 	if len(selection.ClaudeModelAssignments) == 0 && len(selection.ClaudePhaseAssignments) == 0 && len(selection.KiroModelAssignments) == 0 && len(selection.ModelAssignments) == 0 && len(selection.CodexModelAssignments) == 0 && len(selection.CodexCarrilModelAssignments) == 0 && len(selection.CodexPhaseModelAssignments) == 0 && !hasAssignmentSignal {
 		return nil
 	}
-	_, err := statestore.WithLock(homeDir, func(current *state.InstallState) error {
+	_, err := statestore.Mutate(homeDir, func(current *state.InstallState) error {
 		applyAssignments(current, selection)
 		return nil
 	})
