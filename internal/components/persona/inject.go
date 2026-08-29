@@ -603,9 +603,9 @@ var osReadFile = func(path string) ([]byte, error) {
 // shevanio-ai managed sections (SDD orchestrator, engram protocol, etc.) and
 // returns new content that preserves those sections while replacing only the
 // persona text before them. Returns ("", false) when no preservation is needed
-// (empty file, Gentleman persona, or no managed markers found).
+// (empty file, legacy Gentleman persona, or no managed markers found).
 func preserveManagedSections(existing, newPersona string, persona model.PersonaID) (string, bool) {
-	if existing == "" || isGentlemanConversationPersona(persona) {
+	if existing == "" || persona == model.PersonaGentleman {
 		return "", false
 	}
 
