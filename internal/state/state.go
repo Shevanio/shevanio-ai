@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
@@ -153,6 +154,43 @@ type InstallState struct {
 	PiBackgroundIntent model.PiBackgroundIntent `json:"pi_background_subagents,omitempty"`
 
 	unknownFields map[string]json.RawMessage
+}
+
+// ConvergeManagedIdentity returns a copy with only exact model-authorized
+// managed identity aliases replaced. User-managed values and named actors are
+// preserved. When legacy and canonical assignment keys coexist, canonical wins.
+func ConvergeManagedIdentity(current InstallState) (InstallState, bool) {
+	next := current
+	changed := false
+	if persona, class := model.NormalizePersonaRead(current.Persona); (class == model.IdentityCanonicalManaged || class == model.IdentityLegacyManaged) && current.Persona != string(persona) {
+		next.Persona, changed = string(persona), true
+	}
+	if preset, class := model.NormalizePresetRead(string(current.Preset)); (class == model.IdentityCanonicalManaged || class == model.IdentityLegacyManaged) && current.Preset != preset {
+		next.Preset, changed = preset, true
+	}
+
+	legacyKeys := make([]string, 0, len(current.ModelAssignments))
+	for key := range current.ModelAssignments {
+		if _, class := model.NormalizeOrchestratorRead(key); class == model.IdentityLegacyManaged {
+			legacyKeys = append(legacyKeys, key)
+		}
+	}
+	if len(legacyKeys) == 0 {
+		return next, changed
+	}
+	sort.Strings(legacyKeys)
+	next.ModelAssignments = make(map[string]ModelAssignmentState, len(current.ModelAssignments))
+	for key, assignment := range current.ModelAssignments {
+		next.ModelAssignments[key] = assignment
+	}
+	for _, legacyKey := range legacyKeys {
+		canonicalKey, _ := model.NormalizeOrchestratorRead(legacyKey)
+		if _, exists := next.ModelAssignments[canonicalKey]; !exists {
+			next.ModelAssignments[canonicalKey] = next.ModelAssignments[legacyKey]
+		}
+		delete(next.ModelAssignments, legacyKey)
+	}
+	return next, true
 }
 
 var installStateJSONFields = map[string]struct{}{
