@@ -41,23 +41,19 @@ func TestNormalizeManagedIdentityInputs(t *testing.T) {
 		})
 	}
 
-	presetCases := []struct {
-		input string
-		want  model.PresetID
-		ok    bool
-	}{
-		{input: "", want: model.PresetFullShevanio, ok: true},
-		{input: "full-shevanio", want: model.PresetFullShevanio, ok: true},
-		{input: "full-gentleman", want: model.PresetFullShevanio, ok: true},
-		{input: "custom", want: model.PresetCustom, ok: true},
-		{input: "Full-shevanio"},
-		{input: "full-shevanio-extra"},
+	presetCases := map[string]model.PresetID{
+		"":                    model.PresetFullShevanio,
+		"full-shevanio":       model.PresetFullShevanio,
+		"full-gentleman":      model.PresetFullShevanio,
+		"custom":              model.PresetCustom,
+		"Full-shevanio":       "",
+		"full-shevanio-extra": "",
 	}
-	for _, tt := range presetCases {
-		t.Run("preset/"+tt.input, func(t *testing.T) {
-			got, err := normalizePreset(tt.input)
-			if (err == nil) != tt.ok || got != tt.want {
-				t.Fatalf("normalizePreset(%q) = %q, %v; want %q, success=%v", tt.input, got, err, tt.want, tt.ok)
+	for input, want := range presetCases {
+		t.Run("preset/"+input, func(t *testing.T) {
+			got, err := normalizePreset(input)
+			if (err == nil) != (want != "") || got != want {
+				t.Fatalf("normalizePreset(%q) = %q, %v; want %q, success=%v", input, got, err, want, want != "")
 			}
 		})
 	}
