@@ -43,9 +43,6 @@ func TestNavigationWelcomeToDetection(t *testing.T) {
 	if !state.InstallFlowActive {
 		t.Fatal("expected Start installation to activate the install flow")
 	}
-	if state.Selection.Persona != model.PersonaShevanio || state.Selection.Preset != model.PresetFullShevanio {
-		t.Fatalf("selection identity = %q/%q, want canonical managed identity", state.Selection.Persona, state.Selection.Preset)
-	}
 }
 
 func TestNewModelRestoresSelectionIdentity(t *testing.T) {

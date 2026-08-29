@@ -23,24 +23,20 @@ func TestNormalizePersonaRemapsGentlemanNeutralArtifacts(t *testing.T) {
 }
 
 func TestNormalizeManagedIdentityInputs(t *testing.T) {
-	personaCases := []struct {
-		input string
-		want  model.PersonaID
-		ok    bool
-	}{
-		{input: "", want: model.PersonaShevanio, ok: true},
-		{input: "shevanio", want: model.PersonaShevanio, ok: true},
-		{input: "Shevanio", want: model.PersonaShevanio, ok: true},
-		{input: "gentleman", want: model.PersonaShevanio, ok: true},
-		{input: "Gentleman", want: model.PersonaShevanio, ok: true},
-		{input: "SHEVANIO"},
-		{input: "Shevanio "},
+	personaCases := map[string]model.PersonaID{
+		"":          model.PersonaShevanio,
+		"shevanio":  model.PersonaShevanio,
+		"Shevanio":  model.PersonaShevanio,
+		"gentleman": model.PersonaShevanio,
+		"Gentleman": model.PersonaShevanio,
+		"SHEVANIO":  "",
+		"Shevanio ": "",
 	}
-	for _, tt := range personaCases {
-		t.Run("persona/"+tt.input, func(t *testing.T) {
-			got, remapped, err := normalizePersona(tt.input)
-			if (err == nil) != tt.ok || got != tt.want || remapped {
-				t.Fatalf("normalizePersona(%q) = %q, %v, %v; want %q, false, success=%v", tt.input, got, remapped, err, tt.want, tt.ok)
+	for input, want := range personaCases {
+		t.Run("persona/"+input, func(t *testing.T) {
+			got, remapped, err := normalizePersona(input)
+			if (err == nil) != (want != "") || got != want || remapped {
+				t.Fatalf("normalizePersona(%q) = %q, %v, %v; want %q, false, success=%v", input, got, remapped, err, want, want != "")
 			}
 		})
 	}

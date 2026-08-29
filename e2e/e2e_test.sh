@@ -173,7 +173,7 @@ test_dry_run_preset_full() {
 
     output=$($BINARY install --preset full-gentleman --dry-run 2>&1) || true
 
-    assert_output_contains "$output" "Preset: full-gentleman" "Shows full-gentleman preset"
+    assert_output_contains "$output" "Preset: full-shevanio" "Legacy preset emits canonical full-shevanio ID"
 }
 
 test_dry_run_preset_custom() {
