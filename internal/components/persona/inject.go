@@ -501,7 +501,7 @@ func shouldStripManagedLegacyPersona(existing string) bool {
 // to neutral (cli.normalizePersona in internal/cli/validate.go, mirrored at
 // the injectInternal entry) and is intentionally NOT gentleman here.
 func isGentlemanConversationPersona(persona model.PersonaID) bool {
-	return persona == model.PersonaGentleman
+	return persona == model.PersonaShevanio || persona == model.PersonaGentleman
 }
 
 // residualChannel reports whether the adapter already delivers tone/language/

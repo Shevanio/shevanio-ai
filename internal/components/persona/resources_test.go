@@ -19,6 +19,7 @@ func TestResourcePlanOutputStylePaths(t *testing.T) {
 		persona model.PersonaID
 		want    persona.OutputStylePaths
 	}{
+		{name: "shevanio writes the current gentleman asset", persona: model.PersonaShevanio, want: persona.OutputStylePaths{Write: gentleman, Backup: []string{gentleman, neutral}}},
 		{
 			name:    "gentleman writes its selected style without removing neutral",
 			persona: model.PersonaGentleman,
