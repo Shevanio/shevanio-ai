@@ -13,6 +13,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/update"
 )
 
@@ -173,22 +174,22 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 				t.Fatal(err)
 			}
 			if tc.lock {
-				held, lockErr := reviewtransaction.AcquireAuthorityFileLock(installStateLockPath(home))
+				held, lockErr := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
 				if lockErr != nil {
 					t.Fatal(lockErr)
 				}
 				defer held.Release()
 			}
-			original, calls := ggaStateWriteFn, 0
+			original, calls := ggaLeaseCommitFn, 0
 			if tc.retry {
-				ggaStateWriteFn = func(home string, persisted state.InstallState) error {
+				ggaLeaseCommitFn = func(lease *statestore.Lease, persisted state.InstallState) (statestore.Result, error) {
 					calls++
 					if calls == 1 {
-						return errors.New("forced persistence failure")
+						return statestore.Result{Outcome: statestore.Uncommitted}, errors.New("forced persistence failure")
 					}
-					return state.WriteReconciled(home, persisted)
+					return lease.Commit(persisted)
 				}
-				defer func() { ggaStateWriteFn = original }()
+				defer func() { ggaLeaseCommitFn = original }()
 			}
 			if _, err := MigrateLegacyGGA(home, false); err == nil {
 				t.Fatal("migration unexpectedly succeeded")
@@ -210,6 +211,25 @@ func TestMigrateLegacyGGAFailuresLeaveStateAndFilesUnchanged(t *testing.T) {
 			}
 			requirePath(t, legacyGGAConfigPath(home), "")
 		})
+	}
+}
+
+func TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError(t *testing.T) {
+	home := migrationHome(t)
+	original := ggaRemoveOwnedFilesFn
+	t.Cleanup(func() { ggaRemoveOwnedFilesFn = original })
+	sentinel := errors.New("sentinel removal failure")
+	preservedPath := filepath.Join(home, ".config", "gga", "user-owned")
+	ggaRemoveOwnedFilesFn = func([]ggaManagedFile) ([]string, error) {
+		return []string{preservedPath}, sentinel
+	}
+
+	result, err := MigrateLegacyGGA(home, false)
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("behavior mismatch: TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError: error = %v", err)
+	}
+	if len(result.PreservedPaths) != 1 || result.PreservedPaths[0] != preservedPath {
+		t.Fatalf("behavior mismatch: TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError: preserved paths = %#v", result.PreservedPaths)
 	}
 }
 

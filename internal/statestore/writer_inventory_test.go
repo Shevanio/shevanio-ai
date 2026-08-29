@@ -39,7 +39,7 @@ func approvedWriterEntries() []writerEntry {
 		{"internal/update/cooldown.go", "CheckAllWithCooldown", "statestore.Mutate"}, {"internal/app/selfupdate.go", "selfUpdate", "statestore.Mutate"},
 		{"internal/app/app.go", "RunArgs", "statestore.Mutate"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.Mutate"}, {"internal/app/app.go", "persistAssignments", "statestore.Mutate"},
 		{"internal/tui/model.go", "startUpgradeSync", "statestore.Mutate"}, {"internal/cli/review_mode.go", "writeGlobalRDDMode", "statestore.Mutate"}, {"internal/components/uninstall/service.go", "updateStateAfterUninstall", "statestore.Mutate"},
-		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.Mutate"}, {"internal/cli/run.go", "persistInstallState", "statestore.Mutate"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "statestore.Mutate"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "withInstallStateLock"},
+		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.Mutate"}, {"internal/cli/run.go", "persistInstallState", "statestore.Mutate"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "statestore.Mutate"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "statestore.Begin"},
 	}
 }
 func validateWriterInventory(root string, want []writerEntry) error {
@@ -131,7 +131,7 @@ func writerCall(call *ast.CallExpr, aliases map[string]string) string {
 	if aliases[x.Name] == stateImport && (fn.Sel.Name == "Write" || fn.Sel.Name == "WriteReconciled") {
 		return "state." + fn.Sel.Name
 	}
-	if aliases[x.Name] == storeImport && (fn.Sel.Name == "WithLock" || fn.Sel.Name == "Mutate") {
+	if aliases[x.Name] == storeImport && (fn.Sel.Name == "Begin" || fn.Sel.Name == "WithLock" || fn.Sel.Name == "Mutate") {
 		return "statestore." + fn.Sel.Name
 	}
 	return ""

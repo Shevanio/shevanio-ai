@@ -13,6 +13,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 )
 
 const legacyGGAComponentID model.ComponentID = "gga"
@@ -26,54 +27,59 @@ type GGARetirementResult struct {
 var (
 	ggaRetirementNow         = time.Now
 	ggaRetirementSnapshotter = func() backup.Snapshotter { return backup.NewSnapshotter() }
-	ggaStateWriteFn          = state.WriteReconciled
+	ggaLeaseCommitFn         = func(lease *statestore.Lease, next state.InstallState) (statestore.Result, error) {
+		return lease.Commit(next)
+	}
+	ggaRemoveOwnedFilesFn = removeOwnedGGAFiles
 )
 
-func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (GGARetirementResult, error) {
+func MigrateLegacyGGA(homeDir string, ggaRegistered bool) (result GGARetirementResult, err error) {
 	if ggaRegistered {
 		return GGARetirementResult{}, nil
 	}
-	var result GGARetirementResult
-	err := withInstallStateLock(homeDir, func() error {
-		persisted, err := state.Read(homeDir)
+	lease, err := statestore.Begin(homeDir)
+	if err != nil {
+		return result, fmt.Errorf("acquire install state lock: %w", err)
+	}
+	defer func() {
+		if releaseErr := lease.Release(); releaseErr != nil {
+			err = errors.Join(err, fmt.Errorf("release install state lock: %w", releaseErr))
+		}
+	}()
+	persisted, err := lease.Current()
+	if err != nil {
+		return result, fmt.Errorf("read install state: %w", err)
+	}
+	filtered := filterLegacyGGAComponents(persisted.Components)
+	if len(filtered) == len(persisted.Components) {
+		return result, nil
+	}
+	owned, preserved, err := findOwnedGGAFiles(homeDir)
+	if err != nil {
+		return result, err
+	}
+	result.PreservedPaths = preserved
+	if len(owned) > 0 {
+		manifest, err := backupLegacyGGAFiles(homeDir, owned)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return nil
-			}
-			return fmt.Errorf("read install state: %w", err)
+			return result, err
 		}
-		filtered := filterLegacyGGAComponents(persisted.Components)
-		if len(filtered) == len(persisted.Components) {
-			return nil
-		}
-		owned, preserved, err := findOwnedGGAFiles(homeDir)
+		result.BackupID = manifest.ID
+		preserved, err := ggaRemoveOwnedFilesFn(owned)
+		result.PreservedPaths = append(result.PreservedPaths, preserved...)
 		if err != nil {
-			return err
+			return result, err
 		}
-		result.PreservedPaths = preserved
-		if len(owned) > 0 {
-			manifest, err := backupLegacyGGAFiles(homeDir, owned)
-			if err != nil {
-				return err
-			}
-			result.BackupID = manifest.ID
-			preserved, err := removeOwnedGGAFiles(owned)
-			result.PreservedPaths = append(result.PreservedPaths, preserved...)
-			if err != nil {
-				return err
-			}
-			if err := removeEmptyGGADirectories(homeDir); err != nil {
-				return err
-			}
+		if err := removeEmptyGGADirectories(homeDir); err != nil {
+			return result, err
 		}
-		persisted.Components = filtered
-		if err := ggaStateWriteFn(homeDir, persisted); err != nil {
-			return fmt.Errorf("persist retired GGA state: %w", err)
-		}
-		result.Changed = true
-		return nil
-	})
-	return result, err
+	}
+	persisted.Components = filtered
+	if _, err := ggaLeaseCommitFn(lease, persisted); err != nil {
+		return result, fmt.Errorf("persist retired GGA state: %w", err)
+	}
+	result.Changed = true
+	return result, nil
 }
 func filterLegacyGGAComponents(components []model.ComponentID) []model.ComponentID {
 	filtered := make([]model.ComponentID, 0, len(components))

@@ -2,6 +2,7 @@ package statestore
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
@@ -150,6 +151,94 @@ func TestMutateContentionAndReentry(t *testing.T) {
 		})
 		require(t, r.Outcome == Committed && e == nil, "callback reentry")
 	})
+}
+
+func TestLeaseLifecycleRefusalIsTypedAndZeroIO(t *testing.T) {
+	h := t.TempDir()
+	lease, err := Begin(h)
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseLifecycleRefusalIsTypedAndZeroIO: %v", err)
+	}
+	result, err := lease.Commit(state.InstallState{Persona: "terminal"})
+	require(t, err == nil && result.Outcome == Committed, "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
+	must(t, os.RemoveAll(h))
+
+	current, currentErr := lease.Current()
+	var lifecycle *LeaseLifecycleError
+	require(t, current.Persona == "" && len(current.InstalledAgents) == 0 && errors.As(currentErr, &lifecycle), "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
+	result, err = lease.Commit(state.InstallState{})
+	lifecycle = nil
+	require(t, result.Outcome == Uncommitted && errors.As(err, &lifecycle), "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
+	result, err = lease.Restore()
+	lifecycle = nil
+	require(t, result.Outcome == Uncommitted && errors.As(err, &lifecycle), "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
+	must(t, lease.Release())
+	_, err = lease.Current()
+	lifecycle = nil
+	require(t, errors.As(err, &lifecycle), "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
+}
+
+func TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage(t *testing.T) {
+	h := t.TempDir()
+	preimage := []byte(`{"installed_agents":["old"],"future":{"nested":[1]}}`)
+	raw(t, h, preimage, 0o600)
+	lease, err := Begin(h)
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage: %v", err)
+	}
+	first, err := lease.Current()
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage: %v", err)
+	}
+	second, err := lease.Current()
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage: %v", err)
+	}
+	if len(first.InstalledAgents) > 0 {
+		first.InstalledAgents[0] = "mutated"
+	}
+	encoded, marshalErr := json.Marshal(second)
+	require(t, len(second.InstalledAgents) == 1 && second.InstalledAgents[0] == "old" && marshalErr == nil && bytes.Contains(encoded, []byte(`"future"`)), "TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage")
+	result, err := lease.Restore()
+	got, readErr := os.ReadFile(state.Path(h))
+	info, statErr := os.Stat(state.Path(h))
+	require(t, result.Outcome == Uncommitted && err == nil && readErr == nil && bytes.Equal(got, preimage) && statErr == nil && info.Mode().Perm() == 0o600, "TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage")
+	must(t, lease.Release())
+}
+
+func TestLeaseReleaseReplaysError(t *testing.T) {
+	original := releaseLock
+	defer func() { releaseLock = original }()
+	calls := 0
+	releaseLock = func(*reviewtransaction.AuthorityFileLock) error {
+		calls++
+		return errRelease
+	}
+	lease, err := Begin(t.TempDir())
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseReleaseReplaysError: %v", err)
+	}
+	first := lease.Release()
+	second := lease.Release()
+	require(t, first == errRelease && second == first && calls == 1, "TestLeaseReleaseReplaysError")
+	lease, err = Begin(t.TempDir())
+	if err != nil {
+		t.Fatalf("setup failure: TestLeaseReleaseReplaysError: %v", err)
+	}
+	result, commitErr := lease.Commit(state.InstallState{Persona: "committed"})
+	releaseErr := lease.Release()
+	require(t, result.Outcome == Committed && commitErr == nil && releaseErr == errRelease, "TestLeaseReleaseReplaysError")
+}
+
+func TestLeaseNilContract(t *testing.T) {
+	var lease *Lease
+	_, currentErr := lease.Current()
+	commitResult, commitErr := lease.Commit(state.InstallState{})
+	restoreResult, restoreErr := lease.Restore()
+	require(t, errors.Is(currentErr, ErrNilLease), "TestLeaseNilContract")
+	require(t, commitResult.Outcome == Uncommitted && errors.Is(commitErr, ErrNilLease), "TestLeaseNilContract")
+	require(t, restoreResult.Outcome == Uncommitted && errors.Is(restoreErr, ErrNilLease), "TestLeaseNilContract")
+	require(t, lease.Release() == nil, "TestLeaseNilContract")
 }
 func contentionCase(t *testing.T, call func(string, Mutator) (Result, error)) {
 	h := t.TempDir()
