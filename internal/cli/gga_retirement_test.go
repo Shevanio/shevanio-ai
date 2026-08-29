@@ -233,6 +233,96 @@ func TestMigrateLegacyGGAPreservesPartialPathsOnRemovalError(t *testing.T) {
 	}
 }
 
+func TestGGARetirementDurableArchiveManifest(t *testing.T) {
+	home := migrationHome(t)
+	var synced []string
+	originalSync, originalRemove, originalDurability := ggaSyncFn, ggaRemoveOwnedFilesFn, ggaRetirementDurabilityFn
+	t.Cleanup(func() {
+		ggaSyncFn, ggaRemoveOwnedFilesFn, ggaRetirementDurabilityFn = originalSync, originalRemove, originalDurability
+	})
+	ggaSyncFn = func(path string, _ bool) error { synced = append(synced, path); return nil }
+	ggaRemoveOwnedFilesFn = func(files []ggaManagedFile) ([]string, error) {
+		if len(synced) != 4 || filepath.Base(synced[0]) != backup.ArchiveFilename || filepath.Base(synced[1]) != backup.ManifestFilename || synced[2] != filepath.Dir(synced[0]) || synced[3] != filepath.Dir(synced[2]) {
+			return nil, errors.New("backup durability was incomplete before removal")
+		}
+		return removeOwnedGGAFiles(files)
+	}
+	if result, err := MigrateLegacyGGA(home, false); err != nil || result.Outcome != statestore.Committed {
+		t.Fatalf("retirement result = %#v, err = %v", result, err)
+	}
+	sentinel := errors.New("archive durability failure")
+	ggaRetirementDurabilityFn = func(string, []ggaManagedFile, backup.Manifest) error { return sentinel }
+	result, err := MigrateLegacyGGA(migrationHome(t), false)
+	if err == nil || !errors.Is(err, sentinel) || result.Outcome != statestore.Uncommitted || result.Changed {
+		t.Fatalf("behavior mismatch: TestGGARetirementDurableArchiveManifest: %#v %v", result, err)
+	}
+}
+func TestGGARetirementCompensationAndExactRestore(t *testing.T) {
+	home := migrationHome(t)
+	path := legacyGGAConfigPath(home)
+	must(t, os.Chmod(filepath.Dir(path), 0o700))
+	primary := errors.New("state publication failure")
+	setGGARecoveryFailure(t, primary, nil)
+	ggaRetirementRestoreFn = restoreGGASnapshot
+	result, err := MigrateLegacyGGA(home, false)
+	if err == nil || !errors.Is(err, primary) || result.Outcome != statestore.Uncommitted {
+		t.Fatalf("behavior mismatch: %s: %#v %v", t.Name(), result, err)
+	}
+	requirePath(t, path, string(legacyGGAConfig()))
+	if info, e := os.Stat(filepath.Dir(path)); e != nil || info.Mode().Perm() != 0o700 {
+		t.Fatalf("behavior mismatch: directory mode = %v, err = %v", info.Mode().Perm(), e)
+	}
+	if _, e := os.Stat(filepath.Join(home, ".local", "share", "gga")); !errors.Is(e, os.ErrNotExist) {
+		t.Fatalf("behavior mismatch: absent GGA directory exists: %v", e)
+	}
+}
+func TestGGARetirementCombinedResultAndRecoveryError(t *testing.T) {
+	primary, recovery := errors.New("primary retirement failure"), errors.New("recovery failure")
+	setGGARecoveryFailure(t, primary, recovery)
+	result, err := MigrateLegacyGGA(migrationHome(t), false)
+	var recoveryErr *GGARetirementRecoveryError
+	if err == nil || !errors.As(err, &recoveryErr) || !errors.Is(err, primary) || !errors.Is(err, recovery) || result.Outcome != statestore.Unknown || recoveryErr.Outcome != statestore.Unknown || len(result.RecoveryPaths) == 0 {
+		t.Fatalf("behavior mismatch: %s: result = %#v, err = %v", t.Name(), result, err)
+	}
+	if _, e := os.Stat(result.RecoveryPaths[len(result.RecoveryPaths)-1]); e != nil {
+		t.Fail()
+	}
+}
+func TestGGARetirementRetryFromEvidence(t *testing.T) {
+	home := migrationHome(t)
+	primary, recovery := errors.New("first publication failure"), errors.New("first restoration failure")
+	t.Cleanup(func() {
+		ggaLeaseCommitFn, ggaRetirementRestoreFn, ggaRemoveOwnedFilesFn = (*statestore.Lease).Commit, restoreGGASnapshot, removeOwnedGGAFiles
+	})
+	removeCalls := 0
+	ggaRemoveOwnedFilesFn = func(files []ggaManagedFile) ([]string, error) { removeCalls++; return removeOwnedGGAFiles(files) }
+	firstAttempt := true
+	ggaLeaseCommitFn = func(lease *statestore.Lease, persisted state.InstallState) (statestore.Result, error) {
+		if firstAttempt {
+			firstAttempt = false
+			return statestore.Result{Outcome: statestore.Uncommitted}, primary
+		}
+		return lease.Commit(persisted)
+	}
+	ggaRetirementRestoreFn = func(string, ggaRecoveryEvidence) error { return recovery }
+	first, firstErr := MigrateLegacyGGA(home, false)
+	if firstErr == nil || first.Outcome != statestore.Unknown || len(first.RecoveryPaths) == 0 {
+		t.Fatalf("behavior mismatch: %s: first result = %#v, err = %v", t.Name(), first, firstErr)
+	}
+	second, secondErr := MigrateLegacyGGA(home, false)
+	if secondErr != nil || second.Outcome != statestore.Committed || !second.Changed || removeCalls != 1 {
+		t.Fatalf("behavior mismatch: %s: second result = %#v, err = %v, removeCalls = %d", t.Name(), second, secondErr, removeCalls)
+	}
+}
+func setGGARecoveryFailure(t *testing.T, primary, recovery error) {
+	originalCommit := ggaLeaseCommitFn
+	t.Cleanup(func() { ggaLeaseCommitFn, ggaRetirementRestoreFn = originalCommit, restoreGGASnapshot })
+	ggaLeaseCommitFn = func(*statestore.Lease, state.InstallState) (statestore.Result, error) {
+		return statestore.Result{Outcome: statestore.Uncommitted}, primary
+	}
+	ggaRetirementRestoreFn = func(string, ggaRecoveryEvidence) error { return recovery }
+}
+
 func migrationHome(t *testing.T) string {
 	home := t.TempDir()
 	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "unknown"}}))
