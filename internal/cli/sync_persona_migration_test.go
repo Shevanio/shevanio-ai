@@ -11,8 +11,8 @@ import (
 )
 
 // TestApplyResolvedPersonaAliasResolution covers only what this change owns:
-// a persisted legacy alias resolves to neutral, valid persisted personas are
-// honored unchanged, an explicit selection wins over persisted state, and the
+// persisted managed aliases resolve to canonical values, custom personas remain
+// unchanged, an explicit selection wins over persisted state, and the
 // documented missing-field compatibility default still applies to state files
 // written before persona persistence existed.
 //
@@ -28,10 +28,13 @@ func TestApplyResolvedPersonaAliasResolution(t *testing.T) {
 		want      model.PersonaID
 	}{
 		{name: "persisted legacy alias resolves to neutral", persisted: string(model.PersonaGentlemanNeutralArtifacts), want: model.PersonaNeutral},
-		{name: "persisted gentleman is honored", persisted: string(model.PersonaGentleman), want: model.PersonaGentleman},
+		{name: "persisted legacy managed ID resolves to shevanio", persisted: string(model.PersonaGentleman), want: model.PersonaShevanio},
+		{name: "persisted legacy managed display resolves to shevanio", persisted: "Gentleman", want: model.PersonaShevanio},
 		{name: "persisted neutral is honored", persisted: string(model.PersonaNeutral), want: model.PersonaNeutral},
-		{name: "explicit selection wins over persisted alias", selection: model.Selection{Persona: model.PersonaGentleman}, persisted: string(model.PersonaGentlemanNeutralArtifacts), want: model.PersonaGentleman},
-		{name: "missing persona field uses the documented compatibility default", persisted: "", want: model.PersonaNeutral},
+		{name: "persisted custom is honored", persisted: string(model.PersonaCustom), want: model.PersonaCustom},
+		{name: "explicit managed alias wins and normalizes", selection: model.Selection{Persona: model.PersonaGentleman}, persisted: string(model.PersonaNeutral), want: model.PersonaShevanio},
+		{name: "explicit unknown is preserved", selection: model.Selection{Persona: "user-persona"}, persisted: string(model.PersonaNeutral), want: "user-persona"},
+		{name: "missing persona field uses the canonical managed default", persisted: "", want: model.PersonaShevanio},
 	}
 
 	for _, tc := range cases {
@@ -40,6 +43,30 @@ func TestApplyResolvedPersonaAliasResolution(t *testing.T) {
 			applyResolvedPersona(&selection, tc.persisted)
 			if selection.Persona != tc.want {
 				t.Fatalf("applyResolvedPersona(persisted=%q) = %q, want %q", tc.persisted, selection.Persona, tc.want)
+			}
+		})
+	}
+}
+
+func TestRestorePersistedSelectionIdentityBoundary(t *testing.T) {
+	cases := []struct {
+		name        string
+		persisted   state.InstallState
+		wantPersona model.PersonaID
+		wantPreset  model.PresetID
+	}{
+		{name: "legacy fallback", wantPersona: model.PersonaShevanio, wantPreset: model.PresetFullShevanio},
+		{name: "legacy managed values", persisted: state.InstallState{SelectionConfigured: true, Persona: "Gentleman", Preset: model.PresetFullGentleman}, wantPersona: model.PersonaShevanio, wantPreset: model.PresetFullShevanio},
+		{name: "custom values", persisted: state.InstallState{SelectionConfigured: true, Persona: "custom", Preset: model.PresetCustom}, wantPersona: model.PersonaCustom, wantPreset: model.PresetCustom},
+		{name: "unknown preset", persisted: state.InstallState{SelectionConfigured: true, Persona: "neutral", Preset: "user-preset"}, wantPersona: model.PersonaNeutral, wantPreset: "user-preset"},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			selection := model.Selection{}
+			RestorePersistedSelection(&selection, tt.persisted, SyncFlags{})
+			applyResolvedPersona(&selection, tt.persisted.Persona)
+			if selection.Persona != tt.wantPersona || selection.Preset != tt.wantPreset {
+				t.Fatalf("selection identity = %q/%q, want %q/%q", selection.Persona, selection.Preset, tt.wantPersona, tt.wantPreset)
 			}
 		})
 	}

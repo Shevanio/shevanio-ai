@@ -22,15 +22,48 @@ func TestNormalizePersonaRemapsGentlemanNeutralArtifacts(t *testing.T) {
 	}
 }
 
-func TestNormalizePersonaDoesNotFlagCanonicalPersonas(t *testing.T) {
-	for _, value := range []string{"", "gentleman", "neutral", "custom"} {
-		_, remapped, err := normalizePersona(value)
-		if err != nil {
-			t.Fatalf("normalizePersona(%q) error = %v", value, err)
-		}
-		if remapped {
-			t.Fatalf("normalizePersona(%q) remapped = true, want false", value)
-		}
+func TestNormalizeManagedIdentityInputs(t *testing.T) {
+	personaCases := []struct {
+		input string
+		want  model.PersonaID
+		ok    bool
+	}{
+		{input: "", want: model.PersonaShevanio, ok: true},
+		{input: "shevanio", want: model.PersonaShevanio, ok: true},
+		{input: "Shevanio", want: model.PersonaShevanio, ok: true},
+		{input: "gentleman", want: model.PersonaShevanio, ok: true},
+		{input: "Gentleman", want: model.PersonaShevanio, ok: true},
+		{input: "SHEVANIO"},
+		{input: "Shevanio "},
+	}
+	for _, tt := range personaCases {
+		t.Run("persona/"+tt.input, func(t *testing.T) {
+			got, remapped, err := normalizePersona(tt.input)
+			if (err == nil) != tt.ok || got != tt.want || remapped {
+				t.Fatalf("normalizePersona(%q) = %q, %v, %v; want %q, false, success=%v", tt.input, got, remapped, err, tt.want, tt.ok)
+			}
+		})
+	}
+
+	presetCases := []struct {
+		input string
+		want  model.PresetID
+		ok    bool
+	}{
+		{input: "", want: model.PresetFullShevanio, ok: true},
+		{input: "full-shevanio", want: model.PresetFullShevanio, ok: true},
+		{input: "full-gentleman", want: model.PresetFullShevanio, ok: true},
+		{input: "custom", want: model.PresetCustom, ok: true},
+		{input: "Full-shevanio"},
+		{input: "full-shevanio-extra"},
+	}
+	for _, tt := range presetCases {
+		t.Run("preset/"+tt.input, func(t *testing.T) {
+			got, err := normalizePreset(tt.input)
+			if (err == nil) != tt.ok || got != tt.want {
+				t.Fatalf("normalizePreset(%q) = %q, %v; want %q, success=%v", tt.input, got, err, tt.want, tt.ok)
+			}
+		})
 	}
 }
 

@@ -297,10 +297,10 @@ func appendConfigWarning(existing, warning string) string {
 }
 
 // SDDOrchestratorPhase is the key used for the base OpenCode SDD coordinator model assignment.
-const SDDOrchestratorPhase = "gentle-orchestrator"
+var SDDOrchestratorPhase = model.CanonicalManagedIdentity.Actor
 
 // ModelPickerRows returns the row labels for the model picker screen.
-// Row 0 is "gentle-orchestrator" (coordinator), row 1 is "Set all phases",
+// Row 0 is the Shevanio coordinator, row 1 is "Set all phases",
 // rows 2-11 are the 10 SDD sub-agent phases, followed by workflow agent sections.
 func ModelPickerRows() []string {
 	return modelPickerRowsWithCustom(true, nil)
@@ -318,7 +318,7 @@ func modelPickerRowsWithCustom(includeReview bool, customAgents []string) []stri
 func modelPickerRowsWithCustomIdentity(includeReview bool, customAgents []string) []ModelPickerRow {
 	rows := make([]ModelPickerRow, 0, 2+len(opencode.SDDPhases())+1+len(opencode.JDPhases())+1+len(opencode.ReviewPhases())+len(customAgents)+2)
 	rows = append(rows,
-		ModelPickerRow{Kind: ModelPickerRowKindAgent, Label: SDDOrchestratorPhase, AgentID: SDDOrchestratorPhase},
+		ModelPickerRow{Kind: ModelPickerRowKindAgent, Label: model.CanonicalManagedIdentity.Display, AgentID: SDDOrchestratorPhase},
 		ModelPickerRow{Kind: ModelPickerRowKindSetAllSDD, Label: "Set all SDD phases"},
 	)
 	for _, phase := range opencode.SDDPhases() {
@@ -948,7 +948,7 @@ func renderPhaseList(
 		var label string
 		switch {
 		case identity.Kind == ModelPickerRowKindAgent && identity.AgentID == SDDOrchestratorPhase:
-			// "gentle-orchestrator" row — coordinator, individual assignment only
+			// Shevanio coordinator row — individual assignment only.
 			assignment, ok := assignments[SDDOrchestratorPhase]
 			if ok && assignment.ProviderID != "" {
 				provName, modelName := resolveNames(assignment, state)

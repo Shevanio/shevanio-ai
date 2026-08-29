@@ -724,21 +724,26 @@ func NewModel(detection system.DetectionResult, version string, installState ...
 		s = installState[0]
 	}
 	agents := preselectedAgents(detection, s)
-	components := componentsForPreset(model.PresetFullGentleman, model.PersonaGentleman)
+	components := componentsForPreset(model.CanonicalManagedIdentity.Preset, model.CanonicalManagedIdentity.Persona)
 	if isPiOnlyAgents(agents) {
 		components = piOnlyComponents()
 	}
 
 	selection := model.Selection{
 		Agents:                 agents,
-		Persona:                model.PersonaGentleman,
-		Preset:                 model.PresetFullGentleman,
+		Persona:                model.CanonicalManagedIdentity.Persona,
+		Preset:                 model.CanonicalManagedIdentity.Preset,
 		Components:             components,
 		ClaudeModelAssignments: installStateClaudeAssignments(s.ClaudeModelAssignments),
 		ClaudePhaseAssignments: installStateClaudePhaseAssignments(s.ClaudePhaseAssignments),
 		KiroModelAssignments:   installStateKiroAssignments(s.KiroModelAssignments),
 		ModelAssignments:       installStateModelAssignments(s.ModelAssignments),
 	}
+	s.RestoreSelection(&selection)
+	if s.Persona != "" {
+		selection.Persona = model.PersonaID(s.Persona)
+	}
+	normalizeSelectionIdentity(&selection)
 
 	return Model{
 		Screen:               ScreenWelcome,
@@ -755,6 +760,19 @@ func NewModel(detection system.DetectionResult, version string, installState ...
 			"Configure selected agents",
 			"Inject ecosystem components",
 		}),
+	}
+}
+
+func normalizeSelectionIdentity(selection *model.Selection) {
+	if selection.Persona == "" {
+		selection.Persona = model.CanonicalManagedIdentity.Persona
+	} else if persona, class := model.NormalizePersonaRead(string(selection.Persona)); class != model.IdentityUnknown {
+		selection.Persona = persona
+	}
+	if selection.Preset == "" {
+		selection.Preset = model.CanonicalManagedIdentity.Preset
+	} else if preset, class := model.NormalizePresetRead(string(selection.Preset)); class != model.IdentityUnknown {
+		selection.Preset = preset
 	}
 }
 
@@ -1776,6 +1794,7 @@ func (m Model) confirmSelection() (tea.Model, tea.Cmd) {
 	case ScreenWelcome:
 		switch m.Cursor {
 		case 0:
+			normalizeSelectionIdentity(&m.Selection)
 			m.InstallFlowActive = true
 			m.setScreen(ScreenDetection)
 		case 1:
@@ -2082,7 +2101,7 @@ func (m Model) confirmSelection() (tea.Model, tea.Cmd) {
 			m.ProfileNamePos = len([]rune(profile.Name))
 			m.ProfileNameErr = ""
 			// Build ModelAssignments from the profile's phase assignments + orchestrator.
-			// The ModelPicker shows gentle-orchestrator as the base row, so we need
+			// The ModelPicker shows Shevanio as the base row, so we need
 			// to include it in the map for it to display the current model.
 			assignments := make(map[string]model.ModelAssignment)
 			for k, v := range profile.PhaseAssignments {

@@ -30,9 +30,9 @@ func TestPresetSelectionNextScreenFlowMatrix(t *testing.T) {
 		golden     string
 	}{
 		{
-			name:       "full gentleman with opencode enters SDD mode before plugins",
+			name:       "full shevanio with opencode enters SDD mode before plugins",
 			agents:     []model.AgentID{model.AgentOpenCode},
-			preset:     model.PresetFullGentleman,
+			preset:     model.PresetFullShevanio,
 			wantScreen: ScreenSDDMode,
 			golden:     "preset-full-gentleman-opencode-next.golden",
 		},
@@ -58,9 +58,9 @@ func TestPresetSelectionNextScreenFlowMatrix(t *testing.T) {
 			golden:     "preset-custom-opencode-next.golden",
 		},
 		{
-			name:       "full gentleman without opencode enters strict TDD",
+			name:       "full shevanio without opencode enters strict TDD",
 			agents:     []model.AgentID{model.AgentCursor},
-			preset:     model.PresetFullGentleman,
+			preset:     model.PresetFullShevanio,
 			wantScreen: ScreenStrictTDD,
 			golden:     "preset-full-gentleman-no-opencode-next.golden",
 		},
@@ -266,7 +266,7 @@ func TestInstallNavigationRoundTrips(t *testing.T) {
 				m := NewModel(system.DetectionResult{}, "dev")
 				m.Screen = ScreenPreset
 				m.Selection.Agents = []model.AgentID{model.AgentOpenCode}
-				m.Cursor = presetCursor(t, model.PresetFullGentleman)
+				m.Cursor = presetCursor(t, model.PresetFullShevanio)
 				return m
 			},
 			forwardActions: []flowAction{
@@ -285,7 +285,7 @@ func TestInstallNavigationRoundTrips(t *testing.T) {
 				m := NewModel(system.DetectionResult{}, "dev")
 				m.Screen = ScreenPreset
 				m.Selection.Agents = []model.AgentID{model.AgentOpenCode}
-				m.Cursor = presetCursor(t, model.PresetFullGentleman)
+				m.Cursor = presetCursor(t, model.PresetFullShevanio)
 				return m
 			},
 			forwardActions: []flowAction{
@@ -316,7 +316,7 @@ func TestInstallNavigationRoundTrips(t *testing.T) {
 				m := NewModel(system.DetectionResult{}, "dev")
 				m.Screen = ScreenPreset
 				m.Selection.Agents = []model.AgentID{model.AgentCursor}
-				m.Cursor = presetCursor(t, model.PresetFullGentleman)
+				m.Cursor = presetCursor(t, model.PresetFullShevanio)
 				return m
 			},
 			forwardActions: []flowAction{
@@ -395,7 +395,7 @@ func TestInstallNavigationRoundTrips(t *testing.T) {
 					model.AgentCodex,
 					model.AgentOpenCode,
 				}
-				m.Cursor = presetCursor(t, model.PresetFullGentleman)
+				m.Cursor = presetCursor(t, model.PresetFullShevanio)
 				return m
 			},
 			forwardActions: []flowAction{
@@ -442,7 +442,7 @@ func TestInstallNavigationRoundTrips(t *testing.T) {
 					model.AgentCodex,
 					model.AgentOpenCode,
 				}
-				m.Cursor = presetCursor(t, model.PresetFullGentleman)
+				m.Cursor = presetCursor(t, model.PresetFullShevanio)
 				return m
 			},
 			forwardActions: []flowAction{

@@ -43,6 +43,31 @@ func TestNavigationWelcomeToDetection(t *testing.T) {
 	if !state.InstallFlowActive {
 		t.Fatal("expected Start installation to activate the install flow")
 	}
+	if state.Selection.Persona != model.PersonaShevanio || state.Selection.Preset != model.PresetFullShevanio {
+		t.Fatalf("selection identity = %q/%q, want canonical managed identity", state.Selection.Persona, state.Selection.Preset)
+	}
+}
+
+func TestNewModelRestoresSelectionIdentity(t *testing.T) {
+	cases := []struct {
+		name        string
+		state       state.InstallState
+		wantPersona model.PersonaID
+		wantPreset  model.PresetID
+	}{
+		{name: "defaults", wantPersona: model.PersonaShevanio, wantPreset: model.PresetFullShevanio},
+		{name: "legacy managed", state: state.InstallState{SelectionConfigured: true, Persona: "Gentleman", Preset: model.PresetFullGentleman}, wantPersona: model.PersonaShevanio, wantPreset: model.PresetFullShevanio},
+		{name: "custom", state: state.InstallState{SelectionConfigured: true, Persona: "custom", Preset: model.PresetCustom}, wantPersona: model.PersonaCustom, wantPreset: model.PresetCustom},
+		{name: "user managed", state: state.InstallState{SelectionConfigured: true, Persona: "user-persona", Preset: "user-preset"}, wantPersona: "user-persona", wantPreset: "user-preset"},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewModel(system.DetectionResult{}, "dev", tt.state).Selection
+			if got.Persona != tt.wantPersona || got.Preset != tt.wantPreset {
+				t.Fatalf("selection identity = %q/%q, want %q/%q", got.Persona, got.Preset, tt.wantPersona, tt.wantPreset)
+			}
+		})
+	}
 }
 
 func TestCodexCustomDiscoveryStartsAsCommandWithFallback(t *testing.T) {
@@ -2860,7 +2885,7 @@ func TestPresetConfirmEntersFirstPickerInFlow(t *testing.T) {
 			m := NewModel(system.DetectionResult{}, "dev")
 			m.Screen = ScreenPreset
 			m.Selection.Agents = tt.agents
-			m.Cursor = presetCursor(t, model.PresetFullGentleman)
+			m.Cursor = presetCursor(t, model.PresetFullShevanio)
 
 			updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			state := updated.(Model)
@@ -5186,7 +5211,7 @@ func TestPersonaScreenDoesNotRecomputeForCustomPreset(t *testing.T) {
 	m.Selection.Persona = model.PersonaGentleman
 	m.Selection.Components = nil
 
-	m.Cursor = 0 // PersonaGentleman
+	m.Cursor = 0 // PersonaShevanio
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	state := updated.(Model)
 
@@ -5277,7 +5302,7 @@ func TestCodexOnly_InstallFlowReachesCodexPicker(t *testing.T) {
 	m := NewModel(system.DetectionResult{}, "dev")
 	m.Screen = ScreenPreset
 	m.Selection.Agents = []model.AgentID{model.AgentCodex}
-	m.Cursor = 0 // PresetFullGentleman (includes SDD)
+	m.Cursor = 0 // PresetFullShevanio (includes SDD)
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	state := updated.(Model)

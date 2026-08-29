@@ -86,22 +86,32 @@ func joinIDs[T ~string](values []T) string {
 }
 
 func reviewPersonaLabel(persona model.PersonaID) string {
+	if normalized, class := model.NormalizePersonaRead(string(persona)); class != model.IdentityUnknown {
+		persona = normalized
+	}
 	if persona == model.PersonaCustom {
 		return "keep existing persona unmanaged"
 	}
 	// Keep the persona ID visible: this is the confirm-before-write screen, so
-	// the reader must be able to see the exact value that lands in state.json,
-	// not only its prose description. The two Gentleman variants differ solely
-	// by the "(legacy alias)" suffix, which is too easy to miss on its own.
+	// the reader can distinguish canonical managed values from special aliases.
 	if description, ok := personaDescriptions[persona]; ok {
+		if persona == model.CanonicalManagedIdentity.Persona {
+			return model.CanonicalManagedIdentity.Display + " (" + string(persona) + ") — " + description
+		}
 		return string(persona) + " — " + description
 	}
 	return string(persona)
 }
 
 func reviewPresetLabel(preset model.PresetID) string {
+	if normalized, class := model.NormalizePresetRead(string(preset)); class != model.IdentityUnknown {
+		preset = normalized
+	}
 	if preset == model.PresetCustom {
 		return "choose components and skills manually"
+	}
+	if preset == model.CanonicalManagedIdentity.Preset {
+		return "Full " + model.CanonicalManagedIdentity.Display + " (" + string(preset) + ")"
 	}
 
 	return string(preset)
