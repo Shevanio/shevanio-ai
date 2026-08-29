@@ -213,7 +213,7 @@ func RunArgs(args []string, stdout io.Writer) error {
 				_, _ = fmt.Fprintf(stdout, "Warning: deferred sync failed: %v\n", err)
 				// Leave PendingSync=true so the next launch retries.
 			} else {
-				_, writeErr := statestore.WithLock(homeDir, func(latest *state.InstallState) error {
+				_, writeErr := statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 					latest.PendingSync = false
 					return nil
 				})

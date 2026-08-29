@@ -176,7 +176,7 @@ func selfUpdate(ctx context.Context, version string, profile system.PlatformProf
 	// JSON, permission denied) means an existing file is present — do not
 	// overwrite it and risk dropping unrelated persisted fields.
 	if homeDir != "" {
-		_, _ = statestore.WithLock(homeDir, func(s *state.InstallState) error {
+		_, _ = statestore.Mutate(homeDir, func(s *state.InstallState) error {
 			s.PendingSync = true
 			return nil
 		})

@@ -9,6 +9,7 @@ import (
 
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
 
@@ -42,6 +43,68 @@ func TestCheckAllWithCooldown_BridgeContentionLeavesStateUntouched(t *testing.T)
 	}
 	if checkCalls != 1 || after.LastUpdateCheck == nil || !after.LastUpdateCheck.Equal(stale) || len(after.InstalledAgents) != 1 {
 		t.Fatalf("behavior mismatch: TestCheckAllWithCooldown_BridgeContentionLeavesStateUntouched")
+	}
+}
+
+func TestCheckAllWithCooldown_MutateConcurrentRetryPreservesDistinctFields(t *testing.T) {
+	home := t.TempDir()
+	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+	stale := now.Add(-7 * time.Hour)
+	if err := state.Write(home, state.InstallState{LastUpdateCheck: &stale}); err != nil {
+		t.Fatal(err)
+	}
+
+	competingStarted := make(chan struct{})
+	releaseCompeting := make(chan struct{})
+	competingDone := make(chan error, 1)
+	go func() {
+		_, err := statestore.Mutate(home, func(current *state.InstallState) error {
+			close(competingStarted)
+			<-releaseCompeting
+			current.BackgroundIntent = "competing-writer"
+			return nil
+		})
+		competingDone <- err
+	}()
+	<-competingStarted
+
+	checkResults := []UpdateResult{{Tool: ToolInfo{Name: "shevanio-ai"}, Status: UpToDate}}
+	results := CheckAllWithCooldown(context.Background(), "1.0.0", system.PlatformProfile{}, home, 6*time.Hour,
+		func() time.Time { return now },
+		func(context.Context, string, system.PlatformProfile) []UpdateResult {
+			return checkResults
+		},
+	)
+	if len(results) != 1 || results[0].Status != UpToDate {
+		t.Fatalf("cooldown result = %v, want one successful result", results)
+	}
+
+	whileContended, err := state.Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if whileContended.LastUpdateCheck == nil || !whileContended.LastUpdateCheck.Equal(stale) || whileContended.BackgroundIntent != "" {
+		t.Fatalf("contended write changed state: %+v", whileContended)
+	}
+
+	close(releaseCompeting)
+	if err := <-competingDone; err != nil {
+		t.Fatal(err)
+	}
+
+	CheckAllWithCooldown(context.Background(), "1.0.0", system.PlatformProfile{}, home, 6*time.Hour,
+		func() time.Time { return now },
+		func(context.Context, string, system.PlatformProfile) []UpdateResult {
+			return checkResults
+		},
+	)
+
+	afterRetry, err := state.Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if afterRetry.LastUpdateCheck == nil || !afterRetry.LastUpdateCheck.Equal(now) || afterRetry.BackgroundIntent != "competing-writer" {
+		t.Fatalf("retry did not preserve both fields: %+v", afterRetry)
 	}
 }
 

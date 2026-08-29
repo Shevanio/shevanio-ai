@@ -67,7 +67,7 @@ func CheckAllWithCooldown(
 	// Also skip write when homeDir is empty.
 	if homeDir != "" && checkSucceeded(results) {
 		// Ignore lock/read/write errors — non-fatal; next launch will retry.
-		_, _ = statestore.WithLock(homeDir, func(current *state.InstallState) error {
+		_, _ = statestore.Mutate(homeDir, func(current *state.InstallState) error {
 			current.LastUpdateCheck = &now
 			return nil
 		})
