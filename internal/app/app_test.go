@@ -642,6 +642,68 @@ func TestTUIExecutePersistsConfiguredSelection(t *testing.T) {
 	}
 }
 
+func TestTUIExecuteStatePublicationFailureRollsBackBeforeSnapshotCleanup(t *testing.T) {
+	home := t.TempDir()
+	setupMockHome(t, home)
+	if err := state.Write(home, state.InstallState{}); err != nil {
+		t.Fatal(err)
+	}
+	originalState, err := os.ReadFile(state.Path(home))
+	if err != nil {
+		t.Fatal(err)
+	}
+	promptPath := filepath.Join(home, ".claude", "CLAUDE.md")
+	if err := os.MkdirAll(filepath.Dir(promptPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(promptPath, []byte("original prompt\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	statePath := state.Path(home)
+	target := filepath.Join(home, ".shevanio-ai", "persisted-state.json")
+	if err := os.Rename(statePath, target); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, statePath); err != nil {
+		t.Skipf("state symlink unavailable: %v", err)
+	}
+
+	selection := model.Selection{Agents: []model.AgentID{model.AgentClaudeCode}, Components: []model.ComponentID{model.ComponentPersona}, Persona: model.PersonaNeutral}
+	resolved := planner.ResolvedPlan{Agents: []model.AgentID{model.AgentClaudeCode}, OrderedComponents: []model.ComponentID{model.ComponentPersona}}
+	result := tuiExecuteWithBackground(selection, resolved, system.DetectionResult{}, "", "", "", "", nil)
+	if result.Err == nil || !strings.Contains(result.Err.Error(), "persist install state") {
+		t.Fatalf("tuiExecute() error = %v, want state persistence failure", result.Err)
+	}
+	gotPrompt, readErr := os.ReadFile(promptPath)
+	if readErr != nil || string(gotPrompt) != "original prompt\n" {
+		t.Fatalf("prompt after failed TUI publication = %q, %v; want original prompt", gotPrompt, readErr)
+	}
+	if got, readErr := os.ReadFile(target); readErr != nil || string(got) != string(originalState) {
+		t.Fatalf("state after failed TUI publication = %q, %v; want original bytes", got, readErr)
+	}
+}
+
+func TestTUIExecuteStatePublicationSuccessCleansRollbackSnapshot(t *testing.T) {
+	home := t.TempDir()
+	setupMockHome(t, home)
+	originalFinalizer := finalizeTUIInstall
+	called := false
+	finalizeTUIInstall = func() error {
+		called = true
+		return nil
+	}
+	t.Cleanup(func() { finalizeTUIInstall = originalFinalizer })
+
+	selection := model.Selection{Preset: model.PresetCustom, Components: []model.ComponentID{}, Skills: []model.SkillID{}, Persona: model.PersonaNeutral}
+	result := tuiExecuteWithBackground(selection, planner.ResolvedPlan{}, system.DetectionResult{}, "", "", "", "", nil)
+	if result.Err != nil {
+		t.Fatalf("tuiExecute() error = %v", result.Err)
+	}
+	if !called {
+		t.Fatal("successful TUI state publication did not finalize the rollback snapshot")
+	}
+}
+
 func TestTUIExecuteWithBackgroundPublishesChoiceAndPreservesState(t *testing.T) {
 	home := t.TempDir()
 	setupMockHome(t, home)

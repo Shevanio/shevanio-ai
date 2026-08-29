@@ -569,6 +569,8 @@ func updateCheckError(results []update.UpdateResult) error {
 // tuiExecute creates a real install runtime and runs the pipeline with progress reporting.
 var appUserHomeDir = os.UserHomeDir
 
+var finalizeTUIInstall = cli.FinalizeTUIInstall
+
 func tuiExecuteWithBackground(
 	selection model.Selection,
 	resolved planner.ResolvedPlan,
@@ -639,6 +641,8 @@ func tuiExecuteWithBackground(
 					execResult.Err = errors.Join(execResult.Err, rollback.Err)
 				}
 			}
+		} else if finalizeErr := finalizeTUIInstall(); finalizeErr != nil {
+			execResult.Err = fmt.Errorf("finalize TUI install: %w", finalizeErr)
 		}
 	}
 
