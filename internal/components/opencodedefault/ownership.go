@@ -56,7 +56,11 @@ func PrepareInstall(settingsPath string) (*InstallPlan, error) {
 		return nil, err
 	}
 	agents, _ := root["agent"].(map[string]any)
-	managedAgentPresent := hasManagedActorDefinition(agents)
+	managedAgentPresent := false
+	for actor := range agents {
+		_, class := model.NormalizeOrchestratorRead(actor)
+		managedAgentPresent = managedAgentPresent || class != model.IdentityUnknown
+	}
 	return &InstallPlan{settingsPath: settingsPath, owned: owned, recapture: !exists || !managedAgentPresent}, nil
 }
 func (p *InstallPlan) Apply() (bool, error) {
@@ -120,19 +124,6 @@ func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, remo
 		return false, false, err
 	}
 	return changed, currentExists && !settingsExist, nil
-}
-
-func hasManagedActorDefinition(agents map[string]any) bool {
-	if _, exists := agents[model.CanonicalManagedIdentity.Actor]; exists {
-		return true
-	}
-	for actor := range agents {
-		_, class := model.NormalizeOrchestratorRead(actor)
-		if class == model.IdentityLegacyManaged {
-			return true
-		}
-	}
-	return false
 }
 
 func readSettings(path string) (map[string]any, []byte, bool, fieldValue, error) {

@@ -1116,7 +1116,7 @@ test_full_preset_opencode() {
         assert_file_contains "$agents_md" "shevanio-ai:engram-protocol" "AGENTS.md has engram protocol"
         assert_no_duplicate_section "$agents_md" "engram-protocol" "No duplicate engram section in AGENTS.md"
         # SDD orchestrator for OpenCode lives in opencode.json as an agent definition (not AGENTS.md)
-        assert_file_contains "$settings" '"gentle-orchestrator"' "opencode.json has gentle-orchestrator agent"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "opencode.json has shevanio-orchestrator agent"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "opencode.json does not have legacy base sdd-orchestrator agent"
         # AGENTS.md must NOT have a sdd-orchestrator HTML section (it's handled by opencode.json)
         assert_file_not_contains "$agents_md" "<!-- shevanio-ai:sdd-orchestrator -->" "AGENTS.md has no SDD section marker (opencode uses json agent)"
@@ -1885,13 +1885,13 @@ test_integrity_sdd_skills_nonempty() {
 }
 
 test_integrity_sdd_orchestrator_in_opencode_json() {
-    log_test "Integrity: opencode.json contains gentle-orchestrator agent after SDD install"
+    log_test "Integrity: opencode.json contains shevanio-orchestrator agent after SDD install"
     cleanup_test_env
 
     if $BINARY install --agent opencode --component sdd --persona neutral 2>&1; then
         local settings="$HOME/.config/opencode/opencode.json"
         assert_file_exists "$settings" "opencode.json exists"
-        assert_file_contains "$settings" '"gentle-orchestrator"' "Has gentle-orchestrator agent"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "Has shevanio-orchestrator agent"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "Does not have legacy base sdd-orchestrator agent"
         assert_file_contains "$settings" '"agent"' "Has agent key"
         assert_valid_json "$settings" "opencode.json is valid JSON"
@@ -1970,12 +1970,12 @@ test_integrity_full_preset_all_skills_nonempty() {
 }
 
 test_integrity_sdd_orchestrator_agent_structure() {
-    log_test "Integrity: gentle-orchestrator agent has required fields in opencode.json"
+    log_test "Integrity: shevanio-orchestrator agent has required fields in opencode.json"
     cleanup_test_env
 
     if $BINARY install --agent opencode --component sdd --persona gentleman 2>&1; then
         local settings="$HOME/.config/opencode/opencode.json"
-        assert_file_contains "$settings" '"gentle-orchestrator"' "Has gentle-orchestrator"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "Has shevanio-orchestrator"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "Does not have legacy base sdd-orchestrator"
         assert_file_contains "$settings" '"mode"' "Agent has mode field"
         assert_file_contains "$settings" '"prompt"' "Agent has prompt field"
@@ -2004,8 +2004,8 @@ test_integrity_skills_plus_sdd_coexist() {
         assert_file_exists "$skill_dir/_shared/persistence-contract.md" "Shared persistence contract"
         assert_file_size_min "$skill_dir/_shared/persistence-contract.md" 50 "Persistence contract has content"
 
-        # opencode.json should have gentle-orchestrator as the base coordinator
-        assert_file_contains "$HOME/.config/opencode/opencode.json" '"gentle-orchestrator"' "gentle-orchestrator present"
+        # opencode.json should have shevanio-orchestrator as the base coordinator
+        assert_file_contains "$HOME/.config/opencode/opencode.json" '"shevanio-orchestrator"' "shevanio-orchestrator present"
         assert_file_not_contains "$HOME/.config/opencode/opencode.json" '"sdd-orchestrator"' "legacy base sdd-orchestrator absent"
     else
         log_fail "SDD + skills coexistence install failed"
@@ -2024,7 +2024,7 @@ test_oc_sdd_multi_mode_injection() {
         local model_variants_plugin="$HOME/.config/opencode/plugins/model-variants.ts"
         assert_file_exists "$settings" "opencode.json exists"
         assert_valid_json "$settings" "opencode.json is valid JSON"
-        assert_file_contains "$settings" '"gentle-orchestrator"' "Has gentle-orchestrator agent"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "Has shevanio-orchestrator agent"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "Does not have legacy base sdd-orchestrator agent"
         assert_file_contains "$settings" '"sdd-apply"' "Has sdd-apply sub-agent"
         assert_file_contains "$settings" '"sdd-init"' "Has sdd-init sub-agent"
@@ -2053,7 +2053,7 @@ test_oc_sdd_single_mode_no_models() {
         local settings="$HOME/.config/opencode/opencode.json"
         assert_file_exists "$settings" "opencode.json exists"
         assert_valid_json "$settings" "opencode.json is valid JSON"
-        assert_file_contains "$settings" '"gentle-orchestrator"' "Has gentle-orchestrator agent"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "Has shevanio-orchestrator agent"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "Single mode: does not have legacy base sdd-orchestrator agent"
         assert_file_contains "$settings" '"sdd-apply"' "Single mode: has sdd-apply sub-agent"
         assert_file_not_contains "$settings" '"model"' "Single mode: no model overrides"
@@ -2071,7 +2071,7 @@ test_oc_sdd_default_mode_same_as_single() {
     if $BINARY install --agent opencode --component sdd --persona neutral 2>&1; then
         local settings="$HOME/.config/opencode/opencode.json"
         assert_file_exists "$settings" "opencode.json exists"
-        assert_file_contains "$settings" '"gentle-orchestrator"' "Has gentle-orchestrator"
+        assert_file_contains "$settings" '"shevanio-orchestrator"' "Has shevanio-orchestrator"
         assert_file_not_contains "$settings" '"sdd-orchestrator"' "Default mode: does not have legacy base sdd-orchestrator"
         assert_file_contains "$settings" '"sdd-apply"' "Default mode: has sdd-apply sub-agent"
         assert_file_not_contains "$settings" '"model"' "Default mode: no model overrides"

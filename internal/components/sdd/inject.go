@@ -2759,24 +2759,15 @@ func normalizeOpenCodeSDDModelAssignments(assignments map[string]model.ModelAssi
 	if len(assignments) == 0 {
 		return assignments
 	}
-	canonical := model.CanonicalManagedIdentity.Actor
-	canonicalAssignment, hasCanonical := assignments[canonical]
 	normalized := make(map[string]model.ModelAssignment, len(assignments))
 	for key, assignment := range assignments {
-		_, class := model.NormalizeOrchestratorRead(key)
+		normalizedKey, class := model.NormalizeOrchestratorRead(key)
 		if class == model.IdentityUnknown {
 			normalized[key] = assignment
+			continue
 		}
-	}
-	if hasCanonical {
-		normalized[canonical] = canonicalAssignment
-		return normalized
-	}
-	for key, assignment := range assignments {
-		_, class := model.NormalizeOrchestratorRead(key)
-		if class == model.IdentityLegacyManaged {
-			normalized[canonical] = assignment
-			break
+		if _, exists := normalized[normalizedKey]; !exists || class == model.IdentityCanonicalManaged {
+			normalized[normalizedKey] = assignment
 		}
 	}
 	return normalized
