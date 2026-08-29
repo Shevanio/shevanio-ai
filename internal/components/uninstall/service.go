@@ -25,6 +25,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 )
 
 type Manager interface {
@@ -1526,12 +1527,7 @@ func updateStateAfterUninstall(homeDir string, toRemove []model.AgentID) ([]mode
 	if len(toRemove) == 0 {
 		return nil, nil
 	}
-
-	current, err := state.Read(homeDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
+	if _, err := state.Read(homeDir); err != nil && !os.IsNotExist(err) {
 		return nil, fmt.Errorf("read install state: %w", err)
 	}
 
@@ -1540,25 +1536,24 @@ func updateStateAfterUninstall(homeDir string, toRemove []model.AgentID) ([]mode
 		removeSet[string(agentID)] = struct{}{}
 	}
 
-	kept := make([]string, 0, len(current.InstalledAgents))
 	removed := make([]model.AgentID, 0, len(toRemove))
-	for _, installed := range current.InstalledAgents {
-		if _, ok := removeSet[installed]; ok {
-			removed = append(removed, model.AgentID(installed))
-			continue
+	_, err := statestore.WithLock(homeDir, func(current *state.InstallState) error {
+		current.InstalledAgents = slices.DeleteFunc(current.InstalledAgents, func(installed string) bool {
+			if _, ok := removeSet[installed]; ok {
+				removed = append(removed, model.AgentID(installed))
+				return true
+			}
+			return false
+		})
+		if len(removed) == 0 {
+			return nil
 		}
-		kept = append(kept, installed)
-	}
-	if len(removed) == 0 {
-		return nil, nil
-	}
-
-	updated := current
-	updated.InstalledAgents = kept
-	if slices.Contains(toRemove, model.AgentOpenCode) {
-		updated.BackgroundIntent = ""
-	}
-	if err := state.Write(homeDir, updated); err != nil {
+		if slices.Contains(toRemove, model.AgentOpenCode) {
+			current.BackgroundIntent = ""
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, fmt.Errorf("write install state: %w", err)
 	}
 	return removed, nil

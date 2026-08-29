@@ -31,6 +31,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/tui/screens"
 	"github.com/shevanio/shevanio-ai/v2/internal/update"
@@ -3323,13 +3324,10 @@ func (m Model) startUpgradeSync() tea.Cmd {
 			// present — skip writing to avoid dropping installed_agents, model
 			// assignments, and other persisted fields.
 			if h := homeDir(); h != "" {
-				s, readErr := state.Read(h)
-				if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
-					// File exists but unreadable/corrupt — skip to avoid clobber.
-				} else {
+				_, _ = statestore.WithLock(h, func(s *state.InstallState) error {
 					s.PendingSync = true
-					_ = state.Write(h, s)
-				}
+					return nil
+				})
 			}
 			return SyncDoneMsg{}
 		}

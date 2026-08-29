@@ -24,6 +24,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 	"github.com/shevanio/shevanio-ai/v2/internal/tui"
@@ -639,6 +640,33 @@ func TestTUIExecutePersistsConfiguredSelection(t *testing.T) {
 	got, err := state.Read(home)
 	if result.Err != nil || err != nil || !got.SelectionConfigured || got.Preset != model.PresetCustom || got.SDDMode != model.SDDModeMulti || !got.StrictTDD || len(got.Components) != 0 || len(got.Skills) != 0 {
 		t.Fatalf("persisted selection = %#v, execute err = %v, read err = %v", got, result.Err, err)
+	}
+}
+
+func TestTUIInstallPublication_BridgeContentionPreservesLatestState(t *testing.T) {
+	home := t.TempDir()
+	setupMockHome(t, home)
+	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"concurrent"}, RDDMode: "off"}); err != nil {
+		t.Fatal(err)
+	}
+	locked, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := tuiExecuteWithBackground(
+		model.Selection{Preset: model.PresetCustom, Components: []model.ComponentID{}, Skills: []model.SkillID{}, SDDMode: model.SDDModeMulti, StrictTDD: true},
+		planner.ResolvedPlan{}, system.DetectionResult{}, "", "", "", "", nil,
+	)
+	if err := locked.Release(); err != nil {
+		t.Fatal(err)
+	}
+	after, err := state.Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Err == nil || len(after.InstalledAgents) != 1 || after.InstalledAgents[0] != "concurrent" || after.RDDMode != "off" {
+		t.Fatalf("behavior mismatch: TestTUIInstallPublication_BridgeContentionPreservesLatestState")
 	}
 }
 

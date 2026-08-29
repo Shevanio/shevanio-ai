@@ -7,9 +7,43 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
+
+func TestCheckAllWithCooldown_BridgeContentionLeavesStateUntouched(t *testing.T) {
+	home := t.TempDir()
+	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+	stale := now.Add(-7 * time.Hour)
+	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"claude-code"}, LastUpdateCheck: &stale}); err != nil {
+		t.Fatal(err)
+	}
+	locked, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checkCalls := 0
+	CheckAllWithCooldown(context.Background(), "1.0.0", system.PlatformProfile{}, home, 6*time.Hour,
+		func() time.Time { return now },
+		func(context.Context, string, system.PlatformProfile) []UpdateResult {
+			checkCalls++
+			return []UpdateResult{{Tool: ToolInfo{Name: "shevanio-ai"}, Status: UpToDate}}
+		},
+	)
+
+	if err := locked.Release(); err != nil {
+		t.Fatal(err)
+	}
+	after, err := state.Read(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if checkCalls != 1 || after.LastUpdateCheck == nil || !after.LastUpdateCheck.Equal(stale) || len(after.InstalledAgents) != 1 {
+		t.Fatalf("behavior mismatch: TestCheckAllWithCooldown_BridgeContentionLeavesStateUntouched")
+	}
+}
 
 // TestCheckAllWithCooldown_FreshCacheSkipsNetwork verifies that when
 // LastUpdateCheck is recent (elapsed < TTL) no GitHub call is made and the

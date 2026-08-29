@@ -31,7 +31,7 @@ var restoreState = restoreSnapshotDefault
 var releaseLock = func(lock *reviewtransaction.AuthorityFileLock) error { return lock.Release() }
 
 func Mutate(homeDir string, mutate Mutator) (Result, error)   { return mutateWithLock(homeDir, mutate) }
-func WithLock(homeDir string, mutate Mutator) (Result, error) { return mutateWithLock(homeDir, mutate) }
+func WithLock(homeDir string, mutate Mutator) (Result, error) { return Mutate(homeDir, mutate) }
 
 func mutateWithLock(homeDir string, mutate Mutator) (Result, error) {
 	lock, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(homeDir) + ".lock")
