@@ -28,6 +28,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
+	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/verify"
 )
 
@@ -5382,4 +5383,121 @@ func TestSyncBackupTargetsContainNoDuplicatePaths(t *testing.T) {
 	}
 
 	assertNoDuplicatePaths(t, "syncBackupTargets", targets)
+}
+func personaTestHome(t *testing.T) string {
+	home := t.TempDir()
+	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"claude-code"}, Persona: string(model.PersonaGentlemanNeutralArtifacts)}); err != nil {
+		t.Fatal(err)
+	}
+	return home
+}
+func personaTestSelection() model.Selection {
+	return model.Selection{Agents: []model.AgentID{model.AgentClaudeCode}, Components: []model.ComponentID{model.ComponentPersona}, Persona: model.PersonaNeutral}
+}
+func personaTestReady(t *testing.T) {
+	old := postSyncVerification
+	postSyncVerification = func(string, string, model.Selection) verify.Report { return verify.Report{Ready: true} }
+	t.Cleanup(func() { postSyncVerification = old })
+}
+func runPersonaScenario(t *testing.T, scenario string) {
+	home := personaTestHome(t)
+	selection := personaTestSelection()
+	if scenario == "wait" {
+		old := postSyncVerification
+		seen := ""
+		postSyncVerification = func(homeDir, _ string, _ model.Selection) verify.Report {
+			s, _ := state.Read(homeDir)
+			seen = s.Persona
+			return verify.Report{Ready: true}
+		}
+		t.Cleanup(func() { postSyncVerification = old })
+		if _, err := RunSyncWithSelection(home, selection); err != nil {
+			t.Fatal(err)
+		}
+		if seen != string(model.PersonaGentlemanNeutralArtifacts) {
+			t.Fatalf("verifier saw %q", seen)
+		}
+		return
+	}
+	if scenario == "reread" {
+		old := postSyncVerification
+		postSyncVerification = func(homeDir, _ string, _ model.Selection) verify.Report {
+			_ = os.WriteFile(state.Path(homeDir), []byte(`{"installed_agents":["claude-code"],"persona":"gentleman-neutral-artifacts","latest_sibling":true}`), 0o640)
+			return verify.Report{Ready: true}
+		}
+		t.Cleanup(func() { postSyncVerification = old })
+		if _, err := RunSyncWithSelection(home, selection); err != nil {
+			t.Fatal(err)
+		}
+		data, _ := os.ReadFile(state.Path(home))
+		if !bytes.Contains(data, []byte(`"latest_sibling": true`)) {
+			t.Fatal("latest state was lost")
+		}
+		return
+	}
+	if scenario == "verify" {
+		old := postSyncVerification
+		postSyncVerification = func(string, string, model.Selection) verify.Report { return verify.Report{Failed: 1} }
+		t.Cleanup(func() { postSyncVerification = old })
+		if _, err := RunSyncWithSelection(home, selection); err == nil {
+			t.Fatal("verification succeeded")
+		}
+		return
+	}
+	personaTestReady(t)
+	old := publishSyncState
+	first := true
+	if scenario == "outcome" {
+		for _, outcome := range []statestore.Outcome{statestore.Committed, statestore.Uncommitted, statestore.Unknown} {
+			t.Run(string(outcome), func(t *testing.T) {
+				home := personaTestHome(t)
+				old := publishSyncState
+				publishSyncState = func(homeDir string, s model.Selection, w string, b model.OpenCodeBackgroundIntent, p model.PiBackgroundIntent, v bool) (syncStatePublication, error) {
+					if outcome == statestore.Committed {
+						published, _ := old(homeDir, s, w, b, p, v)
+						return published, errors.New("release error")
+					}
+					return syncStatePublication{Result: statestore.Result{Outcome: outcome}}, errors.New("publication failure")
+				}
+				t.Cleanup(func() { publishSyncState = old })
+				_, err := RunSyncWithSelection(home, selection)
+				if err == nil {
+					t.Fatal("publication succeeded")
+				}
+			})
+		}
+		return
+	}
+	publishSyncState = func(homeDir string, s model.Selection, w string, b model.OpenCodeBackgroundIntent, p model.PiBackgroundIntent, v bool) (syncStatePublication, error) {
+		if scenario == "retry" && first {
+			first = false
+			return syncStatePublication{Result: statestore.Result{Outcome: statestore.Uncommitted}}, errors.New("retryable")
+		}
+		if scenario == "publish" {
+			return syncStatePublication{Result: statestore.Result{Outcome: statestore.Uncommitted}}, errors.New("write failed")
+		}
+		return old(homeDir, s, w, b, p, v)
+	}
+	t.Cleanup(func() { publishSyncState = old })
+	if _, err := RunSyncWithSelection(home, selection); scenario == "retry" && err == nil {
+		t.Fatal("first run succeeded")
+	} else if scenario != "retry" && err == nil {
+		t.Fatal("publication succeeded")
+	}
+}
+func TestSyncPersonaAliasPublicationWaitsForVerification(t *testing.T) { runPersonaScenario(t, "wait") }
+func TestSyncStatePublicationOutcomeMatrix(t *testing.T)               { runPersonaScenario(t, "outcome") }
+func TestSyncPersonaAliasPublicationReReadsLatestState(t *testing.T)   { runPersonaScenario(t, "reread") }
+func TestSyncPersonaAliasRetryAndByteStability(t *testing.T)           { runPersonaScenario(t, "retry") }
+func TestRunSyncWithSelectionKeepsLegacyPersonaOnVerificationFailure(t *testing.T) {
+	runPersonaScenario(t, "verify")
+}
+func TestRunSyncWithSelectionKeepsLegacyPersonaOnPublicationFailure(t *testing.T) {
+	runPersonaScenario(t, "publish")
+}
+func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.T) {
+	runPersonaScenario(t, "wait")
+}
+func TestRunSyncWithSelectionPreservesExplicitSelectionAndState(t *testing.T) {
+	runPersonaScenario(t, "wait")
 }

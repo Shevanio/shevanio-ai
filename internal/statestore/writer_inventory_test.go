@@ -15,12 +15,12 @@ import (
 
 const stateImport, storeImport = "github.com/shevanio/shevanio-ai/v2/internal/state", "github.com/shevanio/shevanio-ai/v2/internal/statestore"
 
-func TestU1322WriterInventoryDetectsEveryRawProductionWriter(t *testing.T) {
+func TestStatestoreWriterInventory(t *testing.T) {
 	_, file, _, _ := runtime.Caller(0)
 	root := filepath.Join(filepath.Dir(file), "..", "..")
 	entries := approvedWriterEntries()
 	if err := validateWriterInventory(root, entries); err != nil {
-		t.Fatalf("behavior mismatch: TestU1322WriterInventoryDetectsEveryRawProductionWriter")
+		t.Fatalf("behavior mismatch: TestStatestoreWriterInventory")
 	}
 	fixture := t.TempDir()
 	for i := range entries {
@@ -39,7 +39,7 @@ func approvedWriterEntries() []writerEntry {
 		{"internal/update/cooldown.go", "CheckAllWithCooldown", "statestore.Mutate"}, {"internal/app/selfupdate.go", "selfUpdate", "statestore.Mutate"},
 		{"internal/app/app.go", "RunArgs", "statestore.Mutate"}, {"internal/app/app.go", "tuiExecuteWithBackground", "statestore.Mutate"}, {"internal/app/app.go", "persistAssignments", "statestore.Mutate"},
 		{"internal/tui/model.go", "startUpgradeSync", "statestore.Mutate"}, {"internal/cli/review_mode.go", "writeGlobalRDDMode", "statestore.Mutate"}, {"internal/components/uninstall/service.go", "updateStateAfterUninstall", "statestore.Mutate"},
-		{"internal/cli/sync.go", "migratePersistedPersonaAlias", "statestore.Mutate"}, {"internal/cli/run.go", "persistInstallState", "statestore.Mutate"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "statestore.Mutate"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "statestore.Begin"},
+		{"internal/cli/run.go", "persistInstallState", "statestore.Mutate"}, {"internal/cli/sync.go", "persistSyncManagedAssetStateWithBackground", "statestore.Mutate"}, {"internal/cli/gga_retirement.go", "MigrateLegacyGGA", "statestore.Begin"},
 	}
 }
 func validateWriterInventory(root string, want []writerEntry) error {
