@@ -5406,6 +5406,11 @@ func personaStateSnapshot(t *testing.T, home string) ([]byte, os.FileMode) {
 	must(t, err)
 	return mustPersonaFile(t, state.Path(home)), info.Mode().Perm()
 }
+func personaFileSnapshot(t *testing.T, path string) ([]byte, os.FileMode) {
+	info, err := os.Stat(path)
+	must(t, err)
+	return mustPersonaFile(t, path), info.Mode().Perm()
+}
 func mustPersonaState(t *testing.T, home string) state.InstallState {
 	s, err := state.Read(home)
 	must(t, err)
@@ -5550,7 +5555,8 @@ func TestSyncPersonaAliasPublicationWaitsForVerification(t *testing.T) { runPers
 func TestSyncPersonaAliasPublicationReReadsLatestState(t *testing.T)   { runPersonaScenario(t, "reread") }
 
 func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.T) {
-	home, before, mode, _, _, buf := personaRuntimeSetup(t, true)
+	home, before, mode, asset, assetBefore, buf := personaRuntimeSetup(t, true)
+	_, assetMode := personaFileSnapshot(t, asset)
 	lock, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
 	if err != nil {
 		t.Fatal(err)
@@ -5559,6 +5565,10 @@ func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.
 	got, gotMode := personaStateSnapshot(t, home)
 	if !bytes.Equal(got, before) || gotMode != mode {
 		t.Fatal("contention changed authoritative state")
+	}
+	assetAfter, afterAssetMode := personaFileSnapshot(t, asset)
+	if !bytes.Equal(assetAfter, assetBefore) || afterAssetMode != assetMode {
+		t.Fatalf("contention changed managed asset: bytes=%q mode=%#o", assetAfter, afterAssetMode)
 	}
 	if personaBackupCount(t, home) == 0 || buf.Len() != 0 {
 		t.Fatalf("contention evidence/notice = backups=%d notice=%q", personaBackupCount(t, home), buf.String())
@@ -5577,6 +5587,7 @@ func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.
 
 func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
 	home, before, mode, asset, assetBefore, buf := personaRuntimeSetup(t, true)
+	_, assetMode := personaFileSnapshot(t, asset)
 	old := publishSyncState
 	first := true
 	publishSyncState = func(homeDir string, s model.Selection, w string, b model.OpenCodeBackgroundIntent, p model.PiBackgroundIntent, v bool) (syncStatePublication, error) {
@@ -5598,13 +5609,21 @@ func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
 	}
 	requirePersonaSync(t, home, personaTestSelection())
 	stable, stableMode := personaStateSnapshot(t, home)
+	stableAsset, _ := personaFileSnapshot(t, asset)
+	if bytes.Equal(stableAsset, assetBefore) {
+		t.Fatalf("successful retry retained user asset: bytes=%q", stableAsset)
+	}
 	if strings.Count(buf.String(), personaAliasRemapNotice) != 1 {
 		t.Fatalf("successful retry notice = %q", buf.String())
 	}
 	requirePersonaSync(t, home, personaTestSelection())
 	repeated, repeatedMode := personaStateSnapshot(t, home)
+	repeatedAsset, repeatedAssetMode := personaFileSnapshot(t, asset)
 	if !bytes.Equal(repeated, stable) || repeatedMode != stableMode {
-		t.Fatal("repeated retry was not byte/mode stable")
+		t.Fatalf("repeated state changed: bytes=%q mode=%#o", repeated, repeatedMode)
+	}
+	if !bytes.Equal(repeatedAsset, stableAsset) || repeatedAssetMode != assetMode {
+		t.Fatalf("repeated asset changed: bytes=%q mode=%#o", repeatedAsset, repeatedAssetMode)
 	}
 }
 
@@ -5697,10 +5716,37 @@ func TestSyncStatePublicationOutcomeMatrix(t *testing.T) {
 		name    string
 		outcome statestore.Outcome
 	}{
-		{"committed-release-notice", statestore.Committed}, {"uncommitted", statestore.Uncommitted}, {"unknown", statestore.Unknown},
+		{"committed-release-notice", statestore.Committed}, {"committed-release-cleanup-join", statestore.Committed}, {"uncommitted", statestore.Uncommitted}, {"unknown", statestore.Unknown},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			home, _, _, asset, beforeAsset, buf := personaRuntimeSetup(t, true)
+			if tc.name == "committed-release-cleanup-join" {
+				snapshotDir := t.TempDir()
+				marker := filepath.Join(snapshotDir, "rollback-marker")
+				mustWrite(t, marker, []byte("rollback snapshot"), 0o600)
+				markerInfo, err := os.Stat(marker)
+				must(t, err)
+				releaseErr, cleanupErr := errors.New("release error"), errors.New("cleanup error")
+				_, err = finishSyncPublication(SyncResult{}, syncStatePublication{Result: statestore.Result{Outcome: statestore.Committed}, PersonaNormalized: true}, releaseErr, nil, &pipeline.ExecutionResult{}, func() error {
+					return errors.Join(os.Remove(marker), os.RemoveAll(snapshotDir), cleanupErr)
+				})
+				_, snapshotErr := os.Stat(snapshotDir)
+				checks := []struct {
+					name string
+					ok   bool
+					got  any
+				}{
+					{"marker mode", markerInfo.Mode().Perm() == 0o600, markerInfo.Mode().Perm()}, {"snapshot removed", os.IsNotExist(snapshotErr), snapshotErr},
+					{"release error", errors.Is(err, releaseErr), err}, {"cleanup error", errors.Is(err, cleanupErr), err}, {"notice count", strings.Count(buf.String(), personaAliasRemapNotice) == 1, strings.Count(buf.String(), personaAliasRemapNotice)},
+				}
+				for _, check := range checks {
+					if !check.ok {
+						t.Fatalf("%s: observed %v", check.name, check.got)
+					}
+				}
+				return
+			}
+			_, beforeAssetMode := personaFileSnapshot(t, asset)
 			old := publishSyncState
 			publishSyncState = func(homeDir string, _ model.Selection, _ string, _ model.OpenCodeBackgroundIntent, _ model.PiBackgroundIntent, _ bool) (syncStatePublication, error) {
 				if tc.outcome == statestore.Committed {
@@ -5713,9 +5759,15 @@ func TestSyncStatePublicationOutcomeMatrix(t *testing.T) {
 			requirePersonaFailure(t, home, personaTestSelection())
 			current := mustPersonaState(t, home)
 			if tc.outcome == statestore.Committed {
-				afterAsset := mustPersonaFile(t, asset)
-				if current.Persona != string(model.PersonaNeutral) || !strings.Contains(buf.String(), personaAliasRemapNotice) || bytes.Equal(afterAsset, beforeAsset) {
-					t.Fatalf("behavior mismatch: TestSyncStatePublicationOutcomeMatrix/committed-release-notice state=%q notice=%q", current.Persona, buf.String())
+				afterAsset, afterAssetMode := personaFileSnapshot(t, asset)
+				if current.Persona != string(model.PersonaNeutral) || bytes.Equal(afterAsset, beforeAsset) || afterAssetMode != beforeAssetMode {
+					t.Fatalf("committed state/asset mismatch: state=%q asset=%q mode=%#o", current.Persona, afterAsset, afterAssetMode)
+				}
+				if got := strings.Count(buf.String(), personaAliasRemapNotice); got != 1 {
+					t.Fatalf("committed notice count = %d, output=%q", got, buf.String())
+				}
+				if got := personaBackupCount(t, home); got != 1 {
+					t.Fatalf("committed durable backup count = %d, want 1", got)
 				}
 				return
 			}
