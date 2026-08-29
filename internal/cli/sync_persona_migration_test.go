@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
@@ -53,10 +54,13 @@ func TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp(t *testing.T) {
 	defer func() { personaNoticeWriter = previous }()
 
 	homeDir := t.TempDir()
-	if err := state.Write(homeDir, state.InstallState{Persona: string(model.PersonaGentlemanNeutralArtifacts)}); err != nil {
+	if err := state.Write(homeDir, state.InstallState{Persona: string(model.PersonaGentlemanNeutralArtifacts), InstalledBinaryVersion: "old", ManagedAssetDigest: "old"}); err != nil {
 		t.Fatalf("seed state: %v", err)
 	}
-
+	legacyPath := homeDir + "/.gentle-ai/state.json"
+	legacy := []byte(`{"persona":"legacy-only","unknown":true}
+`)
+	mustWrite(t, legacyPath, legacy, 0o600)
 	result, err := RunSyncWithSelection(homeDir, model.Selection{})
 	if err != nil {
 		t.Fatalf("RunSyncWithSelection() error = %v", err)
@@ -64,14 +68,34 @@ func TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp(t *testing.T) {
 	if !result.NoOp {
 		t.Fatal("zero-agent sync must report NoOp")
 	}
-	reread, err := state.Read(homeDir)
-	if err != nil {
-		t.Fatalf("re-read state: %v", err)
-	}
+	reread := mustPersonaState(t, homeDir)
 	if reread.Persona != string(model.PersonaNeutral) {
 		t.Fatalf("persisted persona = %q, want %q after no-op sync", reread.Persona, model.PersonaNeutral)
 	}
-	if !strings.Contains(buf.String(), personaAliasRemapNotice) {
-		t.Fatalf("notice not printed on no-op sync; got %q", buf.String())
+	if reread.InstalledBinaryVersion != "old" || reread.ManagedAssetDigest != "old" || strings.Count(buf.String(), personaAliasRemapNotice) != 1 {
+		t.Fatalf("alias-only publication changed provenance or notice count: state=%#v notice=%q", reread, buf.String())
+	}
+	gotLegacy := mustPersonaFile(t, legacyPath)
+	legacyInfo, err := os.Stat(legacyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(gotLegacy, legacy) || legacyInfo.Mode().Perm() != 0o600 {
+		t.Fatal("alias-only publication changed legacy fallback")
+	}
+
+	noAlias := t.TempDir()
+	if err := state.Write(noAlias, state.InstallState{Persona: string(model.PersonaNeutral)}); err != nil {
+		t.Fatal(err)
+	}
+	noAliasBefore, noAliasMode := personaStateSnapshot(t, noAlias)
+	buf.Reset()
+	result, err = RunSyncWithSelection(noAlias, model.Selection{})
+	if err != nil || !result.NoOp {
+		t.Fatalf("true no-op = result=%#v err=%v", result, err)
+	}
+	noAliasAfter, gotNoAliasMode := personaStateSnapshot(t, noAlias)
+	if !bytes.Equal(noAliasAfter, noAliasBefore) || gotNoAliasMode != noAliasMode || buf.Len() != 0 {
+		t.Fatal("true no-op wrote state or emitted a notice")
 	}
 }

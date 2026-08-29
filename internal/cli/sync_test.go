@@ -27,6 +27,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"github.com/shevanio/shevanio-ai/v2/internal/statestore"
 	"github.com/shevanio/shevanio-ai/v2/internal/verify"
@@ -5399,6 +5400,66 @@ func personaTestReady(t *testing.T) {
 	postSyncVerification = func(string, string, model.Selection) verify.Report { return verify.Report{Ready: true} }
 	t.Cleanup(func() { postSyncVerification = old })
 }
+
+func personaStateSnapshot(t *testing.T, home string) ([]byte, os.FileMode) {
+	info, err := os.Stat(state.Path(home))
+	must(t, err)
+	return mustPersonaFile(t, state.Path(home)), info.Mode().Perm()
+}
+func mustPersonaState(t *testing.T, home string) state.InstallState {
+	s, err := state.Read(home)
+	must(t, err)
+	return s
+}
+func mustPersonaFile(t *testing.T, path string) []byte {
+	data, err := os.ReadFile(path)
+	must(t, err)
+	return data
+}
+func personaBackupCount(t *testing.T, home string) int {
+	entries, err := os.ReadDir(filepath.Join(home, ".shevanio-ai", "backups"))
+	must(t, err)
+	return len(entries)
+}
+
+func personaAsset(t *testing.T, home string) string {
+	path := filepath.Join(home, ".claude", "CLAUDE.md")
+	mustWrite(t, path, []byte("user-authored prompt\n"), 0o644)
+	return path
+}
+
+func personaNotice(t *testing.T) (*bytes.Buffer, func()) {
+	var buf bytes.Buffer
+	previous := personaNoticeWriter
+	personaNoticeWriter = &buf
+	return &buf, func() { personaNoticeWriter = previous }
+}
+
+func personaRuntimeSetup(t *testing.T, ready bool) (string, []byte, os.FileMode, string, []byte, *bytes.Buffer) {
+	if ready {
+		personaTestReady(t)
+	}
+	home := personaTestHome(t)
+	before, mode := personaStateSnapshot(t, home)
+	asset := personaAsset(t, home)
+	assetBefore := mustPersonaFile(t, asset)
+	buf, restoreNotice := personaNotice(t)
+	t.Cleanup(restoreNotice)
+	return home, before, mode, asset, assetBefore, buf
+}
+
+func requirePersonaSync(t *testing.T, home string, selection model.Selection) {
+	if _, err := RunSyncWithSelection(home, selection); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func requirePersonaFailure(t *testing.T, home string, selection model.Selection) {
+	if _, err := RunSyncWithSelection(home, selection); err == nil {
+		t.Fatal("persona sync unexpectedly succeeded")
+	}
+}
+
 func runPersonaScenario(t *testing.T, scenario string) {
 	home := personaTestHome(t)
 	selection := personaTestSelection()
@@ -5486,18 +5547,188 @@ func runPersonaScenario(t *testing.T, scenario string) {
 	}
 }
 func TestSyncPersonaAliasPublicationWaitsForVerification(t *testing.T) { runPersonaScenario(t, "wait") }
-func TestSyncStatePublicationOutcomeMatrix(t *testing.T)               { runPersonaScenario(t, "outcome") }
 func TestSyncPersonaAliasPublicationReReadsLatestState(t *testing.T)   { runPersonaScenario(t, "reread") }
-func TestSyncPersonaAliasRetryAndByteStability(t *testing.T)           { runPersonaScenario(t, "retry") }
-func TestRunSyncWithSelectionKeepsLegacyPersonaOnVerificationFailure(t *testing.T) {
-	runPersonaScenario(t, "verify")
-}
-func TestRunSyncWithSelectionKeepsLegacyPersonaOnPublicationFailure(t *testing.T) {
-	runPersonaScenario(t, "publish")
-}
+
 func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.T) {
-	runPersonaScenario(t, "wait")
+	home, before, mode, _, _, buf := personaRuntimeSetup(t, true)
+	lock, err := reviewtransaction.AcquireAuthorityFileLock(state.Path(home) + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	requirePersonaFailure(t, home, personaTestSelection())
+	got, gotMode := personaStateSnapshot(t, home)
+	if !bytes.Equal(got, before) || gotMode != mode {
+		t.Fatal("contention changed authoritative state")
+	}
+	if personaBackupCount(t, home) == 0 || buf.Len() != 0 {
+		t.Fatalf("contention evidence/notice = backups=%d notice=%q", personaBackupCount(t, home), buf.String())
+	}
+	if err := lock.Release(); err != nil {
+		t.Fatal(err)
+	}
+	requirePersonaSync(t, home, personaTestSelection())
+	if current, _ := state.Read(home); current.Persona != string(model.PersonaNeutral) {
+		t.Fatalf("retry persona = %q", current.Persona)
+	}
+	if strings.Count(buf.String(), personaAliasRemapNotice) != 1 {
+		t.Fatalf("retry notice = %q", buf.String())
+	}
 }
+
+func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
+	home, before, mode, asset, assetBefore, buf := personaRuntimeSetup(t, true)
+	old := publishSyncState
+	first := true
+	publishSyncState = func(homeDir string, s model.Selection, w string, b model.OpenCodeBackgroundIntent, p model.PiBackgroundIntent, v bool) (syncStatePublication, error) {
+		if first {
+			first = false
+			return syncStatePublication{Result: statestore.Result{Outcome: statestore.Uncommitted}}, errors.New("retryable")
+		}
+		return old(homeDir, s, w, b, p, v)
+	}
+	t.Cleanup(func() { publishSyncState = old })
+	requirePersonaFailure(t, home, personaTestSelection())
+	got, gotMode := personaStateSnapshot(t, home)
+	if !bytes.Equal(got, before) || gotMode != mode {
+		t.Fatal("failed publication changed state")
+	}
+	assetAfter := mustPersonaFile(t, asset)
+	if !bytes.Equal(assetAfter, assetBefore) || personaBackupCount(t, home) == 0 || buf.Len() != 0 {
+		t.Fatal("failed publication did not compensate and retain evidence")
+	}
+	requirePersonaSync(t, home, personaTestSelection())
+	stable, stableMode := personaStateSnapshot(t, home)
+	if strings.Count(buf.String(), personaAliasRemapNotice) != 1 {
+		t.Fatalf("successful retry notice = %q", buf.String())
+	}
+	requirePersonaSync(t, home, personaTestSelection())
+	repeated, repeatedMode := personaStateSnapshot(t, home)
+	if !bytes.Equal(repeated, stable) || repeatedMode != stableMode {
+		t.Fatal("repeated retry was not byte/mode stable")
+	}
+}
+
 func TestRunSyncWithSelectionPreservesExplicitSelectionAndState(t *testing.T) {
-	runPersonaScenario(t, "wait")
+	personaTestReady(t)
+	home := t.TempDir()
+	legacy := []byte(`{"schema_version":1,"installed_agents":["claude-code"],"persona":"gentleman-neutral-artifacts","sibling_actor":"keep","profile":"keep"}
+`)
+	legacyPath := filepath.Join(home, ".gentle-ai", "state.json")
+	mustWrite(t, legacyPath, legacy, 0o600)
+	selection := model.Selection{
+		Agents: []model.AgentID{model.AgentClaudeCode}, Components: []model.ComponentID{model.ComponentPersona}, Persona: model.PersonaNeutral,
+		Preset: model.PresetFullGentleman, SDDMode: model.SDDModeMulti, SDDProfileStrategy: model.SDDProfileStrategyGeneratedMulti, StrictTDD: true,
+		ModelAssignments:            map[string]model.ModelAssignment{"sdd-apply": {ProviderID: "anthropic", ModelID: "opus", Effort: "high"}},
+		ClaudePhaseAssignments:      map[string]model.ClaudePhaseAssignment{"sdd-apply": {Model: model.ClaudeModelOpus, Effort: model.ClaudeEffortHigh}},
+		CodexCarrilModelAssignments: map[string]string{"sdd-strong": "gpt-5.6-luna"},
+		Profiles:                    []model.Profile{{Name: "keep", OrchestratorModel: model.ModelAssignment{ProviderID: "openai", ModelID: "gpt-5.6-luna"}}},
+	}
+	var seen model.Selection
+	old := postSyncVerification
+	postSyncVerification = func(_ string, _ string, got model.Selection) verify.Report {
+		seen = got
+		return verify.Report{Ready: true}
+	}
+	t.Cleanup(func() { postSyncVerification = old })
+	requirePersonaSync(t, home, selection)
+	if !reflect.DeepEqual(seen, selection) {
+		t.Fatalf("explicit selection changed: got %#v want %#v", seen, selection)
+	}
+	gotLegacy := mustPersonaFile(t, legacyPath)
+	info, err := os.Stat(legacyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(gotLegacy, legacy) || info.Mode().Perm() != 0o600 {
+		t.Fatal("legacy fallback bytes or mode changed")
+	}
+	canonical := mustPersonaFile(t, state.Path(home))
+	if !bytes.Contains(canonical, []byte(`"sibling_actor": "keep"`)) || !bytes.Contains(canonical, []byte(`"profile": "keep"`)) {
+		t.Fatal("canonical state lost sibling or profile field")
+	}
+}
+
+func runPersonaFailure(t *testing.T, verification bool) {
+	home, before, mode, asset, assetBefore, buf := personaRuntimeSetup(t, !verification)
+	if verification {
+		old := postSyncVerification
+		postSyncVerification = func(string, string, model.Selection) verify.Report { return verify.Report{Failed: 1} }
+		t.Cleanup(func() { postSyncVerification = old })
+	} else {
+		old := publishSyncState
+		publishSyncState = func(string, model.Selection, string, model.OpenCodeBackgroundIntent, model.PiBackgroundIntent, bool) (syncStatePublication, error) {
+			return syncStatePublication{Result: statestore.Result{Outcome: statestore.Uncommitted}}, errors.New("publication failure")
+		}
+		t.Cleanup(func() { publishSyncState = old })
+	}
+	requirePersonaFailure(t, home, personaTestSelection())
+	got, gotMode := personaStateSnapshot(t, home)
+	assetAfter := mustPersonaFile(t, asset)
+	if !bytes.Equal(got, before) || gotMode != mode || !bytes.Equal(assetAfter, assetBefore) || personaBackupCount(t, home) == 0 || buf.Len() != 0 {
+		t.Fatalf("persona failure did not preserve state, compensate assets, and retain evidence: verification=%t", verification)
+	}
+}
+
+func TestRunSyncWithSelectionKeepsLegacyPersonaOnVerificationFailure(t *testing.T) {
+	runPersonaFailure(t, true)
+}
+
+func TestRunSyncWithSelectionKeepsLegacyPersonaOnPublicationFailure(t *testing.T) {
+	runPersonaFailure(t, false)
+}
+
+func TestSyncCommittedReleaseErrorEmitsPersonaNormalizationNotice(t *testing.T) {
+	buf, restoreNotice := personaNotice(t)
+	defer restoreNotice()
+	_, err := finishSyncPublication(SyncResult{}, syncStatePublication{
+		Result:            statestore.Result{Outcome: statestore.Committed},
+		PersonaNormalized: true,
+	}, errors.New("release error"), nil, nil, nil)
+	if err == nil {
+		t.Fatal("committed release error was hidden")
+	}
+	if !strings.Contains(buf.String(), personaAliasRemapNotice) {
+		t.Fatalf("behavior mismatch: TestSyncCommittedReleaseErrorEmitsPersonaNormalizationNotice")
+	}
+}
+
+func TestSyncStatePublicationOutcomeMatrix(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		outcome statestore.Outcome
+	}{
+		{"committed-release-notice", statestore.Committed}, {"uncommitted", statestore.Uncommitted}, {"unknown", statestore.Unknown},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, _, _, asset, beforeAsset, buf := personaRuntimeSetup(t, true)
+			old := publishSyncState
+			publishSyncState = func(homeDir string, _ model.Selection, _ string, _ model.OpenCodeBackgroundIntent, _ model.PiBackgroundIntent, _ bool) (syncStatePublication, error) {
+				if tc.outcome == statestore.Committed {
+					mustWriteFile(t, state.Path(homeDir), []byte(`{"installed_agents":["claude-code"],"persona":"neutral"}
+`))
+				}
+				return syncStatePublication{Result: statestore.Result{Outcome: tc.outcome}, PersonaNormalized: tc.outcome == statestore.Committed}, errors.New("publication outcome")
+			}
+			t.Cleanup(func() { publishSyncState = old })
+			requirePersonaFailure(t, home, personaTestSelection())
+			current := mustPersonaState(t, home)
+			if tc.outcome == statestore.Committed {
+				afterAsset := mustPersonaFile(t, asset)
+				if current.Persona != string(model.PersonaNeutral) || !strings.Contains(buf.String(), personaAliasRemapNotice) || bytes.Equal(afterAsset, beforeAsset) {
+					t.Fatalf("behavior mismatch: TestSyncStatePublicationOutcomeMatrix/committed-release-notice state=%q notice=%q", current.Persona, buf.String())
+				}
+				return
+			}
+			if current.Persona != string(model.PersonaGentlemanNeutralArtifacts) || buf.Len() != 0 || personaBackupCount(t, home) == 0 {
+				t.Fatalf("outcome %s lost state/evidence semantics", tc.outcome)
+			}
+			afterAsset := mustPersonaFile(t, asset)
+			if tc.outcome == statestore.Uncommitted && !bytes.Equal(afterAsset, beforeAsset) {
+				t.Fatal("uncommitted outcome did not compensate assets")
+			}
+			if tc.outcome == statestore.Unknown && bytes.Equal(afterAsset, beforeAsset) {
+				t.Fatal("unknown outcome incorrectly compensated assets")
+			}
+		})
+	}
 }

@@ -1609,12 +1609,16 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 
 type syncStatePublication struct {
 	statestore.Result
+	PersonaNormalized bool
 }
 
 var publishSyncState = persistSyncManagedAssetStateWithBackground
 
 func finishSyncPublication(result SyncResult, publication syncStatePublication, publishErr error, orchestrator *pipeline.Orchestrator, execution *pipeline.ExecutionResult, removeSnapshot func() error) (SyncResult, error) {
 	if publication.Result.Outcome == statestore.Committed {
+		if publication.PersonaNormalized {
+			fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
+		}
 		if removeSnapshot != nil && execution != nil {
 			if cleanupErr := removeSnapshot(); cleanupErr != nil {
 				publishErr = errors.Join(publishErr, cleanupErr)
@@ -1643,13 +1647,12 @@ func finishSyncPublication(result SyncResult, publication syncStatePublication, 
 
 func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.Selection, writer string, background model.OpenCodeBackgroundIntent, piBackground model.PiBackgroundIntent, publishProvenance bool) (syncStatePublication, error) {
 	publication := syncStatePublication{}
-	normalized := false
 	var err error
 	publication.Result, err = statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 		shouldWrite := false
 		if latest.Persona == string(model.PersonaGentlemanNeutralArtifacts) {
 			latest.Persona = string(model.PersonaNeutral)
-			normalized = true
+			publication.PersonaNormalized = true
 			shouldWrite = true
 		}
 		// #2685: stamp the binary version that performed this sync, so doctor
@@ -1689,9 +1692,6 @@ func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.
 				err, state.Path(homeDir))
 		}
 		return publication, fmt.Errorf("persist managed asset provenance: %w", err)
-	}
-	if normalized {
-		fmt.Fprintln(personaNoticeWriter, personaAliasRemapNotice)
 	}
 	return publication, nil
 }

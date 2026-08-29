@@ -28,7 +28,7 @@ func TestStatestoreWriterInventory(t *testing.T) {
 	}
 	writeSyntheticWriterFixture(t, fixture, entries)
 	if err := validateWriterInventory(fixture, entries); err == nil {
-		t.Fatalf("behavior mismatch: TestU1322WriterInventoryDetectsEveryRawProductionWriter")
+		t.Fatal("synthetic writer inventory was accepted")
 	}
 }
 
