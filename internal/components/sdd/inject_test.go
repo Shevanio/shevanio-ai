@@ -505,6 +505,9 @@ func TestInjectOpenCodeWritesCommandFiles(t *testing.T) {
 	if !strings.Contains(text, "description") {
 		t.Fatal("sdd-init.md missing frontmatter description — not real content")
 	}
+	if !strings.Contains(text, "agent: shevanio-orchestrator") || strings.Contains(text, "agent: gentle-orchestrator") {
+		t.Fatalf("sdd-init.md does not route to the canonical managed actor: %s", text)
+	}
 
 	for _, name := range []string{"skill-creator.md", "skill-registry.md"} {
 		path := filepath.Join(home, ".config", "opencode", "commands", name)
@@ -527,8 +530,8 @@ func TestInjectOpenCodeWritesCommandFiles(t *testing.T) {
 	if !strings.Contains(settingsText, `"agent"`) {
 		t.Fatal("opencode.json missing agent key for SDD commands")
 	}
-	if !strings.Contains(settingsText, `"gentle-orchestrator"`) {
-		t.Fatal("opencode.json missing gentle-orchestrator agent")
+	if !strings.Contains(settingsText, `"shevanio-orchestrator"`) {
+		t.Fatal("opencode.json missing canonical managed orchestrator agent")
 	}
 	if strings.Contains(settingsText, `"sdd-orchestrator"`) {
 		t.Fatal("opencode.json should not install legacy sdd-orchestrator agent")
@@ -563,7 +566,7 @@ func TestInjectOpenCodeIsIdempotent(t *testing.T) {
 	}
 	settingsPath := opencodeAdapter().SettingsPath(home)
 	firstSettings, err := os.ReadFile(settingsPath)
-	if err != nil || !bytes.Contains(firstSettings, []byte(`"default_agent": "gentle-orchestrator"`)) {
+	if err != nil || !bytes.Contains(firstSettings, []byte(`"default_agent": "shevanio-orchestrator"`)) {
 		t.Fatalf("first settings missing managed default: %s, err = %v", firstSettings, err)
 	}
 
@@ -573,6 +576,10 @@ func TestInjectOpenCodeIsIdempotent(t *testing.T) {
 	}
 	if second.Changed {
 		t.Fatalf("Inject() second changed = true")
+	}
+	secondSettings, err := os.ReadFile(settingsPath)
+	if err != nil || !bytes.Equal(firstSettings, secondSettings) {
+		t.Fatalf("second projection changed settings bytes, err = %v", err)
 	}
 }
 
@@ -633,7 +640,7 @@ func TestInjectOpenCodePreservesExistingOrchestratorPromptWhenRequested(t *testi
 	const customPrompt = "EXTERNAL_PROFILE_MANAGER_CUSTOM_PROMPT_DO_NOT_OVERWRITE"
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": "` + customPrompt + `"
     }
@@ -711,7 +718,7 @@ func TestInjectOpenCodeMigratesPreservedLegacyOrchestratorPromptReferences(t *te
 	const stalePrompt = "# Shevanio AI — SDD Orchestrator Instructions\n\nBind this to the dedicated `sdd-orchestrator` agent only.\n\n- Treat `agent.sdd-orchestrator.model` as authoritative when it is set.\n\n### Mandatory Delegation Triggers (Non-Skippable)\n\n3. **PR rule**: before commit, push, or PR after code changes, run a fresh-context review unless the diff is trivial docs/text.\n4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, merge recovery, confusing test command, or environment workaround, stop and run a fresh audit before continuing.\n6. **Fresh review rule**: use fresh context for adversarial review of diffs, conflicts, PR readiness, and incidents; use continuity/forked context only for implementation work that needs inherited state.\n"
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote(stalePrompt) + `
     }
@@ -751,8 +758,8 @@ func TestInjectOpenCodeMigratesPreservedLegacyOrchestratorPromptReferences(t *te
 		}
 	}
 	for _, wanted := range []string{
-		"Bind this to the dedicated `gentle-orchestrator` agent only.",
-		"agent.gentle-orchestrator.model",
+		"Bind this to the dedicated `shevanio-orchestrator` agent only.",
+		"agent.shevanio-orchestrator.model",
 		"### SDD Session Preflight (HARD GATE)",
 		"Use the `question` tool for SDD Session Preflight",
 		"Ask all four preflight groups in one single `question` tool call",
@@ -834,7 +841,7 @@ func TestInjectOpenCodeUpgradesPromptOwnedLensRouter(t *testing.T) {
 		"<!-- /shevanio-ai:delegation-hard-gates-migration -->\n"
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote(v1Block) + `
     }
@@ -865,7 +872,7 @@ func TestInjectOpenCodeUpgradesPromptOwnedLensRouter(t *testing.T) {
 	if err := json.Unmarshal(settingsBytes, &settings); err != nil {
 		t.Fatalf("Unmarshal(opencode.json) error = %v", err)
 	}
-	prompt := settings.Agent["gentle-orchestrator"].Prompt
+	prompt := settings.Agent["shevanio-orchestrator"].Prompt
 	if !strings.HasPrefix(prompt, userContent+"\n\n") {
 		t.Fatalf("user-authored content outside the migration block changed:\n%s", prompt)
 	}
@@ -1207,7 +1214,7 @@ Map answers to canonical values: A1/Interactive -> interactive.
 `
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote(partialPrompt) + `
     }
@@ -1308,7 +1315,7 @@ Hard gate rules:
 `
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote(stalePrompt) + `
     }
@@ -1368,7 +1375,7 @@ Hard gate rules:
 	}
 }
 
-func TestInjectOpenCodeMigratesLegacyBaseOrchestratorToGentleOrchestrator(t *testing.T) {
+func TestInjectOpenCodePreservesLegacyBaseAndProjectsCanonicalOrchestrator(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -1412,15 +1419,15 @@ func TestInjectOpenCodeMigratesLegacyBaseOrchestratorToGentleOrchestrator(t *tes
 	if !ok {
 		t.Fatal("opencode.json missing agent map")
 	}
-	if _, exists := agentMap["sdd-orchestrator"]; exists {
-		t.Fatal("legacy base sdd-orchestrator should be removed")
+	if _, exists := agentMap["sdd-orchestrator"]; !exists {
+		t.Fatal("legacy base sdd-orchestrator should be preserved")
 	}
 	if _, exists := agentMap["sdd-orchestrator-cheap"]; !exists {
 		t.Fatal("named profile orchestrator should be preserved")
 	}
-	gentleOrchestratorAgent, ok := agentMap["gentle-orchestrator"].(map[string]any)
+	gentleOrchestratorAgent, ok := agentMap["shevanio-orchestrator"].(map[string]any)
 	if !ok {
-		t.Fatal("gentle-orchestrator agent not found or wrong type")
+		t.Fatal("canonical orchestrator agent not found or wrong type")
 	}
 	prompt, _ := gentleOrchestratorAgent["prompt"].(string)
 	if !strings.Contains(prompt, legacyPrompt) {
@@ -1431,7 +1438,7 @@ func TestInjectOpenCodeMigratesLegacyBaseOrchestratorToGentleOrchestrator(t *tes
 	}
 }
 
-func TestInjectOpenCodeMigratesMisnamedGentlemanSDDOrchestrator(t *testing.T) {
+func TestInjectOpenCodePreservesUnprovenGentlemanAgent(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -1473,23 +1480,20 @@ func TestInjectOpenCodeMigratesMisnamedGentlemanSDDOrchestrator(t *testing.T) {
 	if !ok {
 		t.Fatal("opencode.json missing agent map")
 	}
-	if _, exists := agentMap["gentleman"]; exists {
-		t.Fatal("misnamed SDD gentleman agent should be removed")
+	if _, exists := agentMap["gentleman"]; !exists {
+		t.Fatal("unproven gentleman agent should be preserved")
 	}
-	gentleOrchestratorAgent, ok := agentMap["gentle-orchestrator"].(map[string]any)
+	gentleOrchestratorAgent, ok := agentMap["shevanio-orchestrator"].(map[string]any)
 	if !ok {
-		t.Fatal("gentle-orchestrator agent not found or wrong type")
+		t.Fatal("canonical orchestrator agent not found or wrong type")
 	}
 	prompt, _ := gentleOrchestratorAgent["prompt"].(string)
-	if !strings.Contains(prompt, priorPrompt) {
-		t.Fatalf("gentle-orchestrator prompt = %q, want it to preserve migrated misnamed prompt", prompt)
-	}
-	if !strings.Contains(prompt, "### SDD Session Preflight (HARD GATE)") {
-		t.Fatalf("gentle-orchestrator prompt = %q, want appended preflight migration", prompt)
+	if strings.Contains(prompt, priorPrompt) {
+		t.Fatalf("canonical orchestrator prompt imported an unproven gentleman prompt: %q", prompt)
 	}
 }
 
-func TestInjectOpenCodeDeletesRevokedGentlemanAgent(t *testing.T) {
+func TestInjectOpenCodePreservesGentlemanAndReadsExactLegacyAlias(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -1534,12 +1538,12 @@ func TestInjectOpenCodeDeletesRevokedGentlemanAgent(t *testing.T) {
 	if !ok {
 		t.Fatal("opencode.json missing agent map")
 	}
-	if _, exists := agentMap["gentleman"]; exists {
-		t.Fatal("revoked gentleman agent should be removed")
+	if _, exists := agentMap["gentleman"]; !exists {
+		t.Fatal("unproven gentleman agent should be preserved")
 	}
-	gentleOrchestratorAgent, ok := agentMap["gentle-orchestrator"].(map[string]any)
+	gentleOrchestratorAgent, ok := agentMap["shevanio-orchestrator"].(map[string]any)
 	if !ok {
-		t.Fatal("gentle-orchestrator agent not found or wrong type")
+		t.Fatal("canonical orchestrator agent not found or wrong type")
 	}
 	prompt, _ := gentleOrchestratorAgent["prompt"].(string)
 	if !strings.Contains(prompt, "CURRENT_GENTLE_ORCHESTRATOR_PROMPT") {
@@ -1562,7 +1566,7 @@ func TestInjectOpenCodeOverwritesOrchestratorPromptByDefault(t *testing.T) {
 	const customPrompt = "EXTERNAL_PROFILE_MANAGER_CUSTOM_PROMPT_DO_NOT_OVERWRITE"
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": "` + customPrompt + `"
     }
@@ -1642,7 +1646,7 @@ func TestInjectOpenCodeMigratesLegacyAgentsKey(t *testing.T) {
 	if _, ok := agentMap["legacy-agent"]; !ok {
 		t.Fatal("legacy agent was not migrated under agent key")
 	}
-	if _, ok := agentMap["gentle-orchestrator"]; !ok {
+	if _, ok := agentMap["shevanio-orchestrator"]; !ok {
 		t.Fatal("gentle-orchestrator agent missing after merge")
 	}
 	if _, ok := agentMap["sdd-orchestrator"]; ok {
@@ -2220,7 +2224,7 @@ func TestInjectOpenCodeMultiMode(t *testing.T) {
 	}
 
 	// Verify gentle-orchestrator is present.
-	orchestratorRaw, ok := agentMap["gentle-orchestrator"]
+	orchestratorRaw, ok := agentMap["shevanio-orchestrator"]
 	if !ok {
 		t.Fatal("missing gentle-orchestrator agent")
 	}
@@ -2327,7 +2331,7 @@ func TestInjectOpenCodeMultiModeRemovesLegacyDelegateTools(t *testing.T) {
 
 	existing := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "tools": {
         "read": true,
@@ -2357,7 +2361,7 @@ func TestInjectOpenCodeMultiModeRemovesLegacyDelegateTools(t *testing.T) {
 		t.Fatalf("Unmarshal(opencode.json) error = %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	orchestrator := agentMap["gentle-orchestrator"].(map[string]any)
+	orchestrator := agentMap["shevanio-orchestrator"].(map[string]any)
 	tools := orchestrator["tools"].(map[string]any)
 
 	for _, legacyTool := range []string{"delegate", "delegation_read", "delegation_list"} {
@@ -2381,7 +2385,7 @@ func TestInjectOpenCodeSingleModeRemovesLegacyDelegateTools(t *testing.T) {
 
 	existing := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "tools": {
         "read": true,
@@ -2411,7 +2415,7 @@ func TestInjectOpenCodeSingleModeRemovesLegacyDelegateTools(t *testing.T) {
 		t.Fatalf("Unmarshal(opencode.json) error = %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	orchestrator := agentMap["gentle-orchestrator"].(map[string]any)
+	orchestrator := agentMap["shevanio-orchestrator"].(map[string]any)
 	tools := orchestrator["tools"].(map[string]any)
 
 	for _, legacyTool := range []string{"delegate", "delegation_read", "delegation_list"} {
@@ -2603,7 +2607,7 @@ func TestInjectOpenCodeEmptySDDModeDefaultsSingle(t *testing.T) {
 
 	// Empty mode defaults to single — gentle-orchestrator + 2 native fallback agents +
 	// 10 SDD sub-agents + 3 JD agents + 4 review agents + refuter + validator = 22 agents.
-	if _, ok := agentMap["gentle-orchestrator"]; !ok {
+	if _, ok := agentMap["shevanio-orchestrator"]; !ok {
 		t.Fatal("missing gentle-orchestrator agent")
 	}
 	if len(agentMap) != 22 {
@@ -2611,7 +2615,7 @@ func TestInjectOpenCodeEmptySDDModeDefaultsSingle(t *testing.T) {
 	}
 
 	// Verify orchestrator mode is "primary".
-	orchestratorRaw, ok := agentMap["gentle-orchestrator"]
+	orchestratorRaw, ok := agentMap["shevanio-orchestrator"]
 	if !ok {
 		t.Fatal("missing gentle-orchestrator agent")
 	}
@@ -2854,7 +2858,7 @@ func TestInjectOpenCodeSingleToMultiSwitch(t *testing.T) {
 	}
 
 	agentMap, _ := root["agent"].(map[string]any)
-	if _, ok := agentMap["gentle-orchestrator"]; !ok {
+	if _, ok := agentMap["shevanio-orchestrator"]; !ok {
 		t.Fatal("missing gentle-orchestrator after switch to multi")
 	}
 	if _, ok := agentMap["sdd-orchestrator"]; ok {
@@ -3378,7 +3382,7 @@ func TestInjectOpenCodeMultiModeUsesRootModelForUnassignedAgents(t *testing.T) {
 	// pre-existing in the user's config should get the root model injected.
 	// Since we started with only {"model":"openai/gpt-5"} (no agent entries),
 	// ALL agents are "new" from the 3-way logic perspective and should get rootModel.
-	for _, phase := range []string{"gentle-orchestrator", "sdd-init", "sdd-verify"} {
+	for _, phase := range []string{"shevanio-orchestrator", "sdd-init", "sdd-verify"} {
 		agentDef, ok := agentMap[phase].(map[string]any)
 		if !ok {
 			t.Fatalf("phase %q agent not found or wrong type", phase)
@@ -4394,7 +4398,7 @@ func TestInjectKilocodeKeepsLegacyBackgroundAgentsPluginAndRemovesOpenCodeReview
 	if !ok {
 		t.Fatalf("Kilocode settings missing agent map: %v", root)
 	}
-	if _, exists := agentMap["gentle-orchestrator"]; !exists {
+	if _, exists := agentMap["shevanio-orchestrator"]; !exists {
 		t.Fatalf("Kilocode settings must retain gentle-orchestrator agent: %v", agentMap)
 	}
 	if strings.Contains(string(settings), "codegraph_codegraph_explore") {
@@ -4405,7 +4409,7 @@ func TestInjectKilocodeKeepsLegacyBackgroundAgentsPluginAndRemovesOpenCodeReview
 			t.Fatalf("Kilocode settings must not receive OpenCode-only agent %q", openCodeOnlyAgent)
 		}
 	}
-	orchestrator := agentMap["gentle-orchestrator"].(map[string]any)
+	orchestrator := agentMap["shevanio-orchestrator"].(map[string]any)
 	taskPermissions := orchestrator["permission"].(map[string]any)["task"].(map[string]any)
 	if replacement, ok := taskPermissions["__replace__"].(map[string]any); ok {
 		taskPermissions = replacement
@@ -5046,7 +5050,7 @@ func TestInjectOpenCodeMultiModeWithPreExistingMinimalConfig(t *testing.T) {
 	if !ok {
 		t.Fatal("opencode.json missing agent key after merge")
 	}
-	if _, ok := agentMap["gentle-orchestrator"]; !ok {
+	if _, ok := agentMap["shevanio-orchestrator"]; !ok {
 		t.Fatal("missing gentle-orchestrator after merge with pre-existing config")
 	}
 	if _, ok := agentMap["sdd-orchestrator"]; ok {
@@ -5124,7 +5128,7 @@ func TestInjectOpenCodeMultiModeWithPreExistingFullConfig(t *testing.T) {
 
 	// All multi-mode agents must be present with gentle-orchestrator as the base orchestrator.
 	for _, agentName := range []string{
-		"gentle-orchestrator", "sdd-init", "sdd-explore", "sdd-propose",
+		"shevanio-orchestrator", "sdd-init", "sdd-explore", "sdd-propose",
 		"sdd-spec", "sdd-design", "sdd-tasks", "sdd-apply", "sdd-verify", "sdd-archive",
 	} {
 		if _, ok := agentMap[agentName]; !ok {
@@ -5193,7 +5197,7 @@ func TestInjectOpenCodeMultiModeAssignsGentleOrchestratorModelFromLegacyOrchestr
 	}
 
 	// gentle-orchestrator must receive the historical sdd-orchestrator assignment.
-	gentleOrchestratorAgent, ok := agentMap["gentle-orchestrator"].(map[string]any)
+	gentleOrchestratorAgent, ok := agentMap["shevanio-orchestrator"].(map[string]any)
 	if !ok {
 		t.Fatal("gentle-orchestrator agent not found or wrong type")
 	}
@@ -5237,7 +5241,7 @@ func TestInjectOpenCodeMultiModeInstallsGentleOrchestratorWithModel(t *testing.T
 		t.Fatal("opencode.json missing agent map")
 	}
 
-	gentleOrchestratorAgent, ok := agentMap["gentle-orchestrator"].(map[string]any)
+	gentleOrchestratorAgent, ok := agentMap["shevanio-orchestrator"].(map[string]any)
 	if !ok {
 		t.Fatal("gentle-orchestrator agent not found or wrong type")
 	}
@@ -5958,13 +5962,13 @@ func TestInjectOpenCodePostCheckDiskFallback(t *testing.T) {
 		t.Log("Note: result.Changed = false, but that's OK for idempotent runs")
 	}
 
-	// Verify the file on disk still has gentle-orchestrator and not the legacy base key.
+	// Verify the file on disk has the canonical managed orchestrator.
 	diskContent, err := os.ReadFile(settingsPath)
 	if err != nil {
 		t.Fatalf("ReadFile() error = %v", err)
 	}
-	if !strings.Contains(string(diskContent), "gentle-orchestrator") {
-		t.Fatal("File on disk lost gentle-orchestrator after inject")
+	if !strings.Contains(string(diskContent), "shevanio-orchestrator") {
+		t.Fatal("File on disk lost canonical orchestrator after inject")
 	}
 	if strings.Contains(string(diskContent), `"sdd-orchestrator"`) {
 		t.Fatal("File on disk still has legacy sdd-orchestrator after inject")

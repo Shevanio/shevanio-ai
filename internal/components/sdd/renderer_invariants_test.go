@@ -204,7 +204,7 @@ func assertCurrentOpenCodeOrchestratorContract(t *testing.T, label string, conte
 		assertTextContainsClauses(t, label+" model assignment contract", content, []string{
 			"<!-- shevanio-ai:sdd-model-assignments -->",
 			"## Model Assignments",
-			"agent.gentle-orchestrator.model",
+			"agent.shevanio-orchestrator.model",
 			"agent.sdd-<phase>.model",
 			"default OpenCode runtime model",
 		})
@@ -232,27 +232,27 @@ func TestOpenCodeBaseInjectionBindsAssignmentsAndPreservesContract(t *testing.T)
 	mockNoPackageManager(t)
 	home := t.TempDir()
 	assignments := map[string]model.ModelAssignment{
-		"gentle-orchestrator": {ProviderID: "openai", ModelID: "gpt-5.1", Effort: "high"},
-		"sdd-apply":           {ProviderID: "anthropic", ModelID: "claude-sonnet-4-5"},
+		"shevanio-orchestrator": {ProviderID: "openai", ModelID: "gpt-5.1", Effort: "high"},
+		"sdd-apply":             {ProviderID: "anthropic", ModelID: "claude-sonnet-4-5"},
 	}
 	if _, err := Inject(home, opencodeAdapter(), model.SDDModeMulti, InjectOptions{OpenCodeModelAssignments: assignments}); err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
 
 	agentsMap := readOpenCodeAgents(t, filepath.Join(home, ".config", "opencode", "opencode.json"))
-	prompt := agentPrompt(t, agentsMap, "gentle-orchestrator")
+	prompt := agentPrompt(t, agentsMap, "shevanio-orchestrator")
 	assertCurrentOpenCodeOrchestratorContract(t, "OpenCode base injection", prompt, model.AgentOpenCode, "")
 
 	for agentName, wantModel := range map[string]string{
-		"gentle-orchestrator": "openai/gpt-5.1",
-		"sdd-apply":           "anthropic/claude-sonnet-4-5",
+		"shevanio-orchestrator": "openai/gpt-5.1",
+		"sdd-apply":             "anthropic/claude-sonnet-4-5",
 	} {
 		entry, ok := agentsMap[agentName].(map[string]any)
 		if !ok || entry["model"] != wantModel {
 			t.Fatalf("%s model = %#v, want %q", agentName, entry["model"], wantModel)
 		}
 	}
-	if variant := agentsMap["gentle-orchestrator"].(map[string]any)["variant"]; variant != "high" {
+	if variant := agentsMap["shevanio-orchestrator"].(map[string]any)["variant"]; variant != "high" {
 		t.Fatalf("gentle-orchestrator variant = %#v, want high", variant)
 	}
 }

@@ -1,6 +1,6 @@
 {
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "description": "Shevanio AI SDD Orchestrator - coordinates sub-agents, never does work inline",
       "prompt": "{file:./AGENTS.md}",

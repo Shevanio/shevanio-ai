@@ -14,6 +14,7 @@ func TestReadCurrentModelAssignments(t *testing.T) {
 
 	content := `{
   "agent": {
+	"shevanio-orchestrator": { "model": "openai:gpt-5" },
     "gentle-orchestrator": { "model": "anthropic:claude-sonnet-4-20250514" },
     "sdd-apply": { "model": "openai:gpt-4o" },
     "sdd-verify": { "model": "anthropic:claude-haiku-3-20240307" },
@@ -34,7 +35,7 @@ func TestReadCurrentModelAssignments(t *testing.T) {
 		providerID string
 		modelID    string
 	}{
-		{"gentle-orchestrator", "anthropic", "claude-sonnet-4-20250514"},
+		{"shevanio-orchestrator", "openai", "gpt-5"},
 		{"sdd-apply", "openai", "gpt-4o"},
 		{"sdd-verify", "anthropic", "claude-haiku-3-20240307"},
 		{"some-other-agent", "anthropic", "claude-sonnet-4-20250514"},
@@ -167,7 +168,7 @@ func TestReadCurrentModelAssignmentsNoFile(t *testing.T) {
 	}
 }
 
-func TestReadCurrentModelAssignmentsMapsLegacyOrchestratorToGentleOrchestrator(t *testing.T) {
+func TestReadCurrentModelAssignmentsMapsExactLegacyOrchestratorToCanonical(t *testing.T) {
 	dir := t.TempDir()
 	settingsPath := filepath.Join(dir, "opencode.json")
 
@@ -188,8 +189,8 @@ func TestReadCurrentModelAssignmentsMapsLegacyOrchestratorToGentleOrchestrator(t
 		t.Fatal("legacy sdd-orchestrator key should be normalized")
 	}
 	want := model.ModelAssignment{ProviderID: "anthropic", ModelID: "claude-opus-4-5"}
-	if got["gentle-orchestrator"] != want {
-		t.Fatalf("gentle-orchestrator assignment = %+v, want %+v", got["gentle-orchestrator"], want)
+	if got[model.CanonicalManagedIdentity.Actor] != want {
+		t.Fatalf("canonical assignment = %+v, want %+v", got[model.CanonicalManagedIdentity.Actor], want)
 	}
 }
 
@@ -237,7 +238,7 @@ func TestReadCurrentModelAssignmentsPartialModels(t *testing.T) {
 		t.Errorf("ReadCurrentModelAssignments() len = %d, want 1; got %v", len(got), got)
 	}
 
-	a, ok := got["gentle-orchestrator"]
+	a, ok := got[model.CanonicalManagedIdentity.Actor]
 	if !ok {
 		t.Fatal("gentle-orchestrator missing from result")
 	}
@@ -301,7 +302,7 @@ func TestReadCurrentModelAssignmentsSlashSeparator(t *testing.T) {
 		t.Fatalf("ReadCurrentModelAssignments() error = %v", err)
 	}
 
-	a, ok := got["gentle-orchestrator"]
+	a, ok := got[model.CanonicalManagedIdentity.Actor]
 	if !ok {
 		t.Fatal("gentle-orchestrator missing from result — slash-separated format not parsed")
 	}
@@ -409,7 +410,7 @@ func TestReadCurrentModelAssignmentsMixedSeparators(t *testing.T) {
 		providerID string
 		modelID    string
 	}{
-		{"gentle-orchestrator", "anthropic", "claude-sonnet-4-20250514"},
+		{model.CanonicalManagedIdentity.Actor, "anthropic", "claude-sonnet-4-20250514"},
 		{"sdd-apply", "zai-coding-plan", "glm-5-turbo"},
 		{"sdd-verify", "openai", "gpt-4o"},
 		{"sdd-explore", "custom-provider", "some-model-v2"},

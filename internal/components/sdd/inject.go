@@ -58,7 +58,7 @@ type InjectOptions struct {
 	Profiles []model.Profile
 
 	// PreserveOpenCodeOrchestratorPrompt keeps the existing
-	// opencode.json agent.gentle-orchestrator.prompt value during sync.
+	// opencode.json canonical managed orchestrator prompt value during sync.
 	// Used by external-single-active profile strategy integrations where
 	// external tools extend orchestrator policy/prompt at runtime.
 	PreserveOpenCodeOrchestratorPrompt bool
@@ -447,7 +447,7 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 		}
 	}
 
-	// 2b. OpenCode /sdd-* commands reference agent: gentle-orchestrator.
+	// 2b. OpenCode /sdd-* commands reference the canonical managed orchestrator.
 	// Ensure that agent is present even when persona component is not installed.
 	//
 	// mergedSettingsBytes holds the final merged opencode.json bytes produced by
@@ -760,21 +760,13 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 			}
 		}
 
-		if !hasOpenCodeAgentKey(settingsText, "gentle-orchestrator") {
+		if !hasOpenCodeAgentKey(settingsText, model.CanonicalManagedIdentity.Actor) {
 			// In-memory check failed — try reading from disk as last resort.
 			if diskBytes, readErr := os.ReadFile(settingsPath); readErr == nil {
 				settingsText = string(diskBytes)
 			}
-			if !hasOpenCodeAgentKey(settingsText, "gentle-orchestrator") {
-				return InjectionResult{}, fmt.Errorf("post-check: %q missing gentle-orchestrator agent definition — OpenCode /sdd-* commands will fail", settingsPath)
-			}
-		}
-		if hasOpenCodeAgentKey(settingsText, "sdd-orchestrator") {
-			if diskBytes, readErr := os.ReadFile(settingsPath); readErr == nil {
-				settingsText = string(diskBytes)
-			}
-			if hasOpenCodeAgentKey(settingsText, "sdd-orchestrator") {
-				return InjectionResult{}, fmt.Errorf("post-check: %q still contains legacy sdd-orchestrator agent definition after OpenCode SDD sync", settingsPath)
+			if !hasOpenCodeAgentKey(settingsText, model.CanonicalManagedIdentity.Actor) {
+				return InjectionResult{}, fmt.Errorf("post-check: %q missing %s agent definition — OpenCode /sdd-* commands will fail", settingsPath, model.CanonicalManagedIdentity.Actor)
 			}
 		}
 		if sddMode == model.SDDModeMulti && !strings.Contains(settingsText, `"sdd-apply"`) {
@@ -850,7 +842,7 @@ func inlineOpenCodeSDDPrompts(overlayBytes []byte, homeDir, settingsPath string,
 
 	// Inline the orchestrator prompt (always inlined, not a file reference),
 	// unless an external strategy requested preserving the existing prompt.
-	orchestratorRaw, ok := agentsMap["gentle-orchestrator"]
+	orchestratorRaw, ok := agentsMap[model.CanonicalManagedIdentity.Actor]
 	if !ok {
 		return overlayBytes, nil
 	}
@@ -859,21 +851,9 @@ func inlineOpenCodeSDDPrompts(overlayBytes []byte, homeDir, settingsPath string,
 		return overlayBytes, nil
 	}
 	if preserveExistingOrchestratorPrompt {
-		existingPrompt, err := readOpenCodeAgentPrompt(settingsPath, "gentle-orchestrator")
+		existingPrompt, err := readManagedOpenCodeAgentPrompt(settingsPath)
 		if err != nil {
 			return nil, err
-		}
-		if existingPrompt == "" {
-			existingPrompt, err = readOpenCodeAgentPrompt(settingsPath, "sdd-orchestrator")
-			if err != nil {
-				return nil, err
-			}
-		}
-		if existingPrompt == "" {
-			existingPrompt, err = readMisnamedOpenCodeGentlemanSDDPrompt(settingsPath)
-			if err != nil {
-				return nil, err
-			}
 		}
 		if existingPrompt != "" {
 			if strings.Contains(existingPrompt, openCodeBackgroundPolicyMarker) || strings.Contains(existingPrompt, openCodeBackgroundPolicyEnd) {
@@ -949,7 +929,7 @@ func inlineOpenCodeSDDPrompts(overlayBytes []byte, homeDir, settingsPath string,
 // this component from becoming a second author of routing content, so removing
 // or disabling SDD can never change what an agent is told about routing.
 func preserveOpenCodeRoutingGuidance(settingsPath string, orchestratorMap map[string]any) error {
-	previous, err := readOpenCodeAgentPrompt(settingsPath, opencodedefault.ManagedAgent)
+	previous, err := readManagedOpenCodeAgentPrompt(settingsPath)
 	if err != nil {
 		return err
 	}
@@ -1033,11 +1013,16 @@ func migratePreservedOpenCodeOrchestratorPrompt(prompt string) string {
 		return prompt
 	}
 
+	actor := model.CanonicalManagedIdentity.Actor
 	replacer := strings.NewReplacer(
 		"Bind this to the dedicated `sdd-orchestrator` agent only.",
+		fmt.Sprintf("Bind this to the dedicated `%s` agent only.", actor),
 		"Bind this to the dedicated `gentle-orchestrator` agent only.",
+		fmt.Sprintf("Bind this to the dedicated `%s` agent only.", actor),
 		"agent.sdd-orchestrator.model",
+		"agent."+actor+".model",
 		"agent.gentle-orchestrator.model",
+		"agent."+actor+".model",
 		"Before continuing with SDD, choose one option per group.\n",
 		"",
 		"Before continuing with SDD, choose one option per group.\r\n",
@@ -1444,8 +1429,8 @@ func containsOpenCodeOrchestratorLanguageLeak(prompt string) bool {
 	return false
 }
 
-func readOpenCodeAgentPrompt(settingsPath, agentKey string) (string, error) {
-	if strings.TrimSpace(settingsPath) == "" || strings.TrimSpace(agentKey) == "" {
+func readManagedOpenCodeAgentPrompt(settingsPath string) (string, error) {
+	if strings.TrimSpace(settingsPath) == "" {
 		return "", nil
 	}
 
@@ -1470,7 +1455,16 @@ func readOpenCodeAgentPrompt(settingsPath, agentKey string) (string, error) {
 	if !ok {
 		return "", nil
 	}
-	agentRaw, ok := agentsMap[agentKey]
+	agentRaw, ok := agentsMap[model.CanonicalManagedIdentity.Actor]
+	if !ok {
+		for key, candidate := range agentsMap {
+			_, class := model.NormalizeOrchestratorRead(key)
+			if class == model.IdentityLegacyManaged {
+				agentRaw, ok = candidate, true
+				break
+			}
+		}
+	}
 	if !ok {
 		return "", nil
 	}
@@ -1742,7 +1736,7 @@ func stripOpenCodeNativeFallbackAgents(overlayBytes []byte) ([]byte, error) {
 	// Kilocode does not host the OpenCode provider relay that issues the opaque
 	// validator task, so it must not expose or authorize that OpenCode-only role.
 	delete(agents, opencode.ReviewValidatorAgent)
-	if orchestrator, ok := agents["gentle-orchestrator"].(map[string]any); ok {
+	if orchestrator, ok := agents[model.CanonicalManagedIdentity.Actor].(map[string]any); ok {
 		if permission, ok := orchestrator["permission"].(map[string]any); ok {
 			if task, ok := permission["task"].(map[string]any); ok {
 				if replacement, ok := task["__replace__"].(map[string]any); ok {
@@ -1942,10 +1936,6 @@ func mergeJSONFile(path string, overlay []byte) (mergeJSONResult, error) {
 	baseJSON, err = migrateLegacyOpenCodeAgentsKey(baseJSON)
 	if err != nil {
 		return mergeJSONResult{}, fmt.Errorf("migrate opencode agents key: %w", err)
-	}
-	baseJSON, err = migrateLegacyOpenCodeSDDOrchestrator(baseJSON)
-	if err != nil {
-		return mergeJSONResult{}, fmt.Errorf("migrate opencode sdd orchestrator agent: %w", err)
 	}
 	baseJSON, err = migrateLegacyOpenCodeCommandPrompt(baseJSON)
 	if err != nil {
@@ -2762,29 +2752,33 @@ func injectModelAssignments(overlayBytes []byte, assignments map[string]model.Mo
 	return append(result, '\n'), nil
 }
 
-// normalizeOpenCodeSDDModelAssignments accepts the historical
-// sdd-orchestrator assignment key as an input alias, but writes it to the
-// current base coordinator key: gentle-orchestrator. Named profile keys remain unchanged.
+// normalizeOpenCodeSDDModelAssignments accepts exact historical base aliases
+// for reads, but emits only the canonical managed actor. Unknown keys, including
+// named user agents, remain unchanged.
 func normalizeOpenCodeSDDModelAssignments(assignments map[string]model.ModelAssignment) map[string]model.ModelAssignment {
 	if len(assignments) == 0 {
 		return assignments
 	}
-	legacyAssignment, hasLegacy := assignments["sdd-orchestrator"]
-	if !hasLegacy {
-		return assignments
-	}
-	if _, hasGentleOrchestrator := assignments["gentle-orchestrator"]; hasGentleOrchestrator {
-		return assignments
-	}
-
+	canonical := model.CanonicalManagedIdentity.Actor
+	canonicalAssignment, hasCanonical := assignments[canonical]
 	normalized := make(map[string]model.ModelAssignment, len(assignments))
 	for key, assignment := range assignments {
-		if key == "sdd-orchestrator" {
-			continue
+		_, class := model.NormalizeOrchestratorRead(key)
+		if class == model.IdentityUnknown {
+			normalized[key] = assignment
 		}
-		normalized[key] = assignment
 	}
-	normalized["gentle-orchestrator"] = legacyAssignment
+	if hasCanonical {
+		normalized[canonical] = canonicalAssignment
+		return normalized
+	}
+	for key, assignment := range assignments {
+		_, class := model.NormalizeOrchestratorRead(key)
+		if class == model.IdentityLegacyManaged {
+			normalized[canonical] = assignment
+			break
+		}
+	}
 	return normalized
 }
 

@@ -10,13 +10,15 @@ import (
 
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/mutationjournal"
+	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
 
 const (
-	ManagedAgent = "gentle-orchestrator"
-	schema       = "shevanio-ai.opencode-default-agent"
-	version      = 1
+	schema  = "shevanio-ai.opencode-default-agent"
+	version = 1
 )
+
+var ManagedAgent = model.CanonicalManagedIdentity.Actor
 
 type ownership struct {
 	Schema          string `json:"schema"`
@@ -54,7 +56,7 @@ func PrepareInstall(settingsPath string) (*InstallPlan, error) {
 		return nil, err
 	}
 	agents, _ := root["agent"].(map[string]any)
-	_, managedAgentPresent := agents[ManagedAgent]
+	managedAgentPresent := hasManagedActorDefinition(agents)
 	return &InstallPlan{settingsPath: settingsPath, owned: owned, recapture: !exists || !managedAgentPresent}, nil
 }
 func (p *InstallPlan) Apply() (bool, error) {
@@ -63,10 +65,11 @@ func (p *InstallPlan) Apply() (bool, error) {
 		return false, err
 	}
 	owned := p.owned
-	if owned == nil || p.recapture || !current.present || current.value != ManagedAgent {
+	_, currentClass := model.NormalizeOrchestratorRead(current.value)
+	if owned == nil || p.recapture || !current.present || currentClass == model.IdentityUnknown {
 		owned = newOwnership(current)
 	}
-	root["default_agent"] = ManagedAgent
+	root["default_agent"] = model.CanonicalManagedIdentity.Actor
 	settings := encode(root)
 	metadata := encode(owned)
 	ownerPath := OwnershipPath(p.settingsPath)
@@ -95,7 +98,7 @@ func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, remo
 			return false, false, fmt.Errorf("parse cleaned OpenCode settings: %w", err)
 		}
 	}
-	if p.settingsExist && p.current.present && p.current.value == ManagedAgent {
+	if p.settingsExist && p.current.present && p.current.value == model.CanonicalManagedIdentity.Actor {
 		if p.owned == nil || p.owned.PreviousState == "absent" {
 			delete(root, "default_agent")
 		} else {
@@ -118,6 +121,20 @@ func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, remo
 	}
 	return changed, currentExists && !settingsExist, nil
 }
+
+func hasManagedActorDefinition(agents map[string]any) bool {
+	if _, exists := agents[model.CanonicalManagedIdentity.Actor]; exists {
+		return true
+	}
+	for actor := range agents {
+		_, class := model.NormalizeOrchestratorRead(actor)
+		if class == model.IdentityLegacyManaged {
+			return true
+		}
+	}
+	return false
+}
+
 func readSettings(path string) (map[string]any, []byte, bool, fieldValue, error) {
 	raw, err := readRegular(path)
 	if os.IsNotExist(err) {
