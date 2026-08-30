@@ -258,10 +258,6 @@ func readSettings(path string) (map[string]any, []byte, bool, fieldValue, error)
 	}
 	return root, raw, true, current, nil
 }
-func readOwnership(path string) (*ownership, error) {
-	owned, _, err := readOwnershipRaw(path)
-	return owned, err
-}
 func readOwnershipRaw(path string) (*ownership, []byte, error) {
 	raw, err := readRegular(path)
 	if os.IsNotExist(err) {

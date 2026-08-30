@@ -75,7 +75,7 @@ func TestV1OwnershipUpgradesWithoutAdoptingActors(t *testing.T) {
 	}
 	_, err = plan.Apply()
 	check(t, err)
-	upgraded, err := readOwnership(OwnershipPath(settings))
+	upgraded, _, err := readOwnershipRaw(OwnershipPath(settings))
 	check(t, err)
 	if upgraded.Version != 2 || upgraded.PreviousDefault != "build" || len(upgraded.Actors) != 0 {
 		t.Fatalf("persisted upgrade = %#v", upgraded)
@@ -89,7 +89,7 @@ func TestV2OwnershipStrictValidation(t *testing.T) {
 	}})
 	path := filepath.Join(t.TempDir(), "owner.json")
 	check(t, os.WriteFile(path, valid, 0o644))
-	got, err := readOwnership(path)
+	got, _, err := readOwnershipRaw(path)
 	check(t, err)
 	if roundTrip := encode(got); !bytes.Equal(roundTrip, valid) {
 		t.Fatalf("v2 round trip = %s, want %s", roundTrip, valid)
@@ -102,13 +102,13 @@ func TestV2OwnershipStrictValidation(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			check(t, os.WriteFile(path, bytes.Replace(valid, []byte(tt.old), []byte(tt.replacement), 1), 0o644))
-			if _, err := readOwnership(path); err == nil {
+			if _, _, err := readOwnershipRaw(path); err == nil {
 				t.Fatal("invalid v2 ownership was accepted")
 			}
 		})
 	}
 	check(t, os.WriteFile(path, append(valid, []byte(`{}`)...), 0o644))
-	if _, err := readOwnership(path); err == nil {
+	if _, _, err := readOwnershipRaw(path); err == nil {
 		t.Fatal("trailing JSON was accepted")
 	}
 }
@@ -116,7 +116,7 @@ func TestV2OwnershipStrictValidation(t *testing.T) {
 func TestOwnershipInputRefusals(t *testing.T) {
 	dir := t.TempDir()
 	t.Run("directory", func(t *testing.T) {
-		if _, err := readOwnership(dir); err == nil {
+		if _, _, err := readOwnershipRaw(dir); err == nil {
 			t.Fatal("directory ownership input was accepted")
 		}
 	})
@@ -126,14 +126,14 @@ func TestOwnershipInputRefusals(t *testing.T) {
 		if err := os.Symlink(target, link); err != nil {
 			t.Skipf("symlink unavailable: %v", err)
 		}
-		if _, err := readOwnership(link); err == nil {
+		if _, _, err := readOwnershipRaw(link); err == nil {
 			t.Fatal("symlink ownership input was accepted")
 		}
 	})
 	t.Run("oversized", func(t *testing.T) {
 		path := filepath.Join(dir, "oversized")
 		check(t, os.WriteFile(path, bytes.Repeat([]byte("x"), maxOwnershipSize+1), 0o644))
-		if _, err := readOwnership(path); err == nil {
+		if _, _, err := readOwnershipRaw(path); err == nil {
 			t.Fatal("oversized ownership input was accepted")
 		}
 	})
@@ -205,7 +205,7 @@ func TestInstallReconcilesWithoutReauthorizingUnchangedActors(t *testing.T) {
 			t.Fatalf("actor %q was removed without exact authority", actor)
 		}
 	}
-	afterOwnership, err := readOwnership(ownerPath)
+	afterOwnership, _, err := readOwnershipRaw(ownerPath)
 	check(t, err)
 	if len(afterOwnership.Actors) != 2 || afterOwnership.Actors["desired"].Fingerprint != fingerprint(t, map[string]any{"mode": "old"}) || afterOwnership.Actors["omitted"].Scope != "profile/omitted" {
 		t.Fatalf("reconciled ownership = %#v", afterOwnership.Actors)
