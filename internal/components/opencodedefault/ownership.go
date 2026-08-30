@@ -34,7 +34,6 @@ type fieldValue struct {
 type InstallPlan struct {
 	settingsPath string
 	owned        *ownership
-	recapture    bool
 }
 type UninstallPlan struct {
 	settingsPath  string
@@ -47,7 +46,7 @@ func OwnershipPath(settingsPath string) string {
 	return filepath.Join(filepath.Dir(settingsPath), ".shevanio-ai-default-agent.json")
 }
 func PrepareInstall(settingsPath string) (*InstallPlan, error) {
-	root, _, exists, _, err := readSettings(settingsPath)
+	_, _, _, _, err := readSettings(settingsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -55,13 +54,7 @@ func PrepareInstall(settingsPath string) (*InstallPlan, error) {
 	if err != nil {
 		return nil, err
 	}
-	agents, _ := root["agent"].(map[string]any)
-	managedAgentPresent := false
-	for actor := range agents {
-		_, class := model.NormalizeOrchestratorRead(actor)
-		managedAgentPresent = managedAgentPresent || class != model.IdentityUnknown
-	}
-	return &InstallPlan{settingsPath: settingsPath, owned: owned, recapture: !exists || !managedAgentPresent}, nil
+	return &InstallPlan{settingsPath: settingsPath, owned: owned}, nil
 }
 func (p *InstallPlan) Apply() (bool, error) {
 	root, raw, _, current, err := readSettings(p.settingsPath)
@@ -70,7 +63,7 @@ func (p *InstallPlan) Apply() (bool, error) {
 	}
 	owned := p.owned
 	_, currentClass := model.NormalizeOrchestratorRead(current.value)
-	if owned == nil || p.recapture || !current.present || currentClass == model.IdentityUnknown {
+	if owned == nil || !current.present || currentClass == model.IdentityUnknown {
 		owned = newOwnership(current)
 	}
 	root["default_agent"] = model.CanonicalManagedIdentity.Actor
@@ -102,7 +95,9 @@ func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, remo
 			return false, false, fmt.Errorf("parse cleaned OpenCode settings: %w", err)
 		}
 	}
-	if p.settingsExist && p.current.present && p.current.value == model.CanonicalManagedIdentity.Actor {
+	_, currentClass := model.NormalizeOrchestratorRead(p.current.value)
+	ownedDefault := currentClass == model.IdentityCanonicalManaged || (currentClass == model.IdentityLegacyManaged && p.owned != nil)
+	if p.settingsExist && p.current.present && ownedDefault {
 		if p.owned == nil || p.owned.PreviousState == "absent" {
 			delete(root, "default_agent")
 		} else {
@@ -205,25 +200,41 @@ func encode(value any) []byte {
 }
 func writePair(settingsPath string, settings []byte, keepSettings bool, ownerPath string, owner []byte, keepOwner bool) error {
 	journal := mutationjournal.New(filepath.Dir(settingsPath))
-	if err := journal.Capture(settingsPath); err != nil {
-		return err
+	mutations := []pairMutation{
+		{path: settingsPath, data: settings, keep: keepSettings, context: "update OpenCode settings"},
+		{path: ownerPath, data: owner, keep: keepOwner, context: "update OpenCode default ownership"},
 	}
-	if err := journal.Capture(ownerPath); err != nil {
-		return err
-	}
-	mutate := func(path string, data []byte, keep bool) error {
-		if keep {
-			_, err := journal.WriteWithMode(path, data, 0o644)
+	return applyPair(journal, mutations, mutatePair)
+}
+
+type pairMutation struct {
+	path    string
+	data    []byte
+	keep    bool
+	context string
+}
+
+type pairMutator func(*mutationjournal.Journal, pairMutation) error
+
+func applyPair(journal *mutationjournal.Journal, mutations []pairMutation, mutate pairMutator) error {
+	for _, mutation := range mutations {
+		if err := journal.Capture(mutation.path); err != nil {
 			return err
 		}
-		_, err := journal.Remove(path)
-		return err
 	}
-	if err := mutate(settingsPath, settings, keepSettings); err != nil {
-		return fmt.Errorf("update OpenCode settings: %w (rollback: %v)", err, journal.Restore())
-	}
-	if err := mutate(ownerPath, owner, keepOwner); err != nil {
-		return fmt.Errorf("update OpenCode default ownership: %w (rollback: %v)", err, journal.Restore())
+	for _, mutation := range mutations {
+		if err := mutate(journal, mutation); err != nil {
+			return fmt.Errorf("%s: %w (rollback: %v)", mutation.context, err, journal.Restore())
+		}
 	}
 	return nil
+}
+
+func mutatePair(journal *mutationjournal.Journal, mutation pairMutation) error {
+	if mutation.keep {
+		_, err := journal.WriteWithMode(mutation.path, mutation.data, 0o644)
+		return err
+	}
+	_, err := journal.Remove(mutation.path)
+	return err
 }
