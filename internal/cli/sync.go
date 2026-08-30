@@ -664,7 +664,13 @@ func syncBackupTargets(homeDir, workspaceDir string, selection model.Selection, 
 		}
 		if component == model.ComponentPersona {
 			plan := persona.ResourcePlanFor(selection.Persona)
+			_, managesActor := plan.OutputStyle()
 			for _, adapter := range adapters {
+				if (adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode) && managesActor {
+					if path := adapter.SettingsPath(componentInjectionDir(homeDir, workspaceDir, adapter)); path != "" {
+						paths[path] = struct{}{}
+					}
+				}
 				if !adapter.SupportsOutputStyles() {
 					continue
 				}
@@ -773,11 +779,9 @@ func syncAdapterSkillBackupTargets(homeDir, workspaceDir string, selection model
 // syncComponentPaths declares the file paths sync writes for a given component.
 //
 // For most components the contract is identical to install (componentPaths).
-// ComponentPersona is the exception: sync calls persona.InjectForSync which
-// skips the OpenCode/Kilocode agent definition in opencode.json (those JSON
-// merges remain install-only because they conflict with SDD's writes to the
-// same file). Sync therefore must NOT declare those JSON paths or the post-sync
-// verification will look for files sync never promised to write.
+// ComponentPersona is the exception because its paths include only resources
+// promised by persona.InjectForSync; cleanup-only settings paths are added to
+// syncBackupTargets without becoming required verification paths.
 func syncComponentPaths(homeDir string, selection model.Selection, adapters []agents.Adapter, component model.ComponentID) []string {
 	return syncComponentPathsWithWorkspace(homeDir, "", selection, adapters, component)
 }
@@ -793,11 +797,9 @@ func syncComponentPathsWithWorkspace(homeDir, workspaceDir string, selection mod
 // sync. Mirrors persona.InjectForSync and the Pi runtime config writer:
 //   - Step 1: SystemPromptFile (the marker-bound markdown block — CLAUDE.md /
 //     AGENTS.md / equivalent).
+//   - Step 2: canonical OpenCode/Kilocode actor settings (managed persona only).
 //   - Step 3: managed output-style overlay (only when the agent supports it).
 //   - Pi: the project-local gentle-pi persona state file.
-//
-// Step 2 (OpenCode/Kilocode agent definition in opencode.json) is install-only
-// and intentionally NOT declared here.
 func syncPersonaPaths(homeDir string, selection model.Selection, adapters []agents.Adapter) []string {
 	return syncPersonaPathsWithWorkspace(homeDir, "", selection, adapters)
 }
@@ -823,6 +825,9 @@ func syncPersonaPathsWithWorkspace(homeDir, workspaceDir string, selection model
 		}
 		if !adapter.SupportsSystemPrompt() {
 			continue
+		}
+		if (adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode) && (selection.Persona == model.PersonaShevanio || selection.Persona == model.PersonaGentleman) {
+			paths = append(paths, adapter.SettingsPath(targetDir))
 		}
 		if adapter.SystemPromptStrategy() != model.StrategyJinjaModules {
 			paths = append(paths, adapter.SystemPromptFile(targetDir))
@@ -1161,10 +1166,7 @@ func (s componentSyncStep) Run() error {
 	case model.ComponentPersona:
 		// Sync regenerates the persona block between
 		// <!-- shevanio-ai:persona --> markers and (when supported) refreshes
-		// the Gentleman output-style overlay. We deliberately skip the
-		// OpenCode/Kilocode agent definition in opencode.json — that JSON
-		// merge conflicts with SDD's writes to the same settings file and
-		// remains an install-only concern.
+		// the output-style and canonical OpenCode/Kilocode actor projections.
 		for _, adapter := range adapters {
 			if adapter.Agent() == model.AgentPi {
 				rootDir := s.workspaceDir

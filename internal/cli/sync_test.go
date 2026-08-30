@@ -768,13 +768,15 @@ func TestComponentSyncStepCodexRuntimeGate(t *testing.T) {
 }
 
 func TestComponentSyncStepRunsPersonaInjectForSync(t *testing.T) {
-	// The sync step regenerates the marker-bound persona block (markdown only).
-	// It must NOT touch the OpenCode agent definition in opencode.json (those
-	// JSON merges are install-only — running them in sync would conflict with
-	// SDD's settings writes and break idempotency).
+	// Sync regenerates both the marker-bound prompt and the canonical actor.
 	home := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(home, ".config", "opencode"), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
+	}
+	settings := filepath.Join(home, ".config", "opencode", "opencode.json")
+	legacy := `{"sibling":"keep","agent":{"shevanio-orchestrator":{"prompt":"keep"},"gentleman":{"mode":"primary","description":"Senior Architect mentor - helpful first, challenging when it matters","prompt":"{file:./AGENTS.md}","tools":{"write":true,"edit":true}}}}`
+	if err := os.WriteFile(settings, []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
 	}
 
 	step := componentSyncStep{
@@ -799,14 +801,18 @@ func TestComponentSyncStepRunsPersonaInjectForSync(t *testing.T) {
 		t.Errorf("AGENTS.md missing persona open marker after sync; got:\n%s", string(body))
 	}
 
-	// opencode.json must NOT have been touched by the sync persona step
-	// (that JSON merge belongs to install). Either absent or empty is fine.
-	settings := filepath.Join(home, ".config", "opencode", "opencode.json")
-	if _, err := os.Stat(settings); err == nil {
-		raw, _ := os.ReadFile(settings)
-		if strings.Contains(string(raw), "gentleman") {
-			t.Errorf("opencode.json should NOT contain gentleman agent after sync; got:\n%s", string(raw))
-		}
+	raw, err := os.ReadFile(settings)
+	if err != nil {
+		t.Fatalf("ReadFile opencode.json: %v", err)
+	}
+	if !strings.Contains(string(raw), `"shevanio"`) || strings.Contains(string(raw), `"gentleman"`) || !strings.Contains(string(raw), `"shevanio-orchestrator"`) || !strings.Contains(string(raw), `"sibling"`) {
+		t.Errorf("sync did not write only the canonical persona actor:\n%s", raw)
+	}
+	if err := step.Run(); err != nil {
+		t.Fatalf("second componentSyncStep.Run() error = %v", err)
+	}
+	if second, _ := os.ReadFile(settings); string(second) != string(raw) {
+		t.Fatal("repeated sync after legacy migration changed settings bytes")
 	}
 }
 
@@ -3956,21 +3962,25 @@ func TestBuildSyncSelectionDoesNotHardcodePersona(t *testing.T) {
 	}
 }
 
-// TestSyncPersonaPathsExcludeOpenCodeAgentJson verifies the install/sync
-// contract split: syncPersonaPaths must NOT declare opencode.json (that JSON
-// merge is install-only because it conflicts with SDD).
-func TestSyncPersonaPathsExcludeOpenCodeAgentJson(t *testing.T) {
+func TestSyncOpenCodePersonaSettingsPathContract(t *testing.T) {
 	home := t.TempDir()
-	reg, _ := agents.NewDefaultRegistry()
-	a, _ := reg.Get(model.AgentOpenCode)
-
-	paths := syncPersonaPaths(home, model.Selection{Persona: model.PersonaGentleman}, []agents.Adapter{a})
-
 	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
-	for _, p := range paths {
-		if p == settingsPath {
-			t.Errorf("syncPersonaPaths should NOT declare opencode.json (install-only); got %v", paths)
+	adapters := resolveAdapters([]model.AgentID{model.AgentOpenCode})
+	for _, tt := range []struct {
+		persona model.PersonaID
+		want    bool
+	}{
+		{model.PersonaShevanio, true},
+		{model.PersonaNeutral, false},
+		{model.PersonaCustom, false},
+	} {
+		if got := containsPath(syncPersonaPaths(home, model.Selection{Persona: tt.persona}, adapters), settingsPath); got != tt.want {
+			t.Errorf("persona %q settings verification = %t, want %t", tt.persona, got, tt.want)
 		}
+	}
+	neutral := model.Selection{Persona: model.PersonaNeutral, Components: []model.ComponentID{model.ComponentPersona}}
+	if targets, err := syncBackupTargets(home, "", neutral, adapters); err != nil || !containsPath(targets, settingsPath) {
+		t.Fatalf("Neutral settings cleanup missing from sync snapshot: paths=%v error=%v", targets, err)
 	}
 }
 

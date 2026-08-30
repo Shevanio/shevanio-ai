@@ -1874,7 +1874,13 @@ func backupTargets(homeDir, workspaceDir string, scope InstallScope, selection m
 		// cleanup removed. Backup-only: verification stays on the selected file.
 		if component == model.ComponentPersona {
 			plan := persona.ResourcePlanFor(selection.Persona)
+			_, managesActor := plan.OutputStyle()
 			for _, adapter := range adapters {
+				if (adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode) && managesActor {
+					if path := adapter.SettingsPath(componentPathDirScoped(homeDir, workspaceDir, scope, adapter, component)); path != "" {
+						paths[path] = struct{}{}
+					}
+				}
 				if !adapter.SupportsOutputStyles() {
 					continue
 				}
@@ -2185,6 +2191,9 @@ func componentPathsWithWorkspaceScoped(homeDir, workspaceDir string, scope Insta
 			if adapter.Agent() == model.AgentOpenClaw {
 				paths = append(paths, filepath.Join(targetDir, "SOUL.md"))
 				break
+			}
+			if (adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode) && (selection.Persona == model.PersonaShevanio || selection.Persona == model.PersonaGentleman) {
+				paths = append(paths, adapter.SettingsPath(targetDir))
 			}
 			if adapter.SupportsSystemPrompt() && adapter.SystemPromptStrategy() != model.StrategyJinjaModules {
 				paths = append(paths, adapter.SystemPromptFile(targetDir))

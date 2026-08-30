@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/shevanio/shevanio-ai/v2/internal/agents"
@@ -69,14 +70,10 @@ func outputStyleOverlayJSON(name string) []byte {
 	return []byte(fmt.Sprintf("{\n  \"outputStyle\": %q\n}\n", name))
 }
 
-// openCodeAgentOverlayJSON defines the Tab-switchable persona agent for OpenCode.
-// SDD is installed separately by the SDD component as "gentle-orchestrator";
-// persona injection must not create legacy SDD conductor keys.
-var openCodeAgentOverlayJSON = []byte("{\n  \"agent\": {\n    \"gentleman\": {\n      \"mode\": \"primary\",\n      \"description\": \"Senior Architect mentor - helpful first, challenging when it matters\",\n      \"prompt\": \"{file:./AGENTS.md}\",\n      \"tools\": {\n        \"write\": true,\n        \"edit\": true\n      }\n    }\n  }\n}\n")
+var generatedOpenCodePersonaActor = map[string]any{"mode": "primary", "description": "Senior Architect mentor - helpful first, challenging when it matters", "prompt": "{file:./AGENTS.md}", "tools": map[string]any{"write": true, "edit": true}}
 
-// Inject performs a full persona injection: the marker-bound markdown block,
-// the OpenCode/Kilocode `gentleman` agent definition in settings JSON, AND
-// the Claude Code output-style overlay. Used by `shevanio-ai install`.
+// Inject performs a full persona injection, including the canonical
+// OpenCode/Kilocode actor projection and the Claude Code output-style overlay.
 func Inject(homeDir string, adapter agents.Adapter, persona model.PersonaID) (InjectionResult, error) {
 	return injectInternal(homeDir, adapter, persona, false)
 }
@@ -87,18 +84,13 @@ func Inject(homeDir string, adapter agents.Adapter, persona model.PersonaID) (In
 //   - The Shevanio output-style file + outputStyle settings overlay (Claude
 //     Code only — no conflict with other components).
 //
-// It deliberately skips the OpenCode/Kilocode `gentleman` agent definition in
-// opencode.json/kilocode.json: that JSON merge shares the "agent" key with
-// SDD's gentle-orchestrator overlay, so running both in the same sync clobbers
-// each other's entries and breaks idempotency. That overlay remains an
-// install-only concern.
+// OpenCode/Kilocode actor reconciliation is a semantic sub-key update, so sync
+// can refresh it without clobbering the separately owned orchestrator actor.
 func InjectForSync(homeDir string, adapter agents.Adapter, persona model.PersonaID) (InjectionResult, error) {
 	return injectInternal(homeDir, adapter, persona, true)
 }
 
-// syncManaged is the internal flag previously called `markdownOnly`.
-// When true the OpenCode/Kilocode agent overlay is skipped (see InjectForSync).
-func injectInternal(homeDir string, adapter agents.Adapter, persona model.PersonaID, syncManaged bool) (InjectionResult, error) {
+func injectInternal(homeDir string, adapter agents.Adapter, persona model.PersonaID, _ bool) (InjectionResult, error) {
 	persona = canonicalPersona(persona)
 	if !adapter.SupportsSystemPrompt() {
 		return InjectionResult{}, nil
@@ -114,6 +106,17 @@ func injectInternal(homeDir string, adapter agents.Adapter, persona model.Person
 
 	files := make([]string, 0, 3)
 	changed := false
+	if adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode {
+		settingsPath := adapter.SettingsPath(homeDir)
+		actorChanged, err := reconcileOpenCodePersonaActor(settingsPath, persona)
+		if err != nil {
+			return InjectionResult{}, err
+		}
+		if actorChanged {
+			changed = true
+			files = append(files, settingsPath)
+		}
+	}
 
 	content := personaContent(adapter.Agent(), persona, residualChannel(adapter))
 	if content == "" {
@@ -348,40 +351,7 @@ func injectInternal(homeDir string, adapter agents.Adapter, persona model.Person
 		files = append(files, outputStylePath)
 	}
 
-	// 2. OpenCode/Kilocode agent definitions — Tab-switchable agents in settings.
-	// Gentleman overlay creation remains install-only because this overlay shares
-	// the "agent" key in opencode.json with SDD's gentle-orchestrator overlay.
-	// Non-gentleman sync may still do a narrow cleanup of only agent.gentleman so
-	// neutral sync does not leave regional persona state behind.
-	if (adapter.Agent() == model.AgentOpenCode || adapter.Agent() == model.AgentKilocode) && persona != model.PersonaCustom {
-		settingsPath := adapter.SettingsPath(homeDir)
-		if settingsPath != "" {
-			if isGentlemanConversationPersona(persona) {
-				if !syncManaged {
-					agentResult, err := mergeJSONFile(settingsPath, openCodeAgentOverlayJSON)
-					if err != nil {
-						return InjectionResult{}, err
-					}
-					changed = changed || agentResult.Changed
-					files = append(files, settingsPath)
-				}
-			} else {
-				// Non-gentleman: remove any residual agent.gentleman key left by a
-				// previous gentleman install. Only the "gentleman" sub-key is removed
-				// from within "agent" — other user-defined agents are preserved.
-				removed, err := removeJSONNestedSubKey(settingsPath, "agent", "gentleman")
-				if err != nil {
-					return InjectionResult{}, fmt.Errorf("clean agent.gentleman from settings: %w", err)
-				}
-				if removed {
-					changed = true
-					files = append(files, settingsPath)
-				}
-			}
-		}
-	}
-
-	// 3. Write the selected managed output style, then remove only the retired
+	// 2. Write the selected managed output style, then remove only the retired
 	// resources declared by the persona plan. The backup/verify callers derive
 	// their paths from this same plan.
 	plan := ResourcePlanFor(persona)
@@ -752,41 +722,64 @@ func removeJSONKeyIfValue(path, key, wantValue string) (bool, error) {
 	return true, nil
 }
 
-// removeJSONNestedSubKey reads the JSON object at path and removes subKey from
-// within the top-level parentKey object. Only the named subKey is deleted —
-// sibling keys inside parentKey are preserved. If the file does not exist, the
-// parentKey is absent, or subKey is not present, it is a no-op and returns false.
-func removeJSONNestedSubKey(path, parentKey, subKey string) (bool, error) {
+// reconcileOpenCodePersonaActor establishes ownership by exact semantic equality, never by key name.
+func reconcileOpenCodePersonaActor(path string, persona model.PersonaID) (bool, error) {
 	raw, err := osReadFile(path)
 	if err != nil {
 		return false, err
 	}
-	if len(raw) == 0 {
-		return false, nil
-	}
 
 	root := map[string]any{}
-	if err := json.Unmarshal(raw, &root); err != nil {
-		return false, nil
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &root); err != nil {
+			return false, fmt.Errorf("decode OpenCode persona settings: %w", err)
+		}
+	}
+	if root == nil {
+		return false, fmt.Errorf("decode OpenCode persona settings: root must be an object")
 	}
 
-	parent, ok := root[parentKey]
-	if !ok {
-		return false, nil
-	}
-	parentMap, ok := parent.(map[string]any)
-	if !ok {
-		return false, nil
-	}
-	if _, exists := parentMap[subKey]; !exists {
-		return false, nil
+	agentMap := map[string]any{}
+	if existing, ok := root["agent"]; ok {
+		var object bool
+		agentMap, object = existing.(map[string]any)
+		if !object {
+			if isGentlemanConversationPersona(persona) {
+				return false, fmt.Errorf("canonical persona actor conflict: agent must be an object")
+			}
+			return false, nil
+		}
 	}
 
-	delete(parentMap, subKey)
-	if len(parentMap) == 0 {
-		delete(root, parentKey)
+	exact := func(value any) bool { return reflect.DeepEqual(value, generatedOpenCodePersonaActor) }
+	changed := false
+	if isGentlemanConversationPersona(persona) {
+		if existing, ok := agentMap["shevanio"]; ok && !exact(existing) {
+			return false, fmt.Errorf("canonical persona actor conflict: agent.shevanio is user-managed")
+		}
+		if legacy, ok := agentMap["gentleman"]; ok && exact(legacy) {
+			delete(agentMap, "gentleman")
+			changed = true
+		}
+		if _, ok := agentMap["shevanio"]; !ok {
+			agentMap["shevanio"] = generatedOpenCodePersonaActor
+			changed = true
+		}
+	} else if persona == model.PersonaNeutral {
+		for _, key := range []string{"shevanio", "gentleman"} {
+			if existing, ok := agentMap[key]; ok && exact(existing) {
+				delete(agentMap, key)
+				changed = true
+			}
+		}
+	}
+	if !changed {
+		return false, nil
+	}
+	if len(agentMap) == 0 {
+		delete(root, "agent")
 	} else {
-		root[parentKey] = parentMap
+		root["agent"] = agentMap
 	}
 
 	encoded, err := json.MarshalIndent(root, "", "  ")
