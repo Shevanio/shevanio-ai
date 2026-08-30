@@ -162,6 +162,135 @@ func TestObserveOverlayRecordsOnlyExactCurrentWrites(t *testing.T) {
 	}
 }
 
+func TestInstallReconcilesWithoutReauthorizingUnchangedActors(t *testing.T) {
+	dir := t.TempDir()
+	settings, ownerPath := filepath.Join(dir, "opencode.json"), filepath.Join(dir, ".shevanio-ai-default-agent.json")
+	settingsRaw := []byte(`{
+  // Semantic fingerprints ignore accepted JSONC formatting.
+  "default_agent": "shevanio-orchestrator",
+  "agent": {
+    "desired": {"mode":"primary"},
+    "stale": {"mode":"subagent"},
+    "modified": {"mode":"subagent","extra":true},
+    "omitted": {"mode":"subagent"},
+    "shevanio-orchestrator-old": {}, "sdd-orchestrator-old": {}, "custom": {},
+  },
+}`)
+	owned := newOwnership(fieldValue{})
+	owned.Actors = map[string]actorOwnership{
+		"desired":  {Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "old"})},
+		"stale":    {Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})},
+		"modified": {Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})},
+		"omitted":  {Scope: "profile/omitted", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})},
+	}
+	writeFileMode(t, settings, settingsRaw, 0o600)
+	writeFileMode(t, ownerPath, encode(owned), 0o640)
+	overlay := []byte(`{"agent":{"desired":{"mode":"primary"}}}`)
+
+	plan, err := PrepareInstall(settings)
+	check(t, err)
+	check(t, plan.ObserveOverlay("base", settingsRaw, overlay, settingsRaw))
+	changed, err := plan.Apply()
+	check(t, err)
+	if !changed {
+		t.Fatal("reconciliation reported no change")
+	}
+	actors, err := actorObjects(read(t, settings))
+	check(t, err)
+	if _, exists := actors["stale"]; exists {
+		t.Fatal("exact stale recorded actor was preserved")
+	}
+	for _, actor := range []string{"desired", "modified", "omitted", "shevanio-orchestrator-old", "sdd-orchestrator-old", "custom"} {
+		if _, exists := actors[actor]; !exists {
+			t.Fatalf("actor %q was removed without exact authority", actor)
+		}
+	}
+	afterOwnership, err := readOwnership(ownerPath)
+	check(t, err)
+	if len(afterOwnership.Actors) != 2 || afterOwnership.Actors["desired"].Fingerprint != fingerprint(t, map[string]any{"mode": "old"}) || afterOwnership.Actors["omitted"].Scope != "profile/omitted" {
+		t.Fatalf("reconciled ownership = %#v", afterOwnership.Actors)
+	}
+	requireFile(t, ownerPath, encode(afterOwnership), 0o640)
+
+	stable := read(t, settings)
+	plan, err = PrepareInstall(settings)
+	check(t, err)
+	check(t, plan.ObserveOverlay("base", stable, overlay, stable))
+	changed, err = plan.Apply()
+	check(t, err)
+	if changed || !bytes.Equal(stable, read(t, settings)) {
+		t.Fatal("second reconciliation was not a byte-stable no-op")
+	}
+}
+
+func TestGenericUninstallUsesOnlyExactRecordedFingerprints(t *testing.T) {
+	dir := t.TempDir()
+	settings, ownerPath := filepath.Join(dir, "opencode.json"), filepath.Join(dir, ".shevanio-ai-default-agent.json")
+	settingsRaw := encode(map[string]any{"agent": map[string]any{
+		"exact": map[string]any{"mode": "subagent"}, "modified": map[string]any{"mode": "subagent", "extra": true},
+		"shevanio-orchestrator-old": map[string]any{}, "sdd-orchestrator-old": map[string]any{}, "custom": map[string]any{},
+	}})
+	owned := newOwnership(fieldValue{})
+	owned.Actors = map[string]actorOwnership{
+		"exact":    {Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})},
+		"modified": {Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})},
+	}
+	writeFileMode(t, settings, settingsRaw, 0o600)
+	writeFileMode(t, ownerPath, encode(owned), 0o640)
+	plan, err := PrepareUninstall(settings)
+	check(t, err)
+	changed, removed, err := plan.Apply(settingsRaw, true)
+	check(t, err)
+	if !changed || removed {
+		t.Fatalf("uninstall = changed %t, removed %t", changed, removed)
+	}
+	actors, err := actorObjects(read(t, settings))
+	check(t, err)
+	if _, exists := actors["exact"]; exists {
+		t.Fatal("exact recorded actor remains")
+	}
+	for _, actor := range []string{"modified", "shevanio-orchestrator-old", "sdd-orchestrator-old", "custom"} {
+		if _, exists := actors[actor]; !exists {
+			t.Fatalf("actor %q was removed without exact authority", actor)
+		}
+	}
+	requireAbsent(t, ownerPath)
+	stable := read(t, settings)
+	plan, err = PrepareUninstall(settings)
+	check(t, err)
+	changed, _, err = plan.Apply(stable, true)
+	check(t, err)
+	if changed || !bytes.Equal(stable, read(t, settings)) {
+		t.Fatal("second generic uninstall was not a byte-stable no-op")
+	}
+}
+
+func TestUninstallConflictsAbortBeforeActorDeletion(t *testing.T) {
+	for _, conflict := range []string{"settings", "sidecar"} {
+		t.Run(conflict, func(t *testing.T) {
+			dir := t.TempDir()
+			settings, ownerPath := filepath.Join(dir, "opencode.json"), filepath.Join(dir, ".shevanio-ai-default-agent.json")
+			settingsRaw := encode(map[string]any{"agent": map[string]any{"stale": map[string]any{"mode": "subagent"}}})
+			owned := newOwnership(fieldValue{})
+			owned.Actors["stale"] = actorOwnership{Scope: "base", Fingerprint: fingerprint(t, map[string]any{"mode": "subagent"})}
+			check(t, os.WriteFile(settings, settingsRaw, 0o644))
+			check(t, os.WriteFile(ownerPath, encode(owned), 0o644))
+			plan, err := PrepareUninstall(settings)
+			check(t, err)
+			target := map[string]string{"settings": settings, "sidecar": ownerPath}[conflict]
+			check(t, os.WriteFile(target, append(read(t, target), ' '), 0o644))
+			if _, _, err := plan.Apply(settingsRaw, true); err == nil {
+				t.Fatal("conflicting transaction deleted an actor")
+			}
+			actors, parseErr := actorObjects(read(t, settings))
+			check(t, parseErr)
+			if _, exists := actors["stale"]; !exists {
+				t.Fatal("actor was deleted before conflict refusal")
+			}
+		})
+	}
+}
+
 func fingerprint(t *testing.T, value any) string {
 	t.Helper()
 	raw, err := json.Marshal(value)
@@ -235,6 +364,14 @@ func TestOwnershipLifecycle(t *testing.T) {
 	if _, err := os.Stat(settings); !os.IsNotExist(err) {
 		t.Fatalf("fresh absence was not restored: %v", err)
 	}
+	write(`{"default_agent":"shevanio-orchestrator"}`)
+	install()
+	prepared, err := PrepareUninstall(settings)
+	check(t, err)
+	check(t, os.Remove(settings)) // Simulate an earlier trusted uninstall rewrite.
+	_, _, err = prepared.Apply(nil, false)
+	check(t, err)
+	requireAbsent(t, OwnershipPath(settings))
 	write(`{"default_agent":"build"}`)
 	before := read(t, settings)
 	check(t, os.WriteFile(OwnershipPath(settings), []byte(`{"schema":"wrong"}`), 0o644))

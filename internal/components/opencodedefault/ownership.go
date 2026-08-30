@@ -53,48 +53,72 @@ type fieldValue struct {
 	value   string
 }
 type InstallPlan struct {
-	settingsPath string
-	owned        *ownership
-	observed     map[string]actorOwnership
+	settingsPath                      string
+	owned                             *ownership
+	observed, desired                 map[string]actorOwnership
+	observedScopes                    map[string]bool
+	expectedSettings, expectedOwner   []byte
+	settingsExist, ownershipFileExist bool
 }
 type UninstallPlan struct {
-	settingsPath  string
-	settingsExist bool
-	current       fieldValue
-	owned         *ownership
+	settingsPath                   string
+	settingsExist, ownershipExists bool
+	settingsRaw, ownershipRaw      []byte
+	current                        fieldValue
+	owned                          *ownership
 }
 
 func OwnershipPath(settingsPath string) string {
 	return filepath.Join(filepath.Dir(settingsPath), ".shevanio-ai-default-agent.json")
 }
 func PrepareInstall(settingsPath string) (*InstallPlan, error) {
-	_, _, _, _, err := readSettings(settingsPath)
+	_, raw, exists, _, err := readSettings(settingsPath)
 	if err != nil {
 		return nil, err
 	}
-	owned, err := readOwnership(OwnershipPath(settingsPath))
+	owned, ownerRaw, err := readOwnershipRaw(OwnershipPath(settingsPath))
 	if err != nil {
 		return nil, err
 	}
-	return &InstallPlan{settingsPath: settingsPath, owned: owned}, nil
+	return &InstallPlan{settingsPath: settingsPath, owned: owned, expectedSettings: raw, settingsExist: exists, expectedOwner: ownerRaw, ownershipFileExist: owned != nil}, nil
 }
 func (p *InstallPlan) Apply() (bool, error) {
-	root, raw, _, current, err := readSettings(p.settingsPath)
+	root, raw, exists, current, err := readSettings(p.settingsPath)
 	if err != nil {
 		return false, err
+	}
+	if !sameSnapshot(raw, exists, p.expectedSettings, p.settingsExist) {
+		return false, fmt.Errorf("OpenCode ownership transaction conflict: settings changed after observation")
+	}
+	if err := verifySnapshot(OwnershipPath(p.settingsPath), p.expectedOwner, p.ownershipFileExist); err != nil {
+		return false, err
+	}
+	actors := map[string]actorOwnership{}
+	if p.owned != nil {
+		for actor, record := range p.owned.Actors {
+			actors[actor] = record
+		}
+	}
+	agents, _ := root["agent"].(map[string]any)
+	for actor, record := range actors {
+		if !p.observedScopes[record.Scope] {
+			continue
+		}
+		if _, wanted := p.desired[actor]; wanted {
+			continue
+		}
+		delete(actors, actor)
+		fingerprint, exact := actorFingerprint(agents[actor])
+		if exact && fingerprint == record.Fingerprint {
+			delete(agents, actor)
+		}
 	}
 	owned := p.owned
 	_, currentClass := model.NormalizeOrchestratorRead(current.value)
 	if owned == nil || !current.present || currentClass == model.IdentityUnknown {
-		previousActors := map[string]actorOwnership{}
-		if owned != nil {
-			previousActors = owned.Actors
-		}
 		owned = newOwnership(current)
-		for actor, record := range previousActors {
-			owned.Actors[actor] = record
-		}
 	}
+	owned.Actors = actors
 	for actor, record := range p.observed {
 		owned.Actors[actor] = record
 	}
@@ -132,7 +156,15 @@ func (p *InstallPlan) ObserveOverlay(scope string, before, overlay, merged []byt
 	if err != nil {
 		return err
 	}
+	if p.observedScopes == nil {
+		p.observedScopes = map[string]bool{}
+		p.desired = map[string]actorOwnership{}
+	}
+	p.observedScopes[scope] = true
+	p.expectedSettings, p.settingsExist = append([]byte(nil), merged...), true
 	for actor, generated := range generatedActors {
+		record := actorOwnership{Scope: scope, Fingerprint: actorFingerprintMust(generated)}
+		p.desired[actor] = record
 		actual, exists := mergedActors[actor]
 		if !exists || !jsonEqual(actual, generated) {
 			continue
@@ -140,31 +172,51 @@ func (p *InstallPlan) ObserveOverlay(scope string, before, overlay, merged []byt
 		if previous, existed := beforeActors[actor]; existed && jsonEqual(previous, actual) {
 			continue
 		}
-		canonical, _ := json.Marshal(generated)
-		sum := sha256.Sum256(canonical)
 		if p.observed == nil {
 			p.observed = map[string]actorOwnership{}
 		}
-		p.observed[actor] = actorOwnership{Scope: scope, Fingerprint: fmt.Sprintf("sha256:%x", sum)}
+		p.observed[actor] = record
 	}
 	return nil
 }
 func PrepareUninstall(settingsPath string) (*UninstallPlan, error) {
-	_, _, exists, current, err := readSettings(settingsPath)
+	_, raw, exists, current, err := readSettings(settingsPath)
 	if err != nil {
 		return nil, err
 	}
-	owned, err := readOwnership(OwnershipPath(settingsPath))
+	owned, ownerRaw, err := readOwnershipRaw(OwnershipPath(settingsPath))
 	if err != nil {
 		return nil, err
 	}
-	return &UninstallPlan{settingsPath: settingsPath, settingsExist: exists, current: current, owned: owned}, nil
+	return &UninstallPlan{settingsPath: settingsPath, settingsExist: exists, settingsRaw: raw, current: current, owned: owned, ownershipRaw: ownerRaw, ownershipExists: owned != nil}, nil
 }
 func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, removed bool, err error) {
+	_, currentRaw, currentExists, _, err := readSettings(p.settingsPath)
+	if err != nil {
+		return false, false, err
+	}
+	// A trusted earlier uninstall rewrite may have removed an emptied settings
+	// file. With no settings left there is no actor deletion to authorize, but
+	// the stale sidecar must still be removed.
+	settingsAlreadyRemoved := !currentExists && !settingsExist
+	if !sameSnapshot(currentRaw, currentExists, p.settingsRaw, p.settingsExist) && !settingsAlreadyRemoved {
+		return false, false, fmt.Errorf("OpenCode ownership transaction conflict: settings changed after preparation")
+	}
+	if err := verifySnapshot(OwnershipPath(p.settingsPath), p.ownershipRaw, p.ownershipExists); err != nil {
+		return false, false, err
+	}
 	root := map[string]any{}
 	if settingsExist {
 		if root, err = filemerge.UnmarshalJSONObject(cleaned); err != nil {
 			return false, false, fmt.Errorf("parse cleaned OpenCode settings: %w", err)
+		}
+	}
+	if p.owned != nil {
+		agents, _ := root["agent"].(map[string]any)
+		for actor, record := range p.owned.Actors {
+			if fingerprint, exact := actorFingerprint(agents[actor]); exact && fingerprint == record.Fingerprint {
+				delete(agents, actor)
+			}
 		}
 	}
 	_, currentClass := model.NormalizeOrchestratorRead(p.current.value)
@@ -180,11 +232,6 @@ func (p *UninstallPlan) Apply(cleaned []byte, settingsExist bool) (changed, remo
 	var settings []byte
 	if settingsExist {
 		settings = encode(root)
-	}
-	currentRaw, readErr := os.ReadFile(p.settingsPath)
-	currentExists := readErr == nil
-	if readErr != nil && !os.IsNotExist(readErr) {
-		return false, false, readErr
 	}
 	changed = currentExists != settingsExist || (settingsExist && !bytes.Equal(currentRaw, settings)) || p.owned != nil
 	if err := writePair(p.settingsPath, settings, settingsExist, OwnershipPath(p.settingsPath), nil, false); err != nil {
@@ -212,45 +259,49 @@ func readSettings(path string) (map[string]any, []byte, bool, fieldValue, error)
 	return root, raw, true, current, nil
 }
 func readOwnership(path string) (*ownership, error) {
+	owned, _, err := readOwnershipRaw(path)
+	return owned, err
+}
+func readOwnershipRaw(path string) (*ownership, []byte, error) {
 	raw, err := readRegular(path)
 	if os.IsNotExist(err) {
-		return nil, nil
+		return nil, nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read OpenCode default ownership %q: %w", path, err)
+		return nil, nil, fmt.Errorf("read OpenCode default ownership %q: %w", path, err)
 	}
 	if len(raw) > maxOwnershipSize {
-		return nil, fmt.Errorf("read OpenCode default ownership %q: sidecar exceeds %d bytes", path, maxOwnershipSize)
+		return nil, nil, fmt.Errorf("read OpenCode default ownership %q: sidecar exceeds %d bytes", path, maxOwnershipSize)
 	}
 	var envelope struct {
 		Version int `json:"version"`
 	}
 	if err := json.Unmarshal(raw, &envelope); err != nil {
-		return nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
+		return nil, nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
 	}
 	if envelope.Version == legacyVersion {
 		var legacy legacyOwnership
 		if err := decodeOwnership(raw, &legacy); err != nil || !validOwnershipHeader(legacy.Schema, legacy.Version, legacy.State, legacy.PreviousState, legacy.PreviousDefault, legacyVersion) {
-			return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+			return nil, nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
 		}
-		return &ownership{Schema: legacy.Schema, Version: version, State: legacy.State, PreviousState: legacy.PreviousState, PreviousDefault: legacy.PreviousDefault, Actors: map[string]actorOwnership{}}, nil
+		return &ownership{Schema: legacy.Schema, Version: version, State: legacy.State, PreviousState: legacy.PreviousState, PreviousDefault: legacy.PreviousDefault, Actors: map[string]actorOwnership{}}, raw, nil
 	}
 	if envelope.Version != version {
-		return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+		return nil, nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
 	}
 	var owned ownership
 	if err := decodeOwnership(raw, &owned); err != nil {
-		return nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
+		return nil, nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
 	}
 	if !validOwnershipHeader(owned.Schema, owned.Version, owned.State, owned.PreviousState, owned.PreviousDefault, version) || owned.Actors == nil {
-		return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+		return nil, nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
 	}
 	for actor, record := range owned.Actors {
 		if actor == "" || record.Scope != "base" && !profileScopePattern.MatchString(record.Scope) || !fingerprintPattern.MatchString(record.Fingerprint) {
-			return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+			return nil, nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
 		}
 	}
-	return &owned, nil
+	return &owned, raw, nil
 }
 
 func decodeOwnership(raw []byte, target any) error {
@@ -316,6 +367,34 @@ func jsonEqual(left, right any) bool {
 	leftJSON, _ := json.Marshal(left)
 	rightJSON, _ := json.Marshal(right)
 	return bytes.Equal(leftJSON, rightJSON)
+}
+func actorFingerprint(value any) (string, bool) {
+	object, ok := value.(map[string]any)
+	if !ok {
+		return "", false
+	}
+	return actorFingerprintMust(object), true
+}
+func actorFingerprintMust(object map[string]any) string {
+	canonical, _ := json.Marshal(object)
+	sum := sha256.Sum256(canonical)
+	return fmt.Sprintf("sha256:%x", sum)
+}
+func sameSnapshot(got []byte, gotExists bool, want []byte, wantExists bool) bool {
+	return gotExists == wantExists && (!gotExists || bytes.Equal(got, want))
+}
+func verifySnapshot(path string, want []byte, wantExists bool) error {
+	got, err := readRegular(path)
+	if os.IsNotExist(err) {
+		if !wantExists {
+			return nil
+		}
+	} else if err != nil {
+		return fmt.Errorf("verify OpenCode ownership transaction %q: %w", path, err)
+	} else if wantExists && bytes.Equal(got, want) {
+		return nil
+	}
+	return fmt.Errorf("OpenCode ownership transaction conflict: %q changed after preparation", path)
 }
 func encode(value any) []byte {
 	raw, err := json.MarshalIndent(value, "", "  ")
