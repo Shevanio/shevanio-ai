@@ -779,20 +779,21 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 		}
 
 		// Verify profile orchestrators were injected correctly.
-		// For each named profile, check that sdd-orchestrator-{name} is present
+		// For each named profile, check that its canonical actor is present
 		// in the merged settings. A missing key means the overlay merge silently failed.
 		for _, profile := range opts.Profiles {
 			if profile.Name == "" || profile.Name == "default" {
 				continue
 			}
-			orchKey := `"sdd-orchestrator-` + profile.Name + `"`
+			actor := namedProfileActor(profile.Name)
+			orchKey := `"` + actor + `"`
 			if !strings.Contains(settingsText, orchKey) {
 				// Last-resort disk read.
 				if diskBytes, readErr := os.ReadFile(settingsPath); readErr == nil {
 					settingsText = string(diskBytes)
 				}
 				if !strings.Contains(settingsText, orchKey) {
-					return InjectionResult{}, fmt.Errorf("post-check: %q missing profile orchestrator %q — profile overlay was not injected correctly", settingsPath, "sdd-orchestrator-"+profile.Name)
+					return InjectionResult{}, fmt.Errorf("post-check: %q missing profile orchestrator %q — profile overlay was not injected correctly", settingsPath, actor)
 				}
 			}
 		}

@@ -197,7 +197,10 @@ func profileSDDKeysForTest(name string) []string {
 	if name != "" {
 		suffix = "-" + name
 	}
-	keys := []string{"sdd-orchestrator" + suffix}
+	keys := []string{"sdd-orchestrator"}
+	if name != "" {
+		keys[0] = namedProfileActor(name)
+	}
 	for _, phase := range profilePhaseOrder {
 		keys = append(keys, phase+suffix)
 	}

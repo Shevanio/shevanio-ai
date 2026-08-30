@@ -278,7 +278,7 @@ func TestOpenCodeNamedProfileOrchestratorPreservesCurrentContract(t *testing.T) 
 	if err := json.Unmarshal(overlay, &root); err != nil {
 		t.Fatalf("unmarshal profile overlay: %v", err)
 	}
-	orchestratorName := "sdd-orchestrator-" + profileName
+	orchestratorName := namedProfileActor(profileName)
 	content := agentPrompt(t, root.Agent, orchestratorName)
 	assertCurrentOpenCodeOrchestratorContract(t, "OpenCode named profile", content, model.AgentOpenCode, profileName)
 

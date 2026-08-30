@@ -5976,7 +5976,7 @@ func TestInjectOpenCodePostCheckDiskFallback(t *testing.T) {
 }
 
 // TestInjectOpenCodeWithProfile_PostCheckVerifiesOrchestrator verifies that
-// when a named profile is injected, the post-check confirms sdd-orchestrator-{name}
+// when a named profile is injected, the post-check confirms shevanio-orchestrator-{name}
 // is present in the merged opencode.json.
 func TestInjectOpenCodeWithProfile_PostCheckVerifiesOrchestrator(t *testing.T) {
 	home := t.TempDir()
@@ -5997,14 +5997,78 @@ func TestInjectOpenCodeWithProfile_PostCheckVerifiesOrchestrator(t *testing.T) {
 		t.Fatal("Inject() with profile changed = false")
 	}
 
-	// Verify sdd-orchestrator-cheap is present in the merged settings.
+	// Verify the canonical named actor is present in the merged settings.
 	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
 	content, err := os.ReadFile(settingsPath)
 	if err != nil {
 		t.Fatalf("ReadFile(opencode.json) error = %v", err)
 	}
-	if !strings.Contains(string(content), `"sdd-orchestrator-cheap"`) {
-		t.Fatal("opencode.json missing sdd-orchestrator-cheap after profile injection")
+	if !strings.Contains(string(content), `"shevanio-orchestrator-cheap"`) {
+		t.Fatal("opencode.json missing shevanio-orchestrator-cheap after profile injection")
+	}
+}
+
+func TestInjectNamedProfileMigratesOnlySelectedActor(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		adapter agents.Adapter
+	}{
+		{name: "opencode", adapter: opencodeAdapter()},
+		{name: "kilocode", adapter: kilocodeAdapter()},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			mockNoPackageManager(t)
+			settingsPath := tt.adapter.SettingsPath(home)
+			if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+				t.Fatalf("MkdirAll() error = %v", err)
+			}
+			seed := []byte(`{
+  "agent": {
+    "sdd-orchestrator-cheap": {"model":"legacy/model"},
+    "sdd-orchestrator-personal": {"prompt":"KEEP_BYTES"},
+    "custom-actor": {"prompt":"CUSTOM_BYTES"}
+  },
+  "future": {"keep":true}
+}`)
+			if err := os.WriteFile(settingsPath, seed, 0o644); err != nil {
+				t.Fatalf("WriteFile() error = %v", err)
+			}
+			profile := model.Profile{Name: "cheap", OrchestratorModel: model.ModelAssignment{ProviderID: "openai", ModelID: "gpt-5.1"}}
+			if _, err := Inject(home, tt.adapter, model.SDDModeMulti, InjectOptions{Profiles: []model.Profile{profile}}); err != nil {
+				t.Fatalf("Inject() error = %v", err)
+			}
+			first, err := os.ReadFile(settingsPath)
+			if err != nil {
+				t.Fatalf("ReadFile() error = %v", err)
+			}
+			var root map[string]any
+			if err := json.Unmarshal(first, &root); err != nil {
+				t.Fatalf("Unmarshal() error = %v", err)
+			}
+			agentMap := root["agent"].(map[string]any)
+			actor, ok := agentMap[namedProfileActor("cheap")].(map[string]any)
+			if !ok || !strings.Contains(actor["prompt"].(string), namedProfileActor("cheap")) {
+				t.Fatalf("canonical named actor missing or not self-routed: %#v", actor)
+			}
+			if _, exists := agentMap[legacyNamedProfileActor("cheap")]; exists {
+				t.Fatal("selected profile retained its exact legacy actor")
+			}
+			if agentMap[legacyNamedProfileActor("personal")].(map[string]any)["prompt"] != "KEEP_BYTES" || agentMap["custom-actor"].(map[string]any)["prompt"] != "CUSTOM_BYTES" {
+				t.Fatal("unproven legacy or custom actor changed")
+			}
+			if root["future"].(map[string]any)["keep"] != true {
+				t.Fatal("unrelated settings field changed")
+			}
+			secondResult, err := Inject(home, tt.adapter, model.SDDModeMulti, InjectOptions{Profiles: []model.Profile{profile}})
+			if err != nil {
+				t.Fatalf("second Inject() error = %v", err)
+			}
+			second, _ := os.ReadFile(settingsPath)
+			if secondResult.Changed || !bytes.Equal(first, second) {
+				t.Fatal("second named-profile generation was not byte-stable")
+			}
+		})
 	}
 }
 
@@ -6118,7 +6182,7 @@ func TestInjectOpenCodeWithProfile_StaleJDCleanupAcceptsJSONCSettings(t *testing
 	if _, exists := agentMap["jd-judge-a-cheap"]; exists {
 		t.Fatal("stale profile-scoped JD agent survived JSONC-tolerant cleanup")
 	}
-	if _, exists := agentMap["sdd-orchestrator-cheap"]; !exists {
+	if _, exists := agentMap["shevanio-orchestrator-cheap"]; !exists {
 		t.Fatal("profile orchestrator was removed during stale JD cleanup")
 	}
 }
@@ -6175,11 +6239,11 @@ func TestInjectOpenCodeWithTwoProfiles_BothOrchestratorsPresent(t *testing.T) {
 	}
 	text := string(content)
 
-	if !strings.Contains(text, `"sdd-orchestrator-cheap"`) {
-		t.Error("opencode.json missing sdd-orchestrator-cheap")
+	if !strings.Contains(text, `"shevanio-orchestrator-cheap"`) {
+		t.Error("opencode.json missing shevanio-orchestrator-cheap")
 	}
-	if !strings.Contains(text, `"sdd-orchestrator-premium"`) {
-		t.Error("opencode.json missing sdd-orchestrator-premium")
+	if !strings.Contains(text, `"shevanio-orchestrator-premium"`) {
+		t.Error("opencode.json missing shevanio-orchestrator-premium")
 	}
 }
 

@@ -2756,7 +2756,7 @@ func TestRunSyncWithProfilesIntegration(t *testing.T) {
 	// Check all 11 agent keys for each profile.
 	profileNames := []string{"cheap", "premium", "balanced"}
 	phases := []string{
-		"sdd-orchestrator",
+		"shevanio-orchestrator",
 		"sdd-init", "sdd-explore", "sdd-propose", "sdd-spec", "sdd-design",
 		"sdd-tasks", "sdd-apply", "sdd-verify", "sdd-archive", "sdd-onboard",
 	}
@@ -2876,8 +2876,8 @@ func TestRunSyncDetectsExistingProfilesOnRegularSync(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile error = %v", err)
 	}
-	if !strings.Contains(string(settingsData), `"sdd-orchestrator-test-profile"`) {
-		t.Fatalf("run1 did not create sdd-orchestrator-test-profile in opencode.json")
+	if !strings.Contains(string(settingsData), `"shevanio-orchestrator-test-profile"`) {
+		t.Fatalf("run1 did not create shevanio-orchestrator-test-profile in opencode.json")
 	}
 	if !strings.Contains(string(settingsData), `"jd-judge-a-test-profile"`) || !strings.Contains(string(settingsData), `"jd-fix-agent-test-profile"`) {
 		t.Fatalf("run1 did not create profile-scoped JD agents in opencode.json")
@@ -2909,8 +2909,8 @@ func TestRunSyncDetectsExistingProfilesOnRegularSync(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile run2 error = %v", err)
 	}
-	if !strings.Contains(string(settingsData2), `"sdd-orchestrator-test-profile"`) {
-		t.Errorf("run2 (regular sync): sdd-orchestrator-test-profile key should still be present after DetectProfiles re-sync")
+	if !strings.Contains(string(settingsData2), `"shevanio-orchestrator-test-profile"`) {
+		t.Errorf("run2 (regular sync): shevanio-orchestrator-test-profile key should still be present after DetectProfiles re-sync")
 	}
 	if !strings.Contains(string(settingsData2), `"jd-judge-a-test-profile"`) || !strings.Contains(string(settingsData2), `"jd-fix-agent-test-profile"`) {
 		t.Errorf("run2 (regular sync): profile-scoped JD agents should still be present after DetectProfiles re-sync")

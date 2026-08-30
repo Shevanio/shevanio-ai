@@ -1,6 +1,7 @@
 package sdd
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -106,6 +107,7 @@ func TestProfileAgentKeys_Named(t *testing.T) {
 	keys := ProfileAgentKeys("cheap")
 
 	want := []string{
+		"shevanio-orchestrator-cheap",
 		"sdd-orchestrator-cheap",
 		"sdd-init-cheap",
 		"sdd-explore-cheap",
@@ -171,8 +173,8 @@ func TestProfileAgentKeys_Default(t *testing.T) {
 }
 
 func TestProfileAgentKeys_Count(t *testing.T) {
-	if n := len(ProfileAgentKeys("cheap")); n != 14 {
-		t.Errorf("ProfileAgentKeys(\"cheap\") = %d keys, want 14", n)
+	if n := len(ProfileAgentKeys("cheap")); n != 15 {
+		t.Errorf("ProfileAgentKeys(\"cheap\") = %d keys, want 15", n)
 	}
 	if n := len(ProfileAgentKeys("")); n != 11 {
 		t.Errorf("ProfileAgentKeys(\"\") = %d keys, want 11", n)
@@ -188,7 +190,7 @@ func TestDetectProfiles_SingleProfile(t *testing.T) {
 	content := `{
   "agent": {
     "sdd-orchestrator": { "mode": "primary", "prompt": "orchestrator" },
-    "sdd-orchestrator-cheap": { "mode": "primary", "model": "anthropic:claude-haiku-3-5" },
+    "shevanio-orchestrator-cheap": { "mode": "primary", "model": "anthropic:claude-haiku-3-5" },
     "sdd-init-cheap": { "mode": "subagent", "model": "anthropic:claude-haiku-3-5" },
     "sdd-explore-cheap": { "mode": "subagent", "model": "anthropic:claude-haiku-3-5" },
     "sdd-propose-cheap": { "mode": "subagent", "model": "anthropic:claude-haiku-3-5" },
@@ -273,6 +275,42 @@ func TestDetectProfiles_MalformedJSONReturnsError(t *testing.T) {
 	}
 }
 
+func TestDetectProfiles_LegacyRequiresEvidenceAndCanonicalWins(t *testing.T) {
+	settingsPath := filepath.Join(t.TempDir(), "opencode.json")
+	before := []byte(`{
+  "agent": {
+    "shevanio-orchestrator-cheap": {"model":"canonical/model"},
+    "sdd-orchestrator-cheap": {"model":"legacy/model"},
+    "sdd-orchestrator-owned": {"model":"legacy/owned"},
+    "sdd-orchestrator-personal": {"prompt":"KEEP_BYTES"}
+  },
+  "future": {"keep":true}
+}`)
+	if err := os.WriteFile(settingsPath, before, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	profiles, err := DetectProfiles(settingsPath)
+	if err != nil || len(profiles) != 1 {
+		t.Fatalf("DetectProfiles() = %#v, %v; want one canonical profile", profiles, err)
+	}
+	if got := profiles[0].OrchestratorModel.FullID(); got != "canonical/model" {
+		t.Fatalf("canonical profile model = %q, want canonical/model", got)
+	}
+
+	profiles, err = DetectProfiles(settingsPath, "owned")
+	if err != nil || len(profiles) != 2 {
+		t.Fatalf("DetectProfiles(owned) = %#v, %v; want canonical plus proven legacy", profiles, err)
+	}
+	if profiles[1].Name != "owned" || profiles[1].OrchestratorModel.FullID() != "legacy/owned" {
+		t.Fatalf("proven legacy profile = %#v", profiles[1])
+	}
+	after, _ := os.ReadFile(settingsPath)
+	if !bytes.Equal(before, after) {
+		t.Fatal("read compatibility changed settings or an unproven legacy actor")
+	}
+}
+
 func TestDetectProfiles_TwoProfiles(t *testing.T) {
 	dir := t.TempDir()
 	settingsPath := filepath.Join(dir, "opencode.json")
@@ -280,7 +318,7 @@ func TestDetectProfiles_TwoProfiles(t *testing.T) {
 	content := `{
   "agent": {
     "sdd-orchestrator": { "mode": "primary" },
-    "sdd-orchestrator-cheap": { "mode": "primary", "model": "anthropic:claude-haiku-3-5" },
+    "shevanio-orchestrator-cheap": { "mode": "primary", "model": "anthropic:claude-haiku-3-5" },
     "sdd-init-cheap": { "mode": "subagent", "model": "anthropic:claude-haiku-3-5" },
     "sdd-explore-cheap": { "mode": "subagent" },
     "sdd-propose-cheap": { "mode": "subagent" },
@@ -291,7 +329,7 @@ func TestDetectProfiles_TwoProfiles(t *testing.T) {
     "sdd-verify-cheap": { "mode": "subagent" },
     "sdd-archive-cheap": { "mode": "subagent" },
     "sdd-onboard-cheap": { "mode": "subagent" },
-    "sdd-orchestrator-premium": { "mode": "primary", "model": "anthropic:claude-opus-4-5" },
+    "shevanio-orchestrator-premium": { "mode": "primary", "model": "anthropic:claude-opus-4-5" },
     "sdd-init-premium": { "mode": "subagent", "model": "anthropic:claude-opus-4-5" },
     "sdd-explore-premium": { "mode": "subagent" },
     "sdd-propose-premium": { "mode": "subagent" },
@@ -345,7 +383,7 @@ func TestDetectProfiles_ReadsProfileScopedJDAssignments(t *testing.T) {
 
 	content := `{
   "agent": {
-    "sdd-orchestrator-cheap": { "mode": "primary", "model": "anthropic/claude-haiku-3-5" },
+    "shevanio-orchestrator-cheap": { "mode": "primary", "model": "anthropic/claude-haiku-3-5" },
     "sdd-init-cheap": { "mode": "subagent", "model": "anthropic/claude-haiku-3-5" },
     "jd-judge-a-cheap": { "mode": "subagent", "model": "anthropic/claude-opus-4-5", "variant": "high" },
     "jd-judge-b-cheap": { "mode": "subagent", "model": "openai/gpt-5.1" },
@@ -435,22 +473,22 @@ func TestGenerateProfileOverlay_Structure(t *testing.T) {
 	}
 
 	// Orchestrator checks
-	orchRaw, ok := agentMap["sdd-orchestrator-cheap"]
+	orchRaw, ok := agentMap[namedProfileActor("cheap")]
 	if !ok {
-		t.Fatal("missing sdd-orchestrator-cheap")
+		t.Fatal("missing shevanio-orchestrator-cheap")
 	}
 	orch, ok := orchRaw.(map[string]any)
 	if !ok {
-		t.Fatal("sdd-orchestrator-cheap is not an object")
+		t.Fatal("shevanio-orchestrator-cheap is not an object")
 	}
 	if mode, _ := orch["mode"].(string); mode != "primary" {
-		t.Errorf("sdd-orchestrator-cheap mode = %q, want %q", mode, "primary")
+		t.Errorf("shevanio-orchestrator-cheap mode = %q, want %q", mode, "primary")
 	}
 	if model, _ := orch["model"].(string); model != "anthropic/claude-haiku-3-5" {
-		t.Errorf("sdd-orchestrator-cheap model = %q, want %q", model, "anthropic/claude-haiku-3-5")
+		t.Errorf("shevanio-orchestrator-cheap model = %q, want %q", model, "anthropic/claude-haiku-3-5")
 	}
 	if prompt, _ := orch["prompt"].(string); !strings.Contains(prompt, "Agent Teams") && !strings.Contains(prompt, "Orchestrator") {
-		t.Errorf("sdd-orchestrator-cheap prompt does not contain orchestrator content; got: %q", prompt[:min(100, len(prompt))])
+		t.Errorf("shevanio-orchestrator-cheap prompt does not contain orchestrator content; got: %q", prompt[:min(100, len(prompt))])
 	}
 
 	// Sub-agent checks — cheap profiles use slim prompts for apply/verify and
@@ -494,15 +532,15 @@ func TestGenerateProfileOverlay_PermissionScoped(t *testing.T) {
 	}
 
 	agentMap := root["agent"].(map[string]any)
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 
 	permRaw, ok := orch["permission"]
 	if !ok {
-		t.Fatal("sdd-orchestrator-cheap missing 'permission'")
+		t.Fatal("shevanio-orchestrator-cheap missing 'permission'")
 	}
 	perm, ok := permRaw.(map[string]any)
 	if !ok {
-		t.Fatal("sdd-orchestrator-cheap 'permission' is not an object")
+		t.Fatal("shevanio-orchestrator-cheap 'permission' is not an object")
 	}
 	taskRaw, ok := perm["task"]
 	if !ok {
@@ -572,7 +610,7 @@ func TestGenerateProfileOverlay_JDAssignmentsGenerateSuffixedAgents(t *testing.T
 	if gotVariant, hasVariant := judgeB["variant"].(string); !hasVariant || gotVariant != "" {
 		t.Errorf("jd-judge-b-cheap variant = %q, has=%v; want empty variant key", gotVariant, hasVariant)
 	}
-	prompt := agentMap["sdd-orchestrator-cheap"].(map[string]any)["prompt"].(string)
+	prompt := agentMap[namedProfileActor("cheap")].(map[string]any)["prompt"].(string)
 	for _, key := range []string{"jd-judge-a-cheap", "jd-judge-b-cheap", "jd-fix-agent-cheap"} {
 		if !strings.Contains(prompt, key) {
 			t.Errorf("profile orchestrator prompt missing suffixed JD agent %q", key)
@@ -582,7 +620,7 @@ func TestGenerateProfileOverlay_JDAssignmentsGenerateSuffixedAgents(t *testing.T
 		t.Errorf("profile orchestrator prompt missing explicit JD delegation mapping; prompt: %s", prompt)
 	}
 
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 	permission := orch["permission"].(map[string]any)
 	taskWrapper := permission["task"].(map[string]any)
 	taskMap := taskWrapper["__replace__"].(map[string]any)
@@ -611,7 +649,7 @@ func TestGenerateProfileOverlay_NoJDAssignmentsUsesGlobalJDAgents(t *testing.T) 
 		t.Fatalf("overlay is not valid JSON: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	prompt := agentMap["sdd-orchestrator-cheap"].(map[string]any)["prompt"].(string)
+	prompt := agentMap[namedProfileActor("cheap")].(map[string]any)["prompt"].(string)
 	if strings.Contains(prompt, "jd-judge-a-cheap") || strings.Contains(prompt, "jd-judge-b-cheap") || strings.Contains(prompt, "jd-fix-agent-cheap") {
 		t.Errorf("profile orchestrator prompt should not force suffixed JD agents without JD assignments")
 	}
@@ -622,7 +660,7 @@ func TestGenerateProfileOverlay_NoJDAssignmentsUsesGlobalJDAgents(t *testing.T) 
 		}
 	}
 
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 	permission := orch["permission"].(map[string]any)
 	taskWrapper := permission["task"].(map[string]any)
 	taskMap := taskWrapper["__replace__"].(map[string]any)
@@ -647,10 +685,10 @@ func TestGenerateProfileOverlay_ToolsUseReplaceSentinel(t *testing.T) {
 	}
 
 	agentMap := root["agent"].(map[string]any)
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 	toolsWrapper, ok := orch["tools"].(map[string]any)
 	if !ok {
-		t.Fatal("sdd-orchestrator-cheap tools is not an object")
+		t.Fatal("shevanio-orchestrator-cheap tools is not an object")
 	}
 	tools, hasSentinel := toolsWrapper["__replace__"].(map[string]any)
 	if !hasSentinel {
@@ -748,7 +786,7 @@ func TestGenerateProfileOverlay_TaskPermissionsBlockCrossProfileDelegation(t *te
 	}
 
 	agentMap := root["agent"].(map[string]any)
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 	permission := orch["permission"].(map[string]any)
 	taskWrapper := permission["task"].(map[string]any)
 
@@ -813,7 +851,7 @@ func TestGenerateProfileOverlay_OrchestratorPromptSuffixed(t *testing.T) {
 		t.Fatalf("overlay is not valid JSON: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	orch := agentMap["sdd-orchestrator-cheap"].(map[string]any)
+	orch := agentMap[namedProfileActor("cheap")].(map[string]any)
 	prompt, _ := orch["prompt"].(string)
 
 	// The orchestrator prompt should reference suffixed sub-agents
@@ -855,7 +893,7 @@ func TestGenerateProfileOverlay_ExcludesDesktopDelegationVisibility(t *testing.T
 		t.Fatalf("overlay is not valid JSON: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	prompt := agentMap["sdd-orchestrator-cheap"].(map[string]any)["prompt"].(string)
+	prompt := agentMap[namedProfileActor("cheap")].(map[string]any)["prompt"].(string)
 
 	for _, unwanted := range []string{
 		"<!-- shevanio-ai:opencode-desktop-delegation-progress -->",
@@ -878,7 +916,7 @@ func buildSettingsWithProfiles(t *testing.T) (path string) {
 	dir := t.TempDir()
 	settingsPath := filepath.Join(dir, "opencode.json")
 
-	// Build JSON with default (11 keys) + cheap (14 keys) = 25 total
+	// Build JSON with default keys plus the canonical profile and exact legacy alias.
 	agents := make(map[string]any)
 
 	// Default agents (no suffix)
@@ -888,7 +926,7 @@ func buildSettingsWithProfiles(t *testing.T) (path string) {
 		agents[key] = map[string]any{"mode": "primary"}
 	}
 	// cheap profile
-	for _, key := range []string{"sdd-orchestrator-cheap", "sdd-init-cheap", "sdd-explore-cheap",
+	for _, key := range []string{namedProfileActor("cheap"), legacyNamedProfileActor("cheap"), "sdd-init-cheap", "sdd-explore-cheap",
 		"sdd-propose-cheap", "sdd-spec-cheap", "sdd-design-cheap", "sdd-tasks-cheap",
 		"sdd-apply-cheap", "sdd-verify-cheap", "sdd-archive-cheap", "sdd-onboard-cheap"} {
 		agents[key] = map[string]any{"mode": "subagent"}
@@ -948,6 +986,13 @@ func TestRemoveProfileAgents_RemovesProfileSDDAndJDAgents(t *testing.T) {
 		if _, ok := agentMap[key]; !ok {
 			t.Errorf("default key %q was removed — should be preserved", key)
 		}
+	}
+	if err := RemoveProfileAgents(path, "cheap"); err != nil {
+		t.Fatalf("second RemoveProfileAgents() error = %v", err)
+	}
+	second, _ := os.ReadFile(path)
+	if !bytes.Equal(data, second) {
+		t.Fatal("second profile removal changed settings")
 	}
 }
 
@@ -1087,7 +1132,7 @@ func TestDetectProfiles_OpenRouterFreeModel(t *testing.T) {
 
 	content := `{
   "agent": {
-    "sdd-orchestrator-openr": { "mode": "primary", "model": "openrouter/qwen/qwen3.6-plus:free" },
+    "shevanio-orchestrator-openr": { "mode": "primary", "model": "openrouter/qwen/qwen3.6-plus:free" },
     "sdd-apply-openr": { "mode": "subagent", "model": "openrouter/qwen/qwen3.6-plus:free" }
   }
 }`
@@ -1194,7 +1239,7 @@ func TestGenerateProfileOverlay_EmptyEffortClearsVariant(t *testing.T) {
 	}
 
 	// Orchestrator should follow the same rule.
-	orchKey := "sdd-orchestrator-cheap"
+	orchKey := namedProfileActor("cheap")
 	orchAgent := agentMap[orchKey].(map[string]any)
 	orchVariant, orchHasKey := orchAgent["variant"]
 	if !orchHasKey {
