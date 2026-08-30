@@ -570,14 +570,14 @@ test_cc_persona_gentleman() {
         assert_file_not_contains "$HOME/.claude/CLAUDE.md" "Senior Architect" "CLAUDE.md persona residual carries no tone content"
         assert_file_size_min "$HOME/.claude/CLAUDE.md" 200 "Persona section is substantial"
         # Output-style file — canonical tone channel
-        assert_file_exists "$HOME/.claude/output-styles/gentleman.md" "Output-style file exists"
-        assert_file_contains "$HOME/.claude/output-styles/gentleman.md" "name: Gentleman" "Output-style has YAML frontmatter"
-        assert_file_contains "$HOME/.claude/output-styles/gentleman.md" "keep-coding-instructions: true" "Output-style keeps coding instructions"
-        assert_file_contains "$HOME/.claude/output-styles/gentleman.md" "Senior Architect" "Output-style carries the Gentleman tone content"
+        assert_file_exists "$HOME/.claude/output-styles/shevanio.md" "Canonical Shevanio output-style file exists"
+        assert_file_contains "$HOME/.claude/output-styles/shevanio.md" "name: Shevanio" "Output-style has canonical Shevanio YAML frontmatter"
+        assert_file_contains "$HOME/.claude/output-styles/shevanio.md" "keep-coding-instructions: true" "Canonical Shevanio output-style keeps coding instructions"
+        assert_file_contains "$HOME/.claude/output-styles/shevanio.md" "Senior Architect" "Output-style carries the Shevanio tone content"
         # settings.json outputStyle key
         assert_file_exists "$HOME/.claude/settings.json" "settings.json exists"
         assert_file_contains "$HOME/.claude/settings.json" "outputStyle" "settings.json has outputStyle key"
-        assert_file_contains "$HOME/.claude/settings.json" "Gentleman" "settings.json outputStyle is Gentleman"
+        assert_file_contains "$HOME/.claude/settings.json" "Shevanio" "settings.json outputStyle is Shevanio"
     else
         log_fail "persona (gentleman) install command failed"
     fi
@@ -614,7 +614,7 @@ test_cc_persona_custom_does_nothing() {
         # is imposed, so assert that instead of the file's absence.
         assert_file_not_contains "$HOME/.claude/CLAUDE.md" "Senior Architect\|Rioplatense\|voseo" "CLAUDE.md carries no tone content under custom"
         # No output-style file either.
-        assert_file_not_exists "$HOME/.claude/output-styles/gentleman.md" "No output-style for custom"
+        assert_file_not_exists "$HOME/.claude/output-styles/shevanio.md" "No canonical Shevanio output-style for custom"
     else
         log_fail "Custom persona install command failed"
     fi
@@ -1580,7 +1580,7 @@ test_edge_persona_switch() {
     # the CLAUDE.md persona section is a residual pointer (design.md Decision 1).
     $BINARY install --agent claude-code --component persona --persona gentleman 2>&1 || true
     assert_file_contains "$HOME/.claude/CLAUDE.md" "Persona Voice" "First install: gentleman persona residual points to the output style"
-    assert_file_contains "$HOME/.claude/output-styles/gentleman.md" "Senior Architect" "First install: gentleman output-style has the teacher identity"
+    assert_file_contains "$HOME/.claude/output-styles/shevanio.md" "Senior Architect" "First install: Shevanio output-style has the teacher identity"
 
     # Then install with neutral — should REPLACE persona section AND the
     # selected output style. Neutral is a distinct professional voice (same
