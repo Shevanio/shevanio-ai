@@ -83,6 +83,36 @@ func TestGenerateIsDeterministicAndVerifiable(t *testing.T) {
 	}
 }
 
+func TestCommittedContractSemverGeneratesVersionedManifestAndArchive(t *testing.T) {
+	const want = "2.0.0"
+	semverFile := filepath.Join("..", "..", "contracts", "review-provider-contract", "CONTRACT_SEMVER")
+	contractSemver, err := ReadContractSemver(semverFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if contractSemver != want {
+		t.Fatalf("committed contract semver = %q, want %q", contractSemver, want)
+	}
+
+	staging := filepath.Join(t.TempDir(), "staging")
+	if err := Generate(staging, contractSemver); err != nil {
+		t.Fatal(err)
+	}
+	files := readGeneratedFiles(t, staging)
+	if got := manifestContractSemver(t, files["manifest.json"]); got != want {
+		t.Fatalf("generated manifest contract semver = %q, want %q", got, want)
+	}
+
+	archive := filepath.Join(t.TempDir(), "provider-contract.tar.gz")
+	writeArchive(t, archive, files, nil, false)
+	if err := VerifyArchive(archive); err != nil {
+		t.Fatal(err)
+	}
+	if got := archivedManifestContractSemver(t, archive); got != want {
+		t.Fatalf("archived manifest contract semver = %q, want %q", got, want)
+	}
+}
+
 func TestVerifyArchiveRejectsUnsafeTarEntries(t *testing.T) {
 	files, err := generatedFiles("1.0.0")
 	if err != nil {
@@ -322,6 +352,48 @@ func readGeneratedFiles(t *testing.T, directory string) map[string][]byte {
 		t.Fatal(err)
 	}
 	return files
+}
+
+func manifestContractSemver(t *testing.T, payload []byte) string {
+	t.Helper()
+	var document struct {
+		ContractSemver string `json:"contract_semver"`
+	}
+	if err := json.Unmarshal(payload, &document); err != nil {
+		t.Fatal(err)
+	}
+	return document.ContractSemver
+}
+
+func archivedManifestContractSemver(t *testing.T, filename string) string {
+	t.Helper()
+	file, err := os.Open(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	compressed, err := gzip.NewReader(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer compressed.Close()
+	archive := tar.NewReader(compressed)
+	for {
+		header, err := archive.Next()
+		if err == io.EOF {
+			t.Fatal("archive has no manifest.json")
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if header.Name == "manifest.json" {
+			payload, err := io.ReadAll(archive)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return manifestContractSemver(t, payload)
+		}
+	}
 }
 
 func writeArchive(t *testing.T, filename string, files map[string][]byte, override *tar.Header, duplicate bool) {
