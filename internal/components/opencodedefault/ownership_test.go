@@ -2,11 +2,16 @@ package opencodedefault
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/mutationjournal"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 )
@@ -57,6 +62,112 @@ func failAfterSecondPairMutation(want error) pairMutator {
 		}
 		return nil
 	}
+}
+
+func TestV1OwnershipUpgradesWithoutAdoptingActors(t *testing.T) {
+	settings := filepath.Join(t.TempDir(), "opencode.json")
+	check(t, os.WriteFile(settings, []byte(`{"default_agent":"shevanio-orchestrator"}`), 0o644))
+	check(t, os.WriteFile(OwnershipPath(settings), []byte(`{"schema":"shevanio-ai.opencode-default-agent","version":1,"state":"managed","previous_state":"value","previous_default":"build"}`), 0o644))
+	plan, err := PrepareInstall(settings)
+	check(t, err)
+	if len(plan.owned.Actors) != 0 || plan.owned.PreviousDefault != "build" {
+		t.Fatalf("v1 upgrade = %#v, want previous default and zero actors", plan.owned)
+	}
+	_, err = plan.Apply()
+	check(t, err)
+	upgraded, err := readOwnership(OwnershipPath(settings))
+	check(t, err)
+	if upgraded.Version != 2 || upgraded.PreviousDefault != "build" || len(upgraded.Actors) != 0 {
+		t.Fatalf("persisted upgrade = %#v", upgraded)
+	}
+}
+
+func TestV2OwnershipStrictValidation(t *testing.T) {
+	valid := encode(&ownership{Schema: schema, Version: version, State: "managed", PreviousState: "absent", Actors: map[string]actorOwnership{
+		"shevanio-orchestrator": {Scope: "base", Fingerprint: "sha256:" + strings.Repeat("a", 64)},
+		"sdd-apply-cheap":       {Scope: "profile/cheap", Fingerprint: "sha256:" + strings.Repeat("b", 64)},
+	}})
+	path := filepath.Join(t.TempDir(), "owner.json")
+	check(t, os.WriteFile(path, valid, 0o644))
+	got, err := readOwnership(path)
+	check(t, err)
+	if roundTrip := encode(got); !bytes.Equal(roundTrip, valid) {
+		t.Fatalf("v2 round trip = %s, want %s", roundTrip, valid)
+	}
+	for _, tt := range []struct{ name, old, replacement string }{
+		{"unknown version", `"version": 2`, `"version": 3`},
+		{"invalid scope", `"scope": "base"`, `"scope": "profile/Bad"`},
+		{"invalid fingerprint", `sha256:` + strings.Repeat("a", 64), `sha256:short`},
+		{"unknown field", `"actors":`, `"unexpected":true,"actors":`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			check(t, os.WriteFile(path, bytes.Replace(valid, []byte(tt.old), []byte(tt.replacement), 1), 0o644))
+			if _, err := readOwnership(path); err == nil {
+				t.Fatal("invalid v2 ownership was accepted")
+			}
+		})
+	}
+	check(t, os.WriteFile(path, append(valid, []byte(`{}`)...), 0o644))
+	if _, err := readOwnership(path); err == nil {
+		t.Fatal("trailing JSON was accepted")
+	}
+}
+
+func TestOwnershipInputRefusals(t *testing.T) {
+	dir := t.TempDir()
+	t.Run("directory", func(t *testing.T) {
+		if _, err := readOwnership(dir); err == nil {
+			t.Fatal("directory ownership input was accepted")
+		}
+	})
+	t.Run("symlink", func(t *testing.T) {
+		target, link := filepath.Join(dir, "target"), filepath.Join(dir, "link")
+		check(t, os.WriteFile(target, encode(newOwnership(fieldValue{})), 0o644))
+		if err := os.Symlink(target, link); err != nil {
+			t.Skipf("symlink unavailable: %v", err)
+		}
+		if _, err := readOwnership(link); err == nil {
+			t.Fatal("symlink ownership input was accepted")
+		}
+	})
+	t.Run("oversized", func(t *testing.T) {
+		path := filepath.Join(dir, "oversized")
+		check(t, os.WriteFile(path, bytes.Repeat([]byte("x"), maxOwnershipSize+1), 0o644))
+		if _, err := readOwnership(path); err == nil {
+			t.Fatal("oversized ownership input was accepted")
+		}
+	})
+}
+
+func TestObserveOverlayRecordsOnlyExactCurrentWrites(t *testing.T) {
+	before := []byte(`{"agent":{"sdd-init":{"mode":"subagent"},"sdd-verify":{"mode":"subagent","user":true}}}`)
+	overlay := []byte(`{"agent":{"shevanio-orchestrator":{"mode":"primary","tools":{"__replace__":{"read":true}}},"sdd-init":{"mode":"subagent"},"sdd-verify":{"mode":"subagent"}}}`)
+	merged, err := filemerge.MergeJSONObjects(before, overlay)
+	check(t, err)
+	plan := &InstallPlan{}
+	check(t, plan.ObserveOverlay("base", before, overlay, merged))
+	if len(plan.observed) != 1 {
+		t.Fatalf("base observations = %#v, want only the created actor", plan.observed)
+	}
+	wantFingerprint := fingerprint(t, map[string]any{"mode": "primary", "tools": map[string]any{"read": true}})
+	if got := plan.observed["shevanio-orchestrator"]; got.Scope != "base" || got.Fingerprint != wantFingerprint {
+		t.Fatalf("base ownership = %#v, want base/%s", got, wantFingerprint)
+	}
+	profileOverlay := []byte(`{"agent":{"shevanio-orchestrator-cheap":{"mode":"primary"}}}`)
+	profileMerged, err := filemerge.MergeJSONObjects(merged, profileOverlay)
+	check(t, err)
+	check(t, plan.ObserveOverlay("profile/cheap", merged, profileOverlay, profileMerged))
+	if got := plan.observed["shevanio-orchestrator-cheap"]; got.Scope != "profile/cheap" || got.Fingerprint != fingerprint(t, map[string]any{"mode": "primary"}) {
+		t.Fatalf("profile ownership = %#v", got)
+	}
+}
+
+func fingerprint(t *testing.T, value any) string {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	check(t, err)
+	sum := sha256.Sum256(raw)
+	return fmt.Sprintf("sha256:%x", sum)
 }
 func TestOwnershipLifecycle(t *testing.T) {
 	settings := filepath.Join(t.TempDir(), "opencode.json")

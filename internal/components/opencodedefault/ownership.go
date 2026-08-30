@@ -2,11 +2,13 @@ package opencodedefault
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/mutationjournal"
@@ -14,18 +16,37 @@ import (
 )
 
 const (
-	schema  = "shevanio-ai.opencode-default-agent"
-	version = 1
+	schema           = "shevanio-ai.opencode-default-agent"
+	legacyVersion    = 1
+	version          = 2
+	maxOwnershipSize = 1 << 20
+)
+
+var (
+	profileScopePattern = regexp.MustCompile(`^profile/[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
+	fingerprintPattern  = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 )
 
 var ManagedAgent = model.CanonicalManagedIdentity.Actor
 
 type ownership struct {
+	Schema          string                    `json:"schema"`
+	Version         int                       `json:"version"`
+	State           string                    `json:"state"`
+	PreviousState   string                    `json:"previous_state"`
+	PreviousDefault string                    `json:"previous_default,omitempty"`
+	Actors          map[string]actorOwnership `json:"actors"`
+}
+type legacyOwnership struct {
 	Schema          string `json:"schema"`
 	Version         int    `json:"version"`
 	State           string `json:"state"`
 	PreviousState   string `json:"previous_state"`
 	PreviousDefault string `json:"previous_default,omitempty"`
+}
+type actorOwnership struct {
+	Scope       string `json:"scope"`
+	Fingerprint string `json:"fingerprint"`
 }
 type fieldValue struct {
 	present bool
@@ -34,6 +55,7 @@ type fieldValue struct {
 type InstallPlan struct {
 	settingsPath string
 	owned        *ownership
+	observed     map[string]actorOwnership
 }
 type UninstallPlan struct {
 	settingsPath  string
@@ -64,7 +86,17 @@ func (p *InstallPlan) Apply() (bool, error) {
 	owned := p.owned
 	_, currentClass := model.NormalizeOrchestratorRead(current.value)
 	if owned == nil || !current.present || currentClass == model.IdentityUnknown {
+		previousActors := map[string]actorOwnership{}
+		if owned != nil {
+			previousActors = owned.Actors
+		}
 		owned = newOwnership(current)
+		for actor, record := range previousActors {
+			owned.Actors[actor] = record
+		}
+	}
+	for actor, record := range p.observed {
+		owned.Actors[actor] = record
 	}
 	root["default_agent"] = model.CanonicalManagedIdentity.Actor
 	settings := encode(root)
@@ -76,6 +108,46 @@ func (p *InstallPlan) Apply() (bool, error) {
 		return false, err
 	}
 	return changed, nil
+}
+
+// ObserveOverlay records exact actor projections created or changed by this plan.
+// Existing identical actors and merged supersets remain unowned.
+func (p *InstallPlan) ObserveOverlay(scope string, before, overlay, merged []byte) error {
+	if scope != "base" && !profileScopePattern.MatchString(scope) {
+		return fmt.Errorf("invalid OpenCode actor ownership scope %q", scope)
+	}
+	normalized, err := filemerge.MergeJSONObjects(nil, overlay)
+	if err != nil {
+		return fmt.Errorf("normalize OpenCode actor overlay: %w", err)
+	}
+	generatedActors, err := actorObjects(normalized)
+	if err != nil {
+		return err
+	}
+	beforeActors, err := actorObjects(before)
+	if err != nil {
+		return err
+	}
+	mergedActors, err := actorObjects(merged)
+	if err != nil {
+		return err
+	}
+	for actor, generated := range generatedActors {
+		actual, exists := mergedActors[actor]
+		if !exists || !jsonEqual(actual, generated) {
+			continue
+		}
+		if previous, existed := beforeActors[actor]; existed && jsonEqual(previous, actual) {
+			continue
+		}
+		canonical, _ := json.Marshal(generated)
+		sum := sha256.Sum256(canonical)
+		if p.observed == nil {
+			p.observed = map[string]actorOwnership{}
+		}
+		p.observed[actor] = actorOwnership{Scope: scope, Fingerprint: fmt.Sprintf("sha256:%x", sum)}
+	}
+	return nil
 }
 func PrepareUninstall(settingsPath string) (*UninstallPlan, error) {
 	_, _, exists, current, err := readSettings(settingsPath)
@@ -147,20 +219,54 @@ func readOwnership(path string) (*ownership, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read OpenCode default ownership %q: %w", path, err)
 	}
-	var owned ownership
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&owned); err != nil {
+	if len(raw) > maxOwnershipSize {
+		return nil, fmt.Errorf("read OpenCode default ownership %q: sidecar exceeds %d bytes", path, maxOwnershipSize)
+	}
+	var envelope struct {
+		Version int `json:"version"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
 	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return nil, fmt.Errorf("decode OpenCode default ownership %q: trailing data", path)
+	if envelope.Version == legacyVersion {
+		var legacy legacyOwnership
+		if err := decodeOwnership(raw, &legacy); err != nil || !validOwnershipHeader(legacy.Schema, legacy.Version, legacy.State, legacy.PreviousState, legacy.PreviousDefault, legacyVersion) {
+			return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+		}
+		return &ownership{Schema: legacy.Schema, Version: version, State: legacy.State, PreviousState: legacy.PreviousState, PreviousDefault: legacy.PreviousDefault, Actors: map[string]actorOwnership{}}, nil
 	}
-	validPrevious := owned.PreviousState == "absent" && owned.PreviousDefault == "" || owned.PreviousState == "value"
-	if owned.Schema != schema || owned.Version != version || owned.State != "managed" || !validPrevious {
+	if envelope.Version != version {
 		return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
 	}
+	var owned ownership
+	if err := decodeOwnership(raw, &owned); err != nil {
+		return nil, fmt.Errorf("decode OpenCode default ownership %q: %w", path, err)
+	}
+	if !validOwnershipHeader(owned.Schema, owned.Version, owned.State, owned.PreviousState, owned.PreviousDefault, version) || owned.Actors == nil {
+		return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+	}
+	for actor, record := range owned.Actors {
+		if actor == "" || record.Scope != "base" && !profileScopePattern.MatchString(record.Scope) || !fingerprintPattern.MatchString(record.Fingerprint) {
+			return nil, fmt.Errorf("invalid OpenCode default ownership %q", path)
+		}
+	}
 	return &owned, nil
+}
+
+func decodeOwnership(raw []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("trailing data")
+	}
+	return nil
+}
+func validOwnershipHeader(gotSchema string, gotVersion int, state, previousState, previousDefault string, wantVersion int) bool {
+	validPrevious := previousState == "absent" && previousDefault == "" || previousState == "value"
+	return gotSchema == schema && gotVersion == wantVersion && state == "managed" && validPrevious
 }
 func readRegular(path string) ([]byte, error) {
 	info, err := os.Lstat(path)
@@ -184,12 +290,32 @@ func defaultField(root map[string]any) (fieldValue, error) {
 	return fieldValue{present: true, value: text}, nil
 }
 func newOwnership(previous fieldValue) *ownership {
-	owned := &ownership{Schema: schema, Version: version, State: "managed", PreviousState: "absent"}
+	owned := &ownership{Schema: schema, Version: version, State: "managed", PreviousState: "absent", Actors: map[string]actorOwnership{}}
 	if previous.present {
 		owned.PreviousState = "value"
 		owned.PreviousDefault = previous.value
 	}
 	return owned
+}
+
+func actorObjects(raw []byte) (map[string]map[string]any, error) {
+	root, err := filemerge.UnmarshalJSONObject(raw)
+	if err != nil {
+		return nil, fmt.Errorf("parse OpenCode actor projection: %w", err)
+	}
+	result := map[string]map[string]any{}
+	agents, _ := root["agent"].(map[string]any)
+	for actor, value := range agents {
+		if object, ok := value.(map[string]any); ok {
+			result[actor] = object
+		}
+	}
+	return result, nil
+}
+func jsonEqual(left, right any) bool {
+	leftJSON, _ := json.Marshal(left)
+	rightJSON, _ := json.Marshal(right)
+	return bytes.Equal(leftJSON, rightJSON)
 }
 func encode(value any) []byte {
 	raw, err := json.MarshalIndent(value, "", "  ")

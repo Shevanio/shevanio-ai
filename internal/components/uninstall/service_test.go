@@ -16,6 +16,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/backup"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/communitytool"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/engram"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	opencodeactivation "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	"github.com/shevanio/shevanio-ai/v2/internal/state"
@@ -626,7 +627,7 @@ func TestComponentOperationsContext7ClaudePreservesCustomLegacyFile(t *testing.T
 	}
 }
 
-func TestComponentOperationsSDD_RemovesBaseAndProfileAgentsFromSettings(t *testing.T) {
+func TestComponentOperationsSDD_PreservesUnrecordedActors(t *testing.T) {
 	homeDir := t.TempDir()
 	workspaceDir := t.TempDir()
 
@@ -651,6 +652,7 @@ func TestComponentOperationsSDD_RemovesBaseAndProfileAgentsFromSettings(t *testi
 	    "sdd-apply": {"mode": "subagent", "model": "anthropic:claude-sonnet-4"},
 	    "sdd-onboard": {"mode": "subagent", "model": "anthropic:claude-sonnet-4"},
 	    "sdd-verify": {"mode": "subagent", "model": "anthropic:claude-sonnet-4"},
+	    "jd-judge-a": {"mode": "subagent", "model": "historical:model"},
 	    "sdd-orchestrator-fast": {"mode": "primary", "model": "openai:gpt-4.1-mini"},
 	    "sdd-apply-fast": {"mode": "subagent", "model": "openai:gpt-4.1-mini"},
 	    "sdd-onboard-fast": {"mode": "subagent", "model": "openai:gpt-4.1-mini"},
@@ -661,6 +663,10 @@ func TestComponentOperationsSDD_RemovesBaseAndProfileAgentsFromSettings(t *testi
 	}`)
 	if err := os.WriteFile(settingsPath, initial, 0o644); err != nil {
 		t.Fatalf("WriteFile(settings) error = %v", err)
+	}
+	owner := []byte(`{"schema":"shevanio-ai.opencode-default-agent","version":2,"state":"managed","previous_state":"absent","actors":{}}`)
+	if err := os.WriteFile(opencodedefault.OwnershipPath(settingsPath), owner, 0o644); err != nil {
+		t.Fatal(err)
 	}
 
 	ops, _, err := svc.componentOperations(adapter, model.ComponentSDD)
@@ -698,19 +704,19 @@ func TestComponentOperationsSDD_RemovesBaseAndProfileAgentsFromSettings(t *testi
 		t.Fatalf("agent object missing or invalid: %#v", root["agent"])
 	}
 
-	for _, removedKey := range []string{
+	for _, preservedKey := range []string{
 		"sdd-orchestrator",
 		"sdd-apply",
 		"sdd-onboard",
 		"sdd-verify",
+		"jd-judge-a",
+		"sdd-orchestrator-fast",
+		"sdd-apply-fast",
+		"sdd-onboard-fast",
+		"sdd-verify-fast",
 	} {
-		if _, exists := agentMap[removedKey]; exists {
-			t.Fatalf("managed SDD key %q should be removed, got agent map: %#v", removedKey, agentMap)
-		}
-	}
-	for _, preservedKey := range []string{"sdd-orchestrator-fast", "sdd-apply-fast", "sdd-onboard-fast", "sdd-verify-fast"} {
 		if _, exists := agentMap[preservedKey]; !exists {
-			t.Fatalf("unproven profile key %q should be preserved, got agent map: %#v", preservedKey, agentMap)
+			t.Fatalf("unrecorded actor %q should be preserved, got agent map: %#v", preservedKey, agentMap)
 		}
 	}
 

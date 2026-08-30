@@ -538,6 +538,11 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 			if err != nil {
 				return InjectionResult{}, err
 			}
+			if defaultPlan != nil {
+				if err := defaultPlan.ObserveOverlay("base", agentResult.before, overlayBytes, agentResult.merged); err != nil {
+					return InjectionResult{}, err
+				}
+			}
 			changed = changed || agentResult.writeResult.Changed
 			files = append(files, settingsPath)
 			mergedSettingsBytes = agentResult.merged
@@ -558,11 +563,9 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 				if profile.Name == "" || profile.Name == "default" {
 					continue
 				}
-				cleanupResult, cleanupErr := cleanupStaleProfileJDAgents(settingsPath, profile)
-				if cleanupErr != nil {
-					return InjectionResult{}, fmt.Errorf("clean stale profile JD agents %q: %w", profile.Name, cleanupErr)
+				if err := ValidateProfileName(profile.Name); err != nil {
+					return InjectionResult{}, err
 				}
-				changed = changed || cleanupResult.Changed
 				profileOverlay, profileErr := GenerateProfileOverlay(profile, homeDir, settingsPath, opts.OpenCodeModelAssignments, opts.CodeGraphGuidanceMarkdown, opts.orchestratorPolicyRenderOptions())
 				if profileErr != nil {
 					return InjectionResult{}, fmt.Errorf("generate profile overlay %q: %w", profile.Name, profileErr)
@@ -570,6 +573,11 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 				profileResult, profileErr := mergeJSONFile(settingsPath, profileOverlay)
 				if profileErr != nil {
 					return InjectionResult{}, fmt.Errorf("merge profile overlay %q: %w", profile.Name, profileErr)
+				}
+				if defaultPlan != nil {
+					if err := defaultPlan.ObserveOverlay("profile/"+profile.Name, profileResult.before, profileOverlay, profileResult.merged); err != nil {
+						return InjectionResult{}, err
+					}
 				}
 				changed = changed || profileResult.writeResult.Changed
 				mergedSettingsBytes = profileResult.merged
@@ -1917,6 +1925,7 @@ func installOpenCodePlugins(homeDir string, adapter agents.Adapter) (InjectionRe
 
 type mergeJSONResult struct {
 	writeResult filemerge.WriteResult
+	before      []byte
 	// merged holds the final JSON bytes that were written to disk.
 	// Callers should validate against this in-memory copy instead of
 	// re-reading the file from disk — on Windows/WSL2, the atomic rename
@@ -1953,7 +1962,7 @@ func mergeJSONFile(path string, overlay []byte) (mergeJSONResult, error) {
 		return mergeJSONResult{}, err
 	}
 
-	return mergeJSONResult{writeResult: writeResult, merged: merged}, nil
+	return mergeJSONResult{writeResult: writeResult, before: baseJSON, merged: merged}, nil
 }
 
 // defaultOpenCodeShareDisabled adds a defensive OpenCode default for SDD
