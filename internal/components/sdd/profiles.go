@@ -410,8 +410,7 @@ func GenerateProfileOverlay(profile model.Profile, homeDir, settingsPath string,
 		// profile-scoped (presence toggles delegation to the *-{name} agent vs
 		// the global one). When the profile has not opted in, fall back to
 		// the global JD agent and skip generating the suffixed entry — this
-		// preserves the existing "profile-scoped JD is opt-in" contract that
-		// other tests (e.g. cleanupStaleProfileJDAgents) rely on.
+		// preserves the existing "profile-scoped JD is opt-in" contract.
 		profileAssignment, hasProfileKey := profile.PhaseAssignments[jd]
 		hasProfileValue := hasProfileKey && profileAssignment.ProviderID != "" && profileAssignment.ModelID != ""
 		if !hasProfileValue {
@@ -465,66 +464,6 @@ func resolveProfileAssignment(profile model.Profile, fallback map[string]model.M
 func hasProfileAssignment(profile model.Profile, phase string) bool {
 	assignment, ok := profile.PhaseAssignments[phase]
 	return ok && assignment.ProviderID != "" && assignment.ModelID != ""
-}
-
-func cleanupStaleProfileJDAgents(settingsPath string, profile model.Profile) (filemerge.WriteResult, error) {
-	if profile.Name == "" || profile.Name == "default" {
-		return filemerge.WriteResult{}, nil
-	}
-
-	data, err := os.ReadFile(settingsPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return filemerge.WriteResult{}, nil
-		}
-		return filemerge.WriteResult{}, fmt.Errorf("read settings %q: %w", settingsPath, err)
-	}
-
-	root, err := filemerge.UnmarshalJSONObject(data)
-	if err != nil {
-		// Keep this cleanup no stricter than mergeJSONFile/filemerge.MergeJSONObjects:
-		// malformed existing OpenCode configs are treated as an empty base during
-		// merge after the backup step, so stale-key cleanup must not block sync first.
-		return filemerge.WriteResult{}, nil
-	}
-
-	agentRaw, ok := root["agent"]
-	if !ok {
-		return filemerge.WriteResult{}, nil
-	}
-	agentMap, ok := agentRaw.(map[string]any)
-	if !ok {
-		return filemerge.WriteResult{}, nil
-	}
-
-	deleted := 0
-	suffix := "-" + profile.Name
-	if _, exists := agentMap[legacyNamedProfileActor(profile.Name)]; exists {
-		delete(agentMap, legacyNamedProfileActor(profile.Name))
-		deleted++
-	}
-	for _, jd := range opencode.JDPhases() {
-		if hasProfileAssignment(profile, jd) {
-			continue
-		}
-		key := jd + suffix
-		if _, exists := agentMap[key]; exists {
-			delete(agentMap, key)
-			deleted++
-		}
-	}
-	if deleted == 0 {
-		return filemerge.WriteResult{}, nil
-	}
-
-	root["agent"] = agentMap
-	out, err := json.MarshalIndent(root, "", "  ")
-	if err != nil {
-		return filemerge.WriteResult{}, fmt.Errorf("marshal settings: %w", err)
-	}
-	out = append(out, '\n')
-
-	return filemerge.WriteFileAtomic(settingsPath, out, 0o644)
 }
 
 func jdProfileAgentEntry(jd string) map[string]any {
