@@ -3987,9 +3987,9 @@ func TestSyncPersonaPathsDeclareManagedClaudeOutputStyle(t *testing.T) {
 		wantConfig string
 	}{
 		{
-			name:       "gentleman",
+			name:       "legacy gentleman emits shevanio",
 			persona:    model.PersonaGentleman,
-			wantStyle:  filepath.Join(home, ".claude", "output-styles", "gentleman.md"),
+			wantStyle:  filepath.Join(home, ".claude", "output-styles", "shevanio.md"),
 			unwanted:   filepath.Join(home, ".claude", "output-styles", "neutral.md"),
 			wantConfig: filepath.Join(home, ".claude", "settings.json"),
 		},
@@ -3997,14 +3997,14 @@ func TestSyncPersonaPathsDeclareManagedClaudeOutputStyle(t *testing.T) {
 			name:       "neutral",
 			persona:    model.PersonaNeutral,
 			wantStyle:  filepath.Join(home, ".claude", "output-styles", "neutral.md"),
-			unwanted:   filepath.Join(home, ".claude", "output-styles", "gentleman.md"),
+			unwanted:   filepath.Join(home, ".claude", "output-styles", "shevanio.md"),
 			wantConfig: filepath.Join(home, ".claude", "settings.json"),
 		},
 		{
 			name:       "legacy neutral alias",
 			persona:    model.PersonaGentlemanNeutralArtifacts,
 			wantStyle:  filepath.Join(home, ".claude", "output-styles", "neutral.md"),
-			unwanted:   filepath.Join(home, ".claude", "output-styles", "gentleman.md"),
+			unwanted:   filepath.Join(home, ".claude", "output-styles", "shevanio.md"),
 			wantConfig: filepath.Join(home, ".claude", "settings.json"),
 		},
 	}
@@ -4027,30 +4027,34 @@ func TestSyncPersonaPathsDeclareManagedClaudeOutputStyle(t *testing.T) {
 }
 
 // TestSyncBackupTargetsCaptureBothManagedOutputStyles pins the persona-switch
-// backup fix: the pre-sync snapshot must capture BOTH managed output-style
-// files so switching personas (which removes the previously selected file) can
-// be rolled back. Verification stays on the selected file (asserted by
+// backup fix: the pre-sync snapshot must capture canonical managed styles plus
+// the legacy Gentleman style so switching personas remains recoverable.
+// Verification stays on the selected file (asserted by
 // TestSyncPersonaPathsDeclareManagedClaudeOutputStyle).
 func TestSyncBackupTargetsCaptureBothManagedOutputStyles(t *testing.T) {
 	home := t.TempDir()
 	reg, _ := agents.NewDefaultRegistry()
 	a, _ := reg.Get(model.AgentClaudeCode)
 
-	gentleman := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	shevanio := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 	neutral := filepath.Join(home, ".claude", "output-styles", "neutral.md")
+	gentleman := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
 
-	for _, persona := range []model.PersonaID{model.PersonaGentleman, model.PersonaNeutral} {
+	for _, persona := range []model.PersonaID{model.PersonaShevanio, model.PersonaGentleman, model.PersonaNeutral} {
 		selection := model.Selection{Persona: persona, Components: []model.ComponentID{model.ComponentPersona}}
 		targets, err := syncBackupTargets(home, "", selection, []agents.Adapter{a})
 		if err != nil {
 			t.Fatalf("syncBackupTargets(%q) error = %v", persona, err)
 		}
 
-		if !containsPath(targets, gentleman) {
-			t.Errorf("syncBackupTargets(%q) missing gentleman.md; got %v", persona, targets)
+		if !containsPath(targets, shevanio) {
+			t.Errorf("syncBackupTargets(%q) missing shevanio.md; got %v", persona, targets)
 		}
 		if !containsPath(targets, neutral) {
 			t.Errorf("syncBackupTargets(%q) missing neutral.md; got %v", persona, targets)
+		}
+		if !containsPath(targets, gentleman) {
+			t.Errorf("syncBackupTargets(%q) missing legacy gentleman.md; got %v", persona, targets)
 		}
 	}
 }
@@ -4062,13 +4066,13 @@ func TestPersonaSyncOutputStyleSwitchIsIdempotent(t *testing.T) {
 		Components: []model.ComponentID{model.ComponentPersona},
 		Persona:    model.PersonaGentlemanNeutralArtifacts,
 	}
-	gentleman := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	shevanio := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 
 	if _, err := persona.Inject(home, claude.NewAdapter(), model.PersonaGentleman); err != nil {
 		t.Fatalf("Inject(gentleman) error = %v", err)
 	}
-	if _, err := os.Stat(gentleman); err != nil {
-		t.Fatalf("precondition: gentleman output style missing: %v", err)
+	if _, err := os.Stat(shevanio); err != nil {
+		t.Fatalf("precondition: canonical shevanio output style missing: %v", err)
 	}
 
 	first, err := RunSyncWithSelection(home, selection)
@@ -4078,8 +4082,8 @@ func TestPersonaSyncOutputStyleSwitchIsIdempotent(t *testing.T) {
 	if first.FilesChanged == 0 || first.NoOp {
 		t.Fatalf("first sync files changed = %d, no-op = %t; want output-style switch", first.FilesChanged, first.NoOp)
 	}
-	if _, err := os.Stat(gentleman); !os.IsNotExist(err) {
-		t.Fatalf("first sync left retired gentleman output style: %v", err)
+	if _, err := os.Stat(shevanio); !os.IsNotExist(err) {
+		t.Fatalf("first sync left retired shevanio output style: %v", err)
 	}
 
 	second, err := RunSyncWithSelection(home, selection)
@@ -4095,10 +4099,11 @@ func TestPersonaSyncOutputStyleSwitchIsIdempotent(t *testing.T) {
 func TestBackupTargetsCaptureBothManagedOutputStyles(t *testing.T) {
 	home := t.TempDir()
 
-	gentleman := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	shevanio := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 	neutral := filepath.Join(home, ".claude", "output-styles", "neutral.md")
+	gentleman := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
 
-	for _, persona := range []model.PersonaID{model.PersonaGentleman, model.PersonaNeutral} {
+	for _, persona := range []model.PersonaID{model.PersonaShevanio, model.PersonaGentleman, model.PersonaNeutral} {
 		selection := model.Selection{Persona: persona, Components: []model.ComponentID{model.ComponentPersona}}
 		resolved := planner.ResolvedPlan{
 			Agents:            []model.AgentID{model.AgentClaudeCode},
@@ -4109,11 +4114,14 @@ func TestBackupTargetsCaptureBothManagedOutputStyles(t *testing.T) {
 			t.Fatalf("backupTargets(%q) error = %v", persona, err)
 		}
 
-		if !containsPath(targets, gentleman) {
-			t.Errorf("backupTargets(%q) missing gentleman.md; got %v", persona, targets)
+		if !containsPath(targets, shevanio) {
+			t.Errorf("backupTargets(%q) missing shevanio.md; got %v", persona, targets)
 		}
 		if !containsPath(targets, neutral) {
 			t.Errorf("backupTargets(%q) missing neutral.md; got %v", persona, targets)
+		}
+		if !containsPath(targets, gentleman) {
+			t.Errorf("backupTargets(%q) missing legacy gentleman.md; got %v", persona, targets)
 		}
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 func TestResourcePlanOutputStylePaths(t *testing.T) {
 	dir := t.TempDir()
+	shevanio := filepath.Join(dir, "shevanio.md")
 	gentleman := filepath.Join(dir, "gentleman.md")
 	neutral := filepath.Join(dir, "neutral.md")
 
@@ -19,22 +20,22 @@ func TestResourcePlanOutputStylePaths(t *testing.T) {
 		persona model.PersonaID
 		want    persona.OutputStylePaths
 	}{
-		{name: "shevanio writes the current gentleman asset", persona: model.PersonaShevanio, want: persona.OutputStylePaths{Write: gentleman, Backup: []string{gentleman, neutral}}},
+		{name: "shevanio writes the canonical style", persona: model.PersonaShevanio, want: persona.OutputStylePaths{Write: shevanio, Backup: []string{shevanio, neutral, gentleman}}},
 		{
-			name:    "gentleman writes its selected style without removing neutral",
+			name:    "legacy gentleman emits the canonical shevanio style",
 			persona: model.PersonaGentleman,
 			want: persona.OutputStylePaths{
-				Write:  gentleman,
-				Backup: []string{gentleman, neutral},
+				Write:  shevanio,
+				Backup: []string{shevanio, neutral, gentleman},
 			},
 		},
 		{
-			name:    "neutral writes its selected style and removes retired gentleman",
+			name:    "neutral removes canonical and legacy regional styles",
 			persona: model.PersonaNeutral,
 			want: persona.OutputStylePaths{
 				Write:  neutral,
-				Backup: []string{gentleman, neutral},
-				Remove: []string{gentleman},
+				Backup: []string{shevanio, neutral, gentleman},
+				Remove: []string{shevanio, gentleman},
 			},
 		},
 		{
@@ -42,8 +43,8 @@ func TestResourcePlanOutputStylePaths(t *testing.T) {
 			persona: model.PersonaGentlemanNeutralArtifacts,
 			want: persona.OutputStylePaths{
 				Write:  neutral,
-				Backup: []string{gentleman, neutral},
-				Remove: []string{gentleman},
+				Backup: []string{shevanio, neutral, gentleman},
+				Remove: []string{shevanio, gentleman},
 			},
 		},
 		{

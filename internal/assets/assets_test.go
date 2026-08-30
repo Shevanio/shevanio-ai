@@ -206,7 +206,8 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 
 		// Claude agent files
 		"claude/output-style-neutral.md",
-		"claude/persona-gentleman.md",
+		"claude/output-style-shevanio.md",
+		"claude/persona-shevanio.md",
 		"claude/sdd-orchestrator.md",
 		"claude/commands/sdd-apply.md",
 		"claude/commands/sdd-archive.md",
@@ -227,7 +228,7 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 		"claude/agents/review-refuter.md",
 
 		// OpenCode agent files
-		"opencode/persona-gentleman.md",
+		"opencode/persona-shevanio.md",
 		"opencode/background-subagents.md",
 		"opencode/sdd-orchestrator.md",
 		"opencode/sdd-overlay-single.json",
@@ -277,8 +278,8 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 		"kiro/agents/review-refuter.md",
 
 		// Kimi agent files
-		"kimi/persona-gentleman.md",
-		"kimi/output-style-gentleman.md",
+		"kimi/persona-shevanio.md",
+		"kimi/output-style-shevanio.md",
 		"kimi/output-style-neutral.md",
 		"kimi/sdd-orchestrator.md",
 		"kimi/KIMI.md",
@@ -336,7 +337,7 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 
 		// Hermes agent files
 		"hermes/sdd-orchestrator.md",
-		"hermes/persona-gentleman.md",
+		"hermes/persona-shevanio.md",
 		"hermes/persona-neutral.md",
 
 		// Foundation skills
@@ -433,7 +434,7 @@ func TestOpenCodeEmbeddedAssetLayout(t *testing.T) {
 		seen[entry.Name()] = true
 	}
 
-	for _, name := range []string{"commands", "plugins", "persona-gentleman.md", "background-subagents.md", "sdd-orchestrator.md", "sdd-overlay-single.json", "sdd-overlay-multi.json"} {
+	for _, name := range []string{"commands", "plugins", "persona-shevanio.md", "background-subagents.md", "sdd-orchestrator.md", "sdd-overlay-single.json", "sdd-overlay-multi.json"} {
 		if !seen[name] {
 			t.Fatalf("opencode embedded assets missing %q", name)
 		}
@@ -672,7 +673,7 @@ func TestClaudeEmbeddedAssetLayout(t *testing.T) {
 		seen[entry.Name()] = true
 	}
 
-	for _, name := range []string{"agents", "commands", "persona-gentleman.md", "sdd-orchestrator.md"} {
+	for _, name := range []string{"agents", "commands", "persona-shevanio.md", "output-style-shevanio.md", "sdd-orchestrator.md"} {
 		if !seen[name] {
 			t.Fatalf("claude embedded assets missing %q", name)
 		}
@@ -1302,13 +1303,13 @@ func TestPlatformNativeSDDOrchestratorsAvoidOpenCodePersistenceClaims(t *testing
 	}
 }
 
-func TestGentlemanLanguageInstructionsDoNotBiasEnglishSessions(t *testing.T) {
+func TestShevanioLanguageInstructionsDoNotBiasEnglishSessions(t *testing.T) {
 	// Claude and Kimi have an active output-style channel — their persona
 	// section is a residual and no longer carries language content on its
 	// own; the guardrail contract must be evaluated over the COMBINED
 	// persona-residual + output-style channel (design.md Decision 1;
 	// spec.md "Generic Neutral Asset Parity" applies the same combined-channel
-	// principle to Gentleman here).
+	// principle to Shevanio here).
 	personaPaths := []struct {
 		path           string
 		combineWith    string // "" when the persona file alone still carries language content
@@ -1317,11 +1318,11 @@ func TestGentlemanLanguageInstructionsDoNotBiasEnglishSessions(t *testing.T) {
 		// Claude/Kimi no longer carry "REPLY ONLY" in the persona residual —
 		// their combined channel exposes the output style's own Language
 		// Rules opener instead (JD-019).
-		{path: "claude/persona-gentleman.md", combineWith: "claude/output-style-gentleman.md", languagePhrase: "Always match the user's current language in your reply."},
-		{path: "generic/persona-gentleman.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
-		{path: "kiro/persona-gentleman.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
-		{path: "kimi/persona-gentleman.md", combineWith: "kimi/output-style-gentleman.md", languagePhrase: "Always match the user's current language in your reply."},
-		{path: "opencode/persona-gentleman.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
+		{path: "claude/persona-shevanio.md", combineWith: "claude/output-style-shevanio.md", languagePhrase: "Always match the user's current language in your reply."},
+		{path: "generic/persona-shevanio.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
+		{path: "kiro/persona-shevanio.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
+		{path: "kimi/persona-shevanio.md", combineWith: "kimi/output-style-shevanio.md", languagePhrase: "Always match the user's current language in your reply."},
+		{path: "opencode/persona-shevanio.md", languagePhrase: "Match the user's current language in your REPLY ONLY"},
 	}
 
 	for _, tc := range personaPaths {
@@ -1354,8 +1355,8 @@ func TestGentlemanLanguageInstructionsDoNotBiasEnglishSessions(t *testing.T) {
 	}
 
 	for _, path := range []string{
-		"claude/output-style-gentleman.md",
-		"kimi/output-style-gentleman.md",
+		"claude/output-style-shevanio.md",
+		"kimi/output-style-shevanio.md",
 	} {
 		t.Run(path, func(t *testing.T) {
 			content := MustRead(path)
@@ -1460,7 +1461,7 @@ func TestClaudeManagedOutputStylesAnchorReplyLanguageToLatestUserRequest(t *test
 		artifactContracts []string
 	}{
 		{
-			path: "claude/output-style-gentleman.md",
+			path: "claude/output-style-shevanio.md",
 			artifactContracts: []string{
 				"Default to English. UI labels, comments, identifiers, and copy are in English",
 				"The persona styles HOW YOU TALK, not WHAT YOU BUILD.",
@@ -1505,11 +1506,11 @@ func TestClaudeManagedOutputStylesAnchorReplyLanguageToLatestUserRequest(t *test
 	}
 }
 
-func TestClaudeGentlemanPersonaPreventsEnglishGreetingCodeSwitching(t *testing.T) {
+func TestClaudeShevanioPersonaPreventsEnglishGreetingCodeSwitching(t *testing.T) {
 	// Claude's persona section is a residual (Decision 1) — the code-switching
 	// guardrail contract now lives in the output style; evaluate the combined
 	// channel, not the persona file in isolation.
-	content := MustRead("claude/persona-gentleman.md") + "\n" + MustRead("claude/output-style-gentleman.md")
+	content := MustRead("claude/persona-shevanio.md") + "\n" + MustRead("claude/output-style-shevanio.md")
 
 	for _, required := range []string{
 		"If the selected reply language is English, every part of the direct reply must be English: greetings, interjections, acknowledgements, transition phrases, and the first sentence.",
@@ -1518,7 +1519,7 @@ func TestClaudeGentlemanPersonaPreventsEnglishGreetingCodeSwitching(t *testing.T
 		"Do not switch languages unless the user does, asks you to, or you are quoting/translating content.",
 	} {
 		if !strings.Contains(content, required) {
-			t.Fatalf("claude/persona-gentleman.md missing code-switching guardrail %q", required)
+			t.Fatalf("claude/persona-shevanio.md missing code-switching guardrail %q", required)
 		}
 	}
 }
@@ -1538,12 +1539,12 @@ func TestPersonasContainContextualSkillLoadingDirective(t *testing.T) {
 		isClaude  bool
 		invokeMsg string // wording specific to the agent family
 	}{
-		{path: "claude/persona-gentleman.md", isClaude: true, invokeMsg: "invoke it via the built-in `Skill` tool"},
-		{path: "opencode/persona-gentleman.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
-		{path: "generic/persona-gentleman.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
+		{path: "claude/persona-shevanio.md", isClaude: true, invokeMsg: "invoke it via the built-in `Skill` tool"},
+		{path: "opencode/persona-shevanio.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
+		{path: "generic/persona-shevanio.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
 		{path: "generic/persona-neutral.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
-		{path: "kiro/persona-gentleman.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
-		{path: "kimi/persona-gentleman.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
+		{path: "kiro/persona-shevanio.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
+		{path: "kimi/persona-shevanio.md", isClaude: false, invokeMsg: "read the matching SKILL.md"},
 	}
 
 	for _, tc := range tests {

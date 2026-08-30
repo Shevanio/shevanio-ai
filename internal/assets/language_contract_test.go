@@ -42,21 +42,21 @@ func TestManagedDirectReplyAssetsEnforceEnglishNoCodeSwitching(t *testing.T) {
 		path        string
 		combineWith string // "" when the asset alone still carries the contract
 	}{
-		{name: "claude gentleman output style", path: "claude/output-style-gentleman.md"},
+		{name: "claude shevanio output style", path: "claude/output-style-shevanio.md"},
 		{name: "claude neutral output style", path: "claude/output-style-neutral.md"},
 		// Claude and Kimi personas are residuals (Decision 1) — evaluate the
 		// combined persona-residual + output-style channel, not the persona
 		// file alone.
-		{name: "claude gentleman persona", path: "claude/persona-gentleman.md", combineWith: "claude/output-style-gentleman.md"},
-		{name: "generic gentleman persona", path: "generic/persona-gentleman.md"},
+		{name: "claude shevanio persona", path: "claude/persona-shevanio.md", combineWith: "claude/output-style-shevanio.md"},
+		{name: "generic shevanio persona", path: "generic/persona-shevanio.md"},
 		{name: "generic neutral persona", path: "generic/persona-neutral.md"},
-		{name: "hermes gentleman persona", path: "hermes/persona-gentleman.md"},
+		{name: "hermes shevanio persona", path: "hermes/persona-shevanio.md"},
 		{name: "hermes neutral persona", path: "hermes/persona-neutral.md"},
-		{name: "kiro gentleman persona", path: "kiro/persona-gentleman.md"},
-		{name: "kimi gentleman output style", path: "kimi/output-style-gentleman.md"},
+		{name: "kiro shevanio persona", path: "kiro/persona-shevanio.md"},
+		{name: "kimi shevanio output style", path: "kimi/output-style-shevanio.md"},
 		{name: "kimi neutral output style", path: "kimi/output-style-neutral.md"},
-		{name: "kimi gentleman persona", path: "kimi/persona-gentleman.md", combineWith: "kimi/output-style-gentleman.md"},
-		{name: "opencode gentleman persona", path: "opencode/persona-gentleman.md"},
+		{name: "kimi shevanio persona", path: "kimi/persona-shevanio.md", combineWith: "kimi/output-style-shevanio.md"},
+		{name: "opencode shevanio persona", path: "opencode/persona-shevanio.md"},
 	}
 
 	for _, tc := range tests {
@@ -292,7 +292,7 @@ func TestCommentWriterLanguageContractSources(t *testing.T) {
 	}
 }
 
-func TestGentlemanPersonaKeepsDirectConversationVoice(t *testing.T) {
+func TestShevanioPersonaKeepsDirectConversationVoice(t *testing.T) {
 	// Claude and Kimi personas are residuals (Decision 1) — the direct-
 	// conversation voice now lives exclusively in the output style; evaluate
 	// the combined persona-residual + output-style channel for those two.
@@ -300,11 +300,11 @@ func TestGentlemanPersonaKeepsDirectConversationVoice(t *testing.T) {
 		path        string
 		combineWith string
 	}{
-		{path: "claude/persona-gentleman.md", combineWith: "claude/output-style-gentleman.md"},
-		{path: "generic/persona-gentleman.md"},
-		{path: "kiro/persona-gentleman.md"},
-		{path: "kimi/persona-gentleman.md", combineWith: "kimi/output-style-gentleman.md"},
-		{path: "opencode/persona-gentleman.md"},
+		{path: "claude/persona-shevanio.md", combineWith: "claude/output-style-shevanio.md"},
+		{path: "generic/persona-shevanio.md"},
+		{path: "kiro/persona-shevanio.md"},
+		{path: "kimi/persona-shevanio.md", combineWith: "kimi/output-style-shevanio.md"},
+		{path: "opencode/persona-shevanio.md"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.path, func(t *testing.T) {
@@ -314,7 +314,7 @@ func TestGentlemanPersonaKeepsDirectConversationVoice(t *testing.T) {
 			}
 			for _, required := range []string{"Rioplatense", "voseo", "Passionate teacher"} {
 				if !strings.Contains(content, required) {
-					t.Fatalf("%s (combined=%q) missing Gentleman direct-conversation voice marker %q", tc.path, tc.combineWith, required)
+					t.Fatalf("%s (combined=%q) missing Shevanio direct-conversation voice marker %q", tc.path, tc.combineWith, required)
 				}
 			}
 		})
@@ -468,16 +468,16 @@ const neutralToneDialectAntiDriftRequired = "The same rule applies to tone and d
 
 func TestPersonaChannelsCarryPreWriteArtifactSelfCheck(t *testing.T) {
 	paths := []string{
-		"claude/output-style-gentleman.md",
+		"claude/output-style-shevanio.md",
 		"claude/output-style-neutral.md",
-		"kimi/output-style-gentleman.md",
+		"kimi/output-style-shevanio.md",
 		"kimi/output-style-neutral.md",
-		"generic/persona-gentleman.md",
+		"generic/persona-shevanio.md",
 		"generic/persona-neutral.md",
-		"hermes/persona-gentleman.md",
+		"hermes/persona-shevanio.md",
 		"hermes/persona-neutral.md",
-		"kiro/persona-gentleman.md",
-		"opencode/persona-gentleman.md",
+		"kiro/persona-shevanio.md",
+		"opencode/persona-shevanio.md",
 	}
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {

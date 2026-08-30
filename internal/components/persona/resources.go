@@ -30,9 +30,11 @@ type ResourcePlan struct {
 }
 
 var managedOutputStyles = []OutputStyle{
-	{Name: "Gentleman", File: "gentleman.md", AssetPath: "claude/output-style-gentleman.md"},
+	{Name: "Shevanio", File: "shevanio.md", AssetPath: "claude/output-style-shevanio.md"},
 	{Name: "Neutral", File: "neutral.md", AssetPath: "claude/output-style-neutral.md"},
 }
+
+var legacyOutputStyleFiles = []string{"gentleman.md"}
 
 func canonicalPersona(persona model.PersonaID) model.PersonaID {
 	if persona == model.PersonaGentlemanNeutralArtifacts {
@@ -48,7 +50,7 @@ func ResourcePlanFor(persona model.PersonaID) ResourcePlan {
 	case isGentlemanConversationPersona(persona):
 		return ResourcePlan{outputStyle: &managedOutputStyles[0]}
 	case persona == model.PersonaNeutral:
-		return ResourcePlan{outputStyle: &managedOutputStyles[1], retired: []string{managedOutputStyles[0].File}}
+		return ResourcePlan{outputStyle: &managedOutputStyles[1], retired: []string{managedOutputStyles[0].File, legacyOutputStyleFiles[0]}}
 	default:
 		return ResourcePlan{}
 	}
@@ -70,10 +72,13 @@ func (p ResourcePlan) OutputStylePaths(dir string) OutputStylePaths {
 
 	paths := OutputStylePaths{
 		Write:  filepath.Join(dir, p.outputStyle.File),
-		Backup: make([]string, 0, len(managedOutputStyles)),
+		Backup: make([]string, 0, len(managedOutputStyles)+len(legacyOutputStyleFiles)),
 	}
 	for _, style := range managedOutputStyles {
 		paths.Backup = append(paths.Backup, filepath.Join(dir, style.File))
+	}
+	for _, file := range legacyOutputStyleFiles {
+		paths.Backup = append(paths.Backup, filepath.Join(dir, file))
 	}
 	for _, file := range p.retired {
 		paths.Remove = append(paths.Remove, filepath.Join(dir, file))

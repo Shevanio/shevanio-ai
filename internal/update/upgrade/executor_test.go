@@ -959,6 +959,9 @@ func TestConfigPathsForBackup_CoversRegistryAgentsNotInOldList(t *testing.T) {
 	if err := os.WriteFile(codexFile, []byte("# Codex config"), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
+	if err := os.MkdirAll(filepath.Join(homeDir, ".claude"), 0o755); err != nil {
+		t.Fatalf("MkdirAll(.claude): %v", err)
+	}
 
 	paths := configPathsForBackup(homeDir)
 
@@ -969,6 +972,12 @@ func TestConfigPathsForBackup_CoversRegistryAgentsNotInOldList(t *testing.T) {
 
 	if _, ok := pathSet[codexFile]; !ok {
 		t.Errorf("configPathsForBackup() missing codex managed file %q — must cover registry agents, not just old hardcoded 4; got paths: %v", codexFile, paths)
+	}
+	for _, name := range []string{"shevanio.md", "gentleman.md"} {
+		path := filepath.Join(homeDir, ".claude", "output-styles", name)
+		if _, ok := pathSet[path]; !ok {
+			t.Errorf("configPathsForBackup() missing Claude output style %q", path)
+		}
 	}
 }
 
