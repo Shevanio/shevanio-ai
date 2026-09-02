@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -40,7 +41,7 @@ func requireFile(t *testing.T, path string, want []byte, mode os.FileMode) {
 	}
 	info, err := os.Stat(path)
 	check(t, err)
-	if got := info.Mode().Perm(); got != mode {
+	if got := info.Mode().Perm(); runtime.GOOS != "windows" && got != mode {
 		t.Fatalf("%s mode = %#o, want %#o", path, got, mode)
 	}
 }

@@ -8,7 +8,7 @@ You configured your SDD models once, and now every task -- cheap or expensive, e
 
 Shevanio AI supports **two ways** of working with OpenCode profiles. Profiles cover SDD phase agents; Judgment Day agents (`jd-judge-a`, `jd-judge-b`, `jd-fix-agent`) are workflow-level slots with independent model assignments.
 
-1. **Generated multi-profile mode** -- the classic Shevanio AI flow. The base SDD conductor is `gentle-orchestrator`. Each named profile generates its own `sdd-orchestrator-{name}` plus 10 suffixed SDD phase sub-agents in `opencode.json`, and you switch between them with **Tab**.
+1. **Generated multi-profile mode** -- the classic Shevanio AI flow. The base SDD conductor is `shevanio-orchestrator`. Each named profile generates its own `shevanio-orchestrator-{name}` plus 10 suffixed SDD phase sub-agents in `opencode.json`, and you switch between them with **Tab**.
 2. **External single-active mode** -- for community tools that keep profile files outside `opencode.json` and activate one runtime profile at a time.
 
 That means you can stay with the built-in multi-profile overlay, or plug Shevanio AI into an external profile manager without the two systems fighting each other.
@@ -52,7 +52,7 @@ Background jobs are process-local and non-durable: restarting OpenCode loses the
 6. Assign sub-agent models (use "Set all phases" for a uniform config, or set each phase individually).
 7. Confirm -- the installer writes the profile to `opencode.json` and runs sync.
 
-Open OpenCode and press **Tab** -- your new orchestrator appears alongside `gentle-orchestrator`, the default OpenCode SDD conductor.
+Open OpenCode and press **Tab** -- your new orchestrator appears alongside `shevanio-orchestrator`, the default OpenCode SDD conductor.
 
 ### Reasoning effort levels (per-model variants)
 
@@ -74,9 +74,10 @@ Use this table when reviewing configs or debugging profile sync:
 
 | Agent key | Meaning | Safe to rename manually? |
 |---|---|---|
-| `gentle-orchestrator` | Canonical base OpenCode SDD conductor. All `/sdd-*` commands point here by default. | No |
-| `sdd-orchestrator` | Legacy base conductor key. Sync migrates it to `gentle-orchestrator`. | No; let sync migrate it |
-| `sdd-orchestrator-{name}` | Generated named profile conductor, such as `sdd-orchestrator-cheap`. | No; use TUI or CLI |
+| `shevanio-orchestrator` | Canonical base OpenCode SDD conductor. All `/sdd-*` commands point here by default. | No |
+| `gentle-orchestrator`, `sdd-orchestrator` | Exact legacy base aliases read for compatibility. Unowned or modified entries are preserved. | No; use the canonical key |
+| `shevanio-orchestrator-{name}` | Canonical named profile conductor, such as `shevanio-orchestrator-cheap`. | No; use TUI or CLI |
+| `sdd-orchestrator-{name}` | Exact legacy named-profile alias, read only for profiles in the trusted managed inventory. | No; use TUI or CLI |
 | `sdd-{phase}` | Default sub-agent for a phase, such as `sdd-apply`. | No |
 | `sdd-{phase}-{name}` | Named profile sub-agent, such as `sdd-apply-cheap`. | No |
 
@@ -140,7 +141,7 @@ In `external-single-active` mode, Shevanio AI:
 
 - keeps writing the base OpenCode SDD assets and shared prompt files
 - **does not** auto-regenerate suffixed named profiles from `opencode.json`
-- **preserves the current `gentle-orchestrator` prompt** during sync so external tools can keep their runtime policy / fallback blocks intact
+- **preserves the current `shevanio-orchestrator` prompt** during sync so external tools can keep their runtime policy / fallback blocks intact
 
 This is the important bit: Shevanio AI still maintains the SDD foundation, but it stops acting like `opencode.json` is the source of truth for every profile.
 
@@ -150,13 +151,13 @@ After creating profiles in generated multi-profile mode, each one appears as a s
 
 | What you see in Tab | What it runs |
 |---|---|
-| `gentle-orchestrator` | Default profile (your original config) |
-| `sdd-orchestrator-cheap` | "cheap" profile -- Haiku everywhere |
-| `sdd-orchestrator-premium` | "premium" profile -- Opus everywhere |
+| `shevanio-orchestrator` | Default profile (your original config) |
+| `shevanio-orchestrator-cheap` | "cheap" profile -- Haiku everywhere |
+| `shevanio-orchestrator-premium` | "premium" profile -- Opus everywhere |
 
 Press **Tab** to cycle between orchestrators. All SDD slash commands (`/sdd-new`, `/sdd-ff`, `/sdd-explore`, etc.) run against whichever orchestrator is currently selected. The orchestrator delegates to its own suffixed sub-agents (e.g., `sdd-apply-cheap`), so profiles never interfere with each other.
 
-If you're using an external single-active manager instead, you typically keep working with the base `gentle-orchestrator` while the external tool swaps its active model assignments at runtime.
+If you're using an external single-active manager instead, you typically keep working with the base `shevanio-orchestrator` while the external tool swaps its active model assignments at runtime.
 
 ## Managing Profiles
 
@@ -168,7 +169,7 @@ From the TUI profile list screen:
 | Delete a profile | `d` on the profile | Removes orchestrator + all sub-agents from JSON |
 | Create a new profile | `n` (or select "Create new profile") | Full creation flow |
 
-The `default` profile (`gentle-orchestrator`) can be edited but not deleted -- it always exists when SDD is configured.
+The `default` profile (`shevanio-orchestrator`) can be edited but not deleted -- it always exists when SDD is configured.
 
 ### Profile name rules
 
@@ -185,14 +186,14 @@ The `default` profile (`gentle-orchestrator`) can be edited but not deleted -- i
 <details>
 <summary><strong>How It Works</strong></summary>
 
-In generated multi-profile mode, each named profile generates 11 agent entries in `opencode.json`: one orchestrator (`sdd-orchestrator-{name}`, mode `primary`) and 10 SDD phase sub-agents (`sdd-{phase}-{name}`, mode `subagent`, hidden). The base/default conductor remains `gentle-orchestrator`. Each named profile orchestrator's permissions are scoped so it can only delegate to its own suffixed sub-agents.
+In generated multi-profile mode, each named profile generates 11 agent entries in `opencode.json`: one orchestrator (`shevanio-orchestrator-{name}`, mode `primary`) and 10 SDD phase sub-agents (`sdd-{phase}-{name}`, mode `subagent`, hidden). The base/default conductor remains `shevanio-orchestrator`. Each named profile orchestrator's permissions are scoped so it can only delegate to its own suffixed sub-agents.
 
 Sub-agent prompts are shared across all profiles as files under `~/.config/opencode/prompts/sdd/` (e.g., `sdd-apply.md`). Each agent entry references the shared file via `{file:~/.config/opencode/prompts/sdd/sdd-apply.md}` -- only the `model` field differs between profiles. Orchestrator prompts are inlined per-profile because they contain profile-specific model assignment tables and sub-agent references.
 
 During sync or update, Shevanio AI now uses one of two strategies:
 
-- **`generated-multi`** -- scan `opencode.json` for `sdd-orchestrator-*`, update shared prompts, regenerate profile orchestrators, preserve model assignments, and keep `gentle-orchestrator` as the canonical base conductor
-- **`external-single-active`** -- detect external profile files, keep the shared SDD assets current, and preserve the existing `gentle-orchestrator` prompt instead of overwriting external runtime extensions
+- **`generated-multi`** -- scan `opencode.json` for canonical named-profile actors (plus trusted exact legacy aliases), update shared prompts, regenerate profile orchestrators, preserve model assignments, and keep `shevanio-orchestrator` as the canonical base conductor
+- **`external-single-active`** -- detect external profile files, keep the shared SDD assets current, and preserve the existing `shevanio-orchestrator` prompt instead of overwriting external runtime extensions
 
 </details>
 

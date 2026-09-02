@@ -52,7 +52,7 @@ func TestRetiredGGAIsAbsentFromActiveSurfaces(t *testing.T) {
 }
 
 func TestRunInstallRejectsRetiredGGAWithoutCommandsOrStateMutation(t *testing.T) {
-	home := t.TempDir()
+	home := ggaTestHome(t)
 	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{"unknown"}}))
 
 	originalHome := osUserHomeDir
@@ -82,9 +82,10 @@ func TestRunInstallRejectsRetiredGGAWithoutCommandsOrStateMutation(t *testing.T)
 }
 
 func TestMigrateLegacyGGASuccessBacksUpCleansParentsAndStaysDormant(t *testing.T) {
-	home := t.TempDir()
+	home := ggaTestHome(t)
 	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "gga-extra", "unknown", legacyGGAComponentID}}))
 	writeOwnedGGAFiles(t, home)
+	must(t, os.MkdirAll(filepath.Join(legacyGGARootDir(home), "lib"), 0o755))
 	if result, err := MigrateLegacyGGA(home, true); err != nil || result.Changed {
 		t.Fatalf("registered migration = %#v, err = %v", result, err)
 	}
@@ -354,9 +355,16 @@ func setGGARecoveryFailure(t *testing.T, primary, recovery error) {
 }
 
 func migrationHome(t *testing.T) string {
-	home := t.TempDir()
+	home := ggaTestHome(t)
 	must(t, state.Write(home, state.InstallState{Components: []model.ComponentID{legacyGGAComponentID, "unknown"}}))
 	writeOwnedGGAFiles(t, home)
+	return home
+}
+
+func ggaTestHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
 	return home
 }
 

@@ -100,7 +100,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `shevanio-ai` writes phase 
 
 ### OpenCode
 
-- Full multi-agent overlay with 11 named agents in `opencode.json` (`gentle-orchestrator` plus 10 SDD phase agents)
+- Full multi-agent overlay with 11 named agents in `opencode.json` (`shevanio-orchestrator` plus 10 SDD phase agents)
 - Slash commands for SDD phases (`/sdd-new`, `/sdd-explore`, etc.)
 - Native OpenCode `task` subagents; managed background execution is configured through `shevanio-ai install` / `shevanio-ai sync` with `--opencode-background-subagents=auto|on|off` or `SHEVANIO_AI_OPENCODE_BACKGROUND_SUBAGENTS`
 - CLI precedence is flag, non-empty environment, prior managed state, then `auto`; the interactive OpenCode + SDD installer prompts only when that preference is unresolved
@@ -184,7 +184,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `shevanio-ai` writes phase 
 ### Kimi Code
 
 - Installation requires the `uv` Python package manager (`uv tool install kimi-cli`).
-- Root custom agent at `~/.kimi/agents/gentleman.yaml` with `system_prompt_path: ../KIMI.md`
+- Root custom agent at `~/.kimi/agents/shevanio.yaml` with `system_prompt_path: ../KIMI.md`
 - `KIMI.md` is a thin Jinja template that includes modular prompt files:
   `persona.md`, `output-style.md`, `engram-protocol.md`, `sdd-orchestrator.md`
 - Built-in Kimi variables are preserved in `KIMI.md`: `${KIMI_AGENTS_MD}` and `${KIMI_SKILLS}`

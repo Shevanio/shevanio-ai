@@ -49,8 +49,8 @@ go run ./cmd/shevanio-ai install \
   --agent claude-code,opencode \
   --component engram,sdd,skills \
   --skill sdd-apply \
-  --persona gentleman \
-  --preset full-gentleman \
+  --persona shevanio \
+  --preset full-shevanio \
   --dry-run
 ```
 

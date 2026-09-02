@@ -12,7 +12,7 @@
 | SDD | `sdd` | Spec-Driven Development workflow and native orchestration. It is explicit and optional; see [Intended Usage](intended-usage.md). |
 | Skills | `skills` | Curated coding skill library |
 | Context7 | `context7` | MCP server for live framework/library documentation |
-| Persona | `persona` | Managed Gentleman/neutral persona injection, or unmanaged custom persona mode |
+| Persona | `persona` | Managed Shevanio/neutral persona injection, or unmanaged custom persona mode |
 | Permissions | `permissions` | Security-first defaults and guardrails. Applied to Claude Code and OpenCode (the two adapters with permissions overlay support). Default sensitive-paths deny list: `~/.ssh/*`, `~/.ssh/**/*`, `**/*.pem`, `**/*.key`, `**/.env*`, `~/.credentials/*`, `~/.aws/credentials`, `~/.config/gh/hosts.yml`, `~/Library/Keychains/*`, `**/secrets/*`, `**/*.p12`, `**/*.pfx` |
 | OpenCode Theme | `theme` | OpenCode visual theme overlay |
 | Claude Code Theme | `claude-theme` | Claude Code visual theme overlay |
@@ -60,7 +60,7 @@
 | RDD Defect Workflow | `rdd-defect-workflow` | Guide receipt-driven defect work with truthful evidence and authority boundaries |
 | Systemic Issue Triage | `systemic-issue-triage` | Group issues by root cause and shrink the system |
 
-These foundation skills are installed by default with both the `full-gentleman` (Dev Stack + Polish) and `ecosystem-only` (Dev Stack) presets.
+These foundation skills are installed by default with both the `full-shevanio` (Dev Stack + Polish) and `ecosystem-only` (Dev Stack) presets.
 
 ### Coding Skills (separate repository)
 
@@ -72,7 +72,7 @@ For framework-specific skills (React 19, Angular, TypeScript, Tailwind 4, Zod 4,
 
 | Preset | ID | What's Included |
 |--------|-----|-----------------|
-| Dev Stack + Polish | `full-gentleman` | Dev Stack plus Persona, Permissions, Claude Code theme, and OpenCode logo |
+| Dev Stack + Polish | `full-shevanio` | Dev Stack plus Persona, Permissions, Claude Code theme, and OpenCode logo |
 | Dev Stack | `ecosystem-only` | Engram + SDD + Skills + Context7 + all bundled skills |
 | Memory Only | `minimal` | Engram + SDD skills only |
 | Custom | `custom` | You choose components and skills manually while keeping any existing persona/settings unmanaged |
