@@ -210,7 +210,7 @@ func TestPreservedSharedOrchestratorSubstitutesRuntimeAgentIdentity(t *testing.T
 		preserved,
 		model.AgentKilocode,
 	)
-	if !strings.Contains(rendered, "Bind this to the dedicated `gentle-orchestrator` agent only.") {
+	if !strings.Contains(rendered, "Bind this to the dedicated `shevanio-orchestrator` agent only.") {
 		t.Fatalf("preserved prompt lost its migration:\n%s", rendered)
 	}
 	if strings.Contains(rendered, runtimeAgentIDPlaceholder) {

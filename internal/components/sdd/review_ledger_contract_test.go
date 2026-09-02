@@ -186,7 +186,7 @@ func TestOpenCodeOverlaysRenderBoundedReadOnlyReviewRoles(t *testing.T) {
 func assertOpenCodeTargetedValidator(t *testing.T, label string, agents map[string]any) {
 	t.Helper()
 
-	orchestrator, ok := agents["gentle-orchestrator"].(map[string]any)
+	orchestrator, ok := agents["shevanio-orchestrator"].(map[string]any)
 	if !ok {
 		t.Fatalf("%s missing gentle-orchestrator", label)
 	}
@@ -404,7 +404,7 @@ func TestKilocodeReviewSettingsMatchCurrentMainBaseline(t *testing.T) {
 	// Deliberate, not drift.
 	// The Shevanio fork rewrites the embedded runtime and protocol identity;
 	// the rendered settings shape is otherwise unchanged.
-	const want = "65d8b75eb653832f9a3a8f6c09958c07a4738c57d4a8e9c202f1b57f4be9b224"
+	const want = "e9a6f4f22b26080dea8039c1fa2da7813e215c7764e3a7179d73fa18c633409e"
 	if got != want {
 		t.Fatalf("Kilocode settings SHA-256 = %s, want current-main baseline %s", got, want)
 	}
@@ -709,7 +709,7 @@ func readGentleOrchestratorPrompt(t *testing.T, settingsPath string) string {
 		t.Fatal(err)
 	}
 	agentsMap := root["agent"].(map[string]any)
-	orchestrator := agentsMap["gentle-orchestrator"].(map[string]any)
+	orchestrator := agentsMap["shevanio-orchestrator"].(map[string]any)
 	return orchestrator["prompt"].(string)
 }
 

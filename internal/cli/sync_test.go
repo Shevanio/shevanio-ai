@@ -2190,14 +2190,14 @@ func TestRunSyncAppliesManagedFilesystemChanges(t *testing.T) {
 	if _, ok := agentsMap["review-validator"].(map[string]any); !ok {
 		t.Fatalf("sync did not add review-validator: %#v", agentsMap)
 	}
-	orchestrator := agentsMap["gentle-orchestrator"].(map[string]any)
+	orchestrator := agentsMap["shevanio-orchestrator"].(map[string]any)
 	permission := orchestrator["permission"].(map[string]any)
 	allowlist := permission["task"].(map[string]any)
 	if replacement, ok := allowlist["__replace__"].(map[string]any); ok {
 		allowlist = replacement
 	}
 	if allowlist["review-validator"] != "allow" {
-		t.Fatalf("sync did not authorize gentle-orchestrator -> review-validator: %#v", allowlist)
+		t.Fatalf("sync did not authorize shevanio-orchestrator -> review-validator: %#v", allowlist)
 	}
 	if _, err := os.Stat(legacyPluginPath); !os.IsNotExist(err) {
 		t.Errorf("expected sync to remove legacy OpenCode plugin %q; stat err = %v", legacyPluginPath, err)
@@ -2952,7 +2952,7 @@ func TestRunSyncExternalSingleActiveSkipsDetectAndPreservesOrchestratorPrompt(t 
 	const customPrompt = "EXTERNAL-RUNTIME-ORCHESTRATOR-PROMPT\nBind this to the dedicated `sdd-orchestrator` agent only.\n- Treat `agent.sdd-orchestrator.model` as authoritative when it is set."
 	seed := `{
   "agent": {
-    "sdd-orchestrator": {"mode": "primary", "prompt": ` + strconv.Quote(customPrompt) + `},
+    "shevanio-orchestrator": {"mode": "primary", "prompt": ` + strconv.Quote(customPrompt) + `},
     "gentleman": {"mode": "primary", "description": "revoked OpenCode persona", "prompt": "REVOKED_GENTLEMAN_PROMPT_SHOULD_NOT_SURVIVE"},
     "sdd-orchestrator-cheap": {"mode": "primary", "model": "anthropic:claude-haiku-3-5"},
     "sdd-init-cheap": {"mode": "subagent", "model": "anthropic:claude-haiku-3-5"}
@@ -2988,20 +2988,20 @@ func TestRunSyncExternalSingleActiveSkipsDetectAndPreservesOrchestratorPrompt(t 
 	if strings.Contains(settingsText, "agent.sdd-orchestrator.model") {
 		t.Fatalf("external-single-active sync preserved stale sdd-orchestrator model assignment key")
 	}
-	if !strings.Contains(settingsText, "Bind this to the dedicated `gentle-orchestrator` agent only.") {
-		t.Fatalf("external-single-active sync did not migrate binding text to gentle-orchestrator")
+	if !strings.Contains(settingsText, "Bind this to the dedicated `shevanio-orchestrator` agent only.") {
+		t.Fatalf("external-single-active sync did not migrate binding text to shevanio-orchestrator")
 	}
-	if !strings.Contains(settingsText, "agent.gentle-orchestrator.model") {
-		t.Fatalf("external-single-active sync did not migrate model assignment key to gentle-orchestrator")
+	if !strings.Contains(settingsText, "agent.shevanio-orchestrator.model") {
+		t.Fatalf("external-single-active sync did not migrate model assignment key to shevanio-orchestrator")
 	}
 	if strings.Contains(settingsText, "\"sdd-onboard-cheap\"") {
 		t.Fatalf("external-single-active should not auto-detect/regenerate suffixed profiles")
 	}
-	if strings.Contains(settingsText, "\"gentleman\"") {
-		t.Fatalf("external-single-active sync should delete revoked gentleman agent")
+	if !strings.Contains(settingsText, "\"gentleman\"") {
+		t.Fatalf("external-single-active sync should preserve the unproven gentleman agent")
 	}
-	if strings.Contains(settingsText, "REVOKED_GENTLEMAN_PROMPT_SHOULD_NOT_SURVIVE") {
-		t.Fatalf("external-single-active sync preserved revoked gentleman prompt")
+	if !strings.Contains(settingsText, "REVOKED_GENTLEMAN_PROMPT_SHOULD_NOT_SURVIVE") {
+		t.Fatalf("external-single-active sync lost the unproven gentleman prompt")
 	}
 
 	// external-single-active forces multi-mode assets so shared prompts exist.
@@ -3112,7 +3112,7 @@ func TestRunSyncWithSelection_WritesExpectedFiles(t *testing.T) {
 		t.Fatalf("read synced OpenCode apply command: %v", err)
 	}
 	for name, content := range map[string]string{
-		"orchestrator": settings.Agent["gentle-orchestrator"].Prompt,
+		"orchestrator": settings.Agent["shevanio-orchestrator"].Prompt,
 		"post-apply":   string(applyPayload),
 	} {
 		// The identity must be OpenCode's own: these are the exact bytes an
@@ -3202,7 +3202,7 @@ func TestRunSyncWithSelection_IsIdempotent(t *testing.T) {
 		t.Fatalf("run 1: FilesChanged = 0, expected > 0")
 	}
 	firstSettings, _ := os.ReadFile(settingsPath)
-	if !bytes.Contains(firstSettings, []byte(`"default_agent": "gentle-orchestrator"`)) {
+	if !bytes.Contains(firstSettings, []byte(`"default_agent": "shevanio-orchestrator"`)) {
 		t.Fatalf("TUI sync did not overwrite default_agent: %s", firstSettings)
 	}
 
@@ -3862,7 +3862,7 @@ func TestRunSyncDoesNotOverridePersistedAssignmentsOnSecondSync(t *testing.T) {
 		t.Fatalf("RunSync(1) error = %v", err)
 	}
 	firstSettings, _ := os.ReadFile(settingsPath)
-	if !bytes.Contains(firstSettings, []byte(`"default_agent": "gentle-orchestrator"`)) {
+	if !bytes.Contains(firstSettings, []byte(`"default_agent": "shevanio-orchestrator"`)) {
 		t.Fatalf("CLI sync did not overwrite default_agent: %s", firstSettings)
 	}
 

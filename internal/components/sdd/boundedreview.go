@@ -81,7 +81,11 @@ func renderBoundedReviewAsset(agent model.AgentID, path string) string {
 // asset passes through, so no branch added to renderBoundedReviewAssetBody can
 // leak an unbound placeholder or an unspecialized identity.
 func bindRuntimeAgentIdentity(content string, agent model.AgentID) string {
-	return strings.ReplaceAll(content, runtimeAgentIDPlaceholder, string(agent))
+	content = strings.ReplaceAll(content, runtimeAgentIDPlaceholder, string(agent))
+	if agent == model.AgentOpenCode || agent == model.AgentKilocode {
+		content = strings.ReplaceAll(content, "gentle-orchestrator", model.CanonicalManagedIdentity.Actor)
+	}
+	return content
 }
 
 func renderBoundedReviewAssetBody(path string) string {

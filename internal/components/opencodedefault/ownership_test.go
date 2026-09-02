@@ -41,8 +41,9 @@ func TestOwnershipLifecycle(t *testing.T) {
 			t.Fatalf("default %q not restored: %s", want, got)
 		}
 	}
-	write(`{"default_agent":"build","agent":{"gentle-orchestrator":{}},"profile":true}`)
+	write(`{"default_agent":"build","agent":{"shevanio-orchestrator":{}},"profile":true}`)
 	install()
+	wantDefault("shevanio-orchestrator")
 	install()
 	uninstall()
 	wantDefault("build")
@@ -84,12 +85,12 @@ func TestUninstallWithoutOwnershipHandlesDefaultAgent(t *testing.T) {
 		defaultAgent string
 		wantPresent  bool
 	}{
-		{name: "managed default is removed", defaultAgent: ManagedAgent},
+		{name: "managed default is removed", defaultAgent: "shevanio-orchestrator"},
 		{name: "user default is preserved", defaultAgent: "build", wantPresent: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			settings := filepath.Join(t.TempDir(), "opencode.json")
-			original := `{"default_agent":"` + tt.defaultAgent + `","agent":{"gentle-orchestrator":{}},"profile":true}`
+			original := `{"default_agent":"` + tt.defaultAgent + `","agent":{"shevanio-orchestrator":{}},"profile":true}`
 			check(t, os.WriteFile(settings, []byte(original), 0o644))
 			plan, err := PrepareUninstall(settings)
 			check(t, err)

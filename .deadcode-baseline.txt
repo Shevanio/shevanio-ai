@@ -51,6 +51,9 @@ internal/components/gga/install.go	ShouldInstall
 internal/components/gga/runtime.go	RuntimeBinDir
 internal/components/mcp/inject.go	context7Args
 internal/components/sdd/inject.go	injectClaudeModelAssignments
+internal/components/sdd/inject.go	looksLikeOpenCodeSDDConductor
+internal/components/sdd/inject.go	migrateLegacyOpenCodeSDDOrchestrator
+internal/components/sdd/inject.go	readMisnamedOpenCodeGentlemanSDDPrompt
 internal/components/sdd/inject.go	resolveClaudeModelAlias
 internal/components/sdd/read_assignments.go	ReadCurrentProfiles
 internal/installcmd/resolver.go	GitBashPath

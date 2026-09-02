@@ -357,7 +357,7 @@ func TestInjectOpenCodeMigratesRetiredDeliveryStrategyMapping(t *testing.T) {
 
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote("# Custom prompt\n"+stalePrompt) + `
     }
@@ -483,7 +483,7 @@ func TestInjectOpenCodeMigratesRetiredChainedPRPreflightOption(t *testing.T) {
 
 	seed := `{
   "agent": {
-    "gentle-orchestrator": {
+    "shevanio-orchestrator": {
       "mode": "primary",
       "prompt": ` + strconv.Quote("# Custom prompt\n"+stalePrompt) + `
     }
@@ -553,7 +553,7 @@ func preservedOrchestratorPrompt(t *testing.T, settingsPath string) string {
 	if err := json.Unmarshal(settingsBytes, &settings); err != nil {
 		t.Fatalf("Unmarshal(opencode.json) error = %v", err)
 	}
-	prompt := settings.Agent["gentle-orchestrator"].Prompt
+	prompt := settings.Agent["shevanio-orchestrator"].Prompt
 	if prompt == "" {
 		t.Fatal("opencode.json lost the preserved gentle-orchestrator prompt")
 	}

@@ -686,7 +686,7 @@ func TestDefaultOverlayTaskPermissions_ExplicitAllowlist(t *testing.T) {
 			}
 
 			agentMap := root["agent"].(map[string]any)
-			orch := agentMap["gentle-orchestrator"].(map[string]any)
+			orch := agentMap["shevanio-orchestrator"].(map[string]any)
 			permission := orch["permission"].(map[string]any)
 			taskWrapper := permission["task"].(map[string]any)
 
@@ -713,7 +713,7 @@ func TestDefaultOverlayToolsUseReplaceSentinel(t *testing.T) {
 			}
 
 			agentMap := root["agent"].(map[string]any)
-			orch := agentMap["gentle-orchestrator"].(map[string]any)
+			orch := agentMap["shevanio-orchestrator"].(map[string]any)
 			toolsWrapper := orch["tools"].(map[string]any)
 			tools, hasSentinel := toolsWrapper["__replace__"].(map[string]any)
 			if !hasSentinel {

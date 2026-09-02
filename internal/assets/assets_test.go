@@ -1783,21 +1783,21 @@ func TestOpenCodeSDDOverlaySubagentsAreExplicitExecutors(t *testing.T) {
 			// single overlay still uses inline prompt strings.
 			isMulti := assetPath == "opencode/sdd-overlay-multi.json"
 
-			orchestrator, ok := agents["gentle-orchestrator"].(map[string]any)
+			orchestrator, ok := agents["shevanio-orchestrator"].(map[string]any)
 			if !ok {
-				t.Fatalf("%q missing gentle-orchestrator agent", assetPath)
+				t.Fatalf("%q missing shevanio-orchestrator agent", assetPath)
 			}
 			permissions, ok := orchestrator["permission"].(map[string]any)
 			if !ok || permissions["question"] != "allow" {
-				t.Fatalf("%q gentle-orchestrator must allow question permission", assetPath)
+				t.Fatalf("%q shevanio-orchestrator must allow question permission", assetPath)
 			}
 			tools, ok := orchestrator["tools"].(map[string]any)
 			if !ok {
-				t.Fatalf("%q gentle-orchestrator missing tools", assetPath)
+				t.Fatalf("%q shevanio-orchestrator missing tools", assetPath)
 			}
 			replacedTools, ok := tools["__replace__"].(map[string]any)
 			if !ok || replacedTools["question"] != true {
-				t.Fatalf("%q gentle-orchestrator must enable question tool", assetPath)
+				t.Fatalf("%q shevanio-orchestrator must enable question tool", assetPath)
 			}
 
 			for _, phase := range []string{"sdd-init", "sdd-explore", "sdd-propose", "sdd-spec", "sdd-design", "sdd-tasks", "sdd-apply", "sdd-verify", "sdd-archive"} {

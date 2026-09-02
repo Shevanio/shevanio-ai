@@ -2049,16 +2049,15 @@ func TestOpenCodePersonaBeforeSDDPreservesAllSections(t *testing.T) {
 	}
 
 	// SDD orchestrator for OpenCode lives in opencode.json agent overlay under
-	// the canonical gentle-orchestrator key. Legacy sdd-orchestrator should be
-	// migrated away during injection.
+	// the canonical shevanio-orchestrator key.
 	opencodeJSON := filepath.Join(home, ".config", "opencode", "opencode.json")
 	jsonContent, err := os.ReadFile(opencodeJSON)
 	if err != nil {
 		t.Fatalf("ReadFile(opencode.json) error = %v", err)
 	}
 	jsonText := string(jsonContent)
-	if !strings.Contains(jsonText, "gentle-orchestrator") {
-		t.Error("opencode.json missing gentle-orchestrator agent entry (SDD not injected)")
+	if !strings.Contains(jsonText, "shevanio-orchestrator") {
+		t.Error("opencode.json missing shevanio-orchestrator agent entry (SDD not injected)")
 	}
 	if strings.Contains(jsonText, `"sdd-orchestrator"`) {
 		t.Error("opencode.json should not contain legacy sdd-orchestrator agent entry")

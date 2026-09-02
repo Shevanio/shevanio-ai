@@ -324,6 +324,15 @@ func managedOrchestratorPrompt(settings map[string]any, settingsPath string) (st
 	}
 
 	orchestratorRaw, ok := agentsMap[opencodedefault.ManagedAgent]
+	if !ok {
+		for actor, candidate := range agentsMap {
+			_, class := model.NormalizeOrchestratorRead(actor)
+			if class == model.IdentityLegacyManaged {
+				orchestratorRaw, ok = candidate, true
+				break
+			}
+		}
+	}
 	if !ok || orchestratorRaw == nil {
 		return "", nil
 	}

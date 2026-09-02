@@ -16,14 +16,15 @@ var configurableAgentSet = buildConfigurableAgentSet()
 // reservedAgentSet contains native and package-owned roles that must not be
 // reclassified as user-defined custom agents when their config entries exist.
 var reservedAgentSet = map[string]bool{
-	"build":               true,
-	"plan":                true,
-	"general":             true,
-	"explore":             true,
-	"gentle-reviewer":     true,
-	"gentle-worker":       true,
-	"gentle-orchestrator": true,
-	"sdd-orchestrator":    true,
+	"build":                              true,
+	"plan":                               true,
+	"general":                            true,
+	"explore":                            true,
+	"gentle-reviewer":                    true,
+	"gentle-worker":                      true,
+	model.CanonicalManagedIdentity.Actor: true,
+	"gentle-orchestrator":                true,
+	"sdd-orchestrator":                   true,
 }
 
 func buildConfigurableAgentSet() map[string]bool {
@@ -32,6 +33,7 @@ func buildConfigurableAgentSet() map[string]bool {
 	for _, p := range phases {
 		set[p] = true
 	}
+	set[model.CanonicalManagedIdentity.Actor] = true
 	set["gentle-orchestrator"] = true
 	// Backward-compatible read alias for configs that have not been synced yet.
 	set["sdd-orchestrator"] = true
@@ -78,6 +80,7 @@ func ReadCurrentModelAssignments(settingsPath string) (map[string]model.ModelAss
 	}
 
 	result := make(map[string]model.ModelAssignment)
+	_, canonicalPresent := agentMap[model.CanonicalManagedIdentity.Actor]
 	for name, defRaw := range agentMap {
 		defMap, ok := defRaw.(map[string]any)
 		if !ok {
@@ -92,9 +95,13 @@ func ReadCurrentModelAssignments(settingsPath string) (map[string]model.ModelAss
 			continue
 		}
 		assignmentKey := name
-		if name == "sdd-orchestrator" {
-			assignmentKey = "gentle-orchestrator"
-			if _, hasGentleOrchestrator := result[assignmentKey]; hasGentleOrchestrator {
+		normalized, class := model.NormalizeOrchestratorRead(name)
+		if class != model.IdentityUnknown {
+			assignmentKey = normalized
+			if class == model.IdentityLegacyManaged && canonicalPresent {
+				continue
+			}
+			if _, alreadyRead := result[assignmentKey]; alreadyRead {
 				continue
 			}
 		}
