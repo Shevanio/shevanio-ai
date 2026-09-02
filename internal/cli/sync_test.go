@@ -1663,7 +1663,7 @@ func TestRestoreSyncFilesNeverWidensZeroMode(t *testing.T) {
 					if statErr != nil {
 						t.Fatal(statErr)
 					}
-					if got := info.Mode().Perm(); got != 0o600 {
+					if got := info.Mode().Perm(); runtime.GOOS != "windows" && got != 0o600 {
 						t.Fatalf("mode immediately after atomic replace = %o, want 0600", got)
 					}
 				}
@@ -1677,7 +1677,7 @@ func TestRestoreSyncFilesNeverWidensZeroMode(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got := info.Mode().Perm(); got != 0 {
+			if got := info.Mode().Perm(); runtime.GOOS != "windows" && got != 0 {
 				t.Fatalf("restored mode = %o, want exact 000", got)
 			}
 		})
@@ -5743,8 +5743,11 @@ func TestRunSyncWithSelectionCanonicalizesManagedIdentityAndPreservesState(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(gotLegacy, legacy) || info.Mode().Perm() != 0o600 {
-		t.Fatal("legacy fallback bytes or mode changed")
+	if !bytes.Equal(gotLegacy, legacy) {
+		t.Fatal("legacy fallback bytes changed")
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		t.Fatal("legacy fallback mode changed")
 	}
 	canonical := mustPersonaFile(t, state.Path(home))
 	if !bytes.Contains(canonical, []byte(`"sibling_actor": "keep"`)) || !bytes.Contains(canonical, []byte(`"profile": "keep"`)) {
@@ -5821,7 +5824,7 @@ func TestSyncStatePublicationOutcomeMatrix(t *testing.T) {
 					ok   bool
 					got  any
 				}{
-					{"marker mode", markerInfo.Mode().Perm() == 0o600, markerInfo.Mode().Perm()}, {"snapshot removed", os.IsNotExist(snapshotErr), snapshotErr},
+					{"marker mode", runtime.GOOS == "windows" || markerInfo.Mode().Perm() == 0o600, markerInfo.Mode().Perm()}, {"snapshot removed", os.IsNotExist(snapshotErr), snapshotErr},
 					{"release error", errors.Is(err, releaseErr), err}, {"cleanup error", errors.Is(err, cleanupErr), err}, {"notice count", strings.Count(buf.String(), personaAliasRemapNotice) == 1, strings.Count(buf.String(), personaAliasRemapNotice)},
 				}
 				for _, check := range checks {

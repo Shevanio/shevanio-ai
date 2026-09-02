@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
-	"github.com/shevanio/shevanio-ai/v2/internal/state"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+
+	"github.com/shevanio/shevanio-ai/v2/internal/reviewtransaction"
+	"github.com/shevanio/shevanio-ai/v2/internal/state"
 )
 
 var errDurability, errPublication, errRelease = errors.New("durability failure"), errors.New("publication failure"), errors.New("release failure")
@@ -68,9 +70,17 @@ func TestMutatePublicationAndReleaseOutcomes(t *testing.T) {
 		target error
 	}{{"no-op", func(h string) { must(t, state.Write(h, state.InstallState{Persona: "same"})) }, Committed, nil}, {"desired-visible", func(string) {
 		writeState = func(h string, s state.InstallState) error { must(t, state.Write(h, s)); return errDurability }
-	}, Committed, errDurability}, {"new-release", func(string) { releaseLock = func(*reviewtransaction.AuthorityFileLock) error { return errRelease } }, Committed, errRelease}, {"old-release", func(string) {
+	}, Committed, errDurability}, {"new-release", func(string) {
+		releaseLock = func(lock *reviewtransaction.AuthorityFileLock) error {
+			_ = lock.Release()
+			return errRelease
+		}
+	}, Committed, errRelease}, {"old-release", func(string) {
 		writeState = func(string, state.InstallState) error { return errPublication }
-		releaseLock = func(*reviewtransaction.AuthorityFileLock) error { return errRelease }
+		releaseLock = func(lock *reviewtransaction.AuthorityFileLock) error {
+			_ = lock.Release()
+			return errRelease
+		}
 	}, Uncommitted, errRelease}} {
 		t.Run(x.n, func(t *testing.T) {
 			ow, or := writeState, releaseLock
@@ -161,7 +171,7 @@ func TestLeaseLifecycleRefusalIsTypedAndZeroIO(t *testing.T) {
 	}
 	result, err := lease.Commit(state.InstallState{Persona: "terminal"})
 	require(t, err == nil && result.Outcome == Committed, "TestLeaseLifecycleRefusalIsTypedAndZeroIO")
-	must(t, os.RemoveAll(h))
+	must(t, os.Remove(state.Path(h)))
 
 	current, currentErr := lease.Current()
 	var lifecycle *LeaseLifecycleError
@@ -202,7 +212,8 @@ func TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage(t *testing.T) {
 	result, err := lease.Restore()
 	got, readErr := os.ReadFile(state.Path(h))
 	info, statErr := os.Stat(state.Path(h))
-	require(t, result.Outcome == Uncommitted && err == nil && readErr == nil && bytes.Equal(got, preimage) && statErr == nil && info.Mode().Perm() == 0o600, "TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage")
+	modeMatches := statErr == nil && (runtime.GOOS == "windows" || info.Mode().Perm() == 0o600)
+	require(t, result.Outcome == Uncommitted && err == nil && readErr == nil && bytes.Equal(got, preimage) && statErr == nil && modeMatches, "TestLeaseCurrentDetachesUnknownFieldsAndCapturesPreimage")
 	must(t, lease.Release())
 }
 
@@ -210,8 +221,9 @@ func TestLeaseReleaseReplaysError(t *testing.T) {
 	original := releaseLock
 	defer func() { releaseLock = original }()
 	calls := 0
-	releaseLock = func(*reviewtransaction.AuthorityFileLock) error {
+	releaseLock = func(lock *reviewtransaction.AuthorityFileLock) error {
 		calls++
+		_ = lock.Release()
 		return errRelease
 	}
 	lease, err := Begin(t.TempDir())

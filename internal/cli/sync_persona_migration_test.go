@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -107,8 +108,11 @@ func TestRunSyncWithSelectionPublishesAliasesOnZeroAgentNoOp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(gotLegacy, legacy) || legacyInfo.Mode().Perm() != 0o600 {
-		t.Fatal("alias-only publication changed legacy fallback")
+	if !bytes.Equal(gotLegacy, legacy) {
+		t.Fatal("alias-only publication changed legacy fallback bytes")
+	}
+	if runtime.GOOS != "windows" && legacyInfo.Mode().Perm() != 0o600 {
+		t.Fatal("alias-only publication changed legacy fallback mode")
 	}
 
 	managed := t.TempDir()

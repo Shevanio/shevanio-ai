@@ -368,11 +368,7 @@ func inspectGGACandidate(candidate ggaManagedFile) (bool, bool, error) {
 	return true, owned, nil
 }
 func removeEmptyGGADirectories(homeDir string) error {
-	for _, dir := range []string{
-		filepath.Join(homeDir, ".config", "gga"),
-		filepath.Join(homeDir, ".local", "share", "gga", "lib"),
-		filepath.Join(homeDir, ".local", "share", "gga"),
-	} {
+	for _, dir := range ggaDirs(homeDir) {
 		info, err := os.Lstat(dir)
 		if errors.Is(err, os.ErrNotExist) || err != nil || !info.IsDir() {
 			continue
@@ -387,7 +383,9 @@ func (e ggaRecoveryEvidence) paths() []string {
 	return []string{e.backupDir, filepath.Join(e.backupDir, backup.ArchiveFilename), filepath.Join(e.backupDir, backup.ManifestFilename)}
 }
 func ggaDirs(homeDir string) []string {
-	return []string{filepath.Join(homeDir, ".config", "gga"), filepath.Join(homeDir, ".local", "share", "gga", "lib"), filepath.Join(homeDir, ".local", "share", "gga")}
+	legacyRoot := legacyGGARootDir(homeDir)
+	sharedRoot := filepath.Join(homeDir, ".local", "share", "gga")
+	return []string{filepath.Join(legacyRoot, "lib"), legacyRoot, filepath.Join(sharedRoot, "lib"), sharedRoot}
 }
 func loadGGARetirementEvidence(homeDir string) (ggaRecoveryEvidence, bool, error) {
 	root := filepath.Join(homeDir, ".shevanio-ai", "backups")

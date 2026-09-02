@@ -19,6 +19,7 @@ import (
 func TestWriteGlobalRDDMode_BridgeContentionPropagates(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if err := state.Write(home, state.InstallState{InstalledAgents: []string{"opencode"}, RDDMode: string(reviewtransaction.RDDModeOff)}); err != nil {
 		t.Fatal(err)
 	}
