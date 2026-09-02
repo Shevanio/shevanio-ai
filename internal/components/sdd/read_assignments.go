@@ -43,8 +43,8 @@ func buildConfigurableAgentSet() map[string]bool {
 // ReadCurrentProfiles reads the named SDD profiles from opencode.json at
 // settingsPath. It is a thin wrapper around DetectProfiles provided so that
 // sync code can import a single symbol from this file.
-func ReadCurrentProfiles(settingsPath string) ([]model.Profile, error) {
-	return DetectProfiles(settingsPath)
+func ReadCurrentProfiles(settingsPath string, managedProfileNames ...string) ([]model.Profile, error) {
+	return DetectProfiles(settingsPath, managedProfileNames...)
 }
 
 // ReadCurrentModelAssignments reads the agent definitions from opencode.json

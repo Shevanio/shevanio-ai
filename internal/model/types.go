@@ -218,7 +218,7 @@ type SDDProfileStrategyID string
 const (
 	// SDDProfileStrategyGeneratedMulti is the default/backward-compatible mode:
 	// named profiles coexist in opencode.json as suffixed agents and are detected
-	// from sdd-orchestrator-{name} keys during regular sync.
+	// from shevanio-orchestrator-{name} keys during regular sync.
 	SDDProfileStrategyGeneratedMulti SDDProfileStrategyID = "generated-multi"
 	// SDDProfileStrategyExternalSingleActive supports external profile managers
 	// that keep profile state outside opencode.json and activate one runtime
@@ -242,7 +242,7 @@ const (
 
 // Profile represents a named SDD orchestrator configuration with model assignments.
 // The default profile (Name="" or Name="default") maps to the base sdd-orchestrator.
-// Named profiles generate sdd-orchestrator-{Name} + suffixed sub-agents.
+// Named profiles generate shevanio-orchestrator-{Name} + suffixed sub-agents.
 type Profile struct {
 	Name              string                     // e.g. "cheap", "premium"; empty = default
 	OrchestratorModel ModelAssignment            // orchestrator model

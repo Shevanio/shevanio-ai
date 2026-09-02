@@ -32,7 +32,14 @@ var reservedProfileNames = func() map[string]bool {
 	return names
 }()
 
-const openCodeDelegationVisibilitySectionID = "opencode-desktop-delegation-progress"
+const (
+	openCodeDelegationVisibilitySectionID = "opencode-desktop-delegation-progress"
+	namedProfileActorPrefix               = "shevanio-orchestrator-"
+	legacyNamedProfileActorPrefix         = "sdd-orchestrator-"
+)
+
+func namedProfileActor(name string) string       { return namedProfileActorPrefix + name }
+func legacyNamedProfileActor(name string) string { return legacyNamedProfileActorPrefix + name }
 
 // ValidateProfileName returns an error if the profile name is not a valid
 // slug (lowercase alphanumeric + hyphens, no underscores, no spaces, non-empty,
@@ -123,15 +130,20 @@ func HasExternalProfileFiles(homeDir string) bool {
 
 // ProfileAgentKeys returns the agent keys for the given profile name.
 // When name is empty, it returns the default (unsuffixed) keys.
-// When name is non-empty, each key is suffixed with "-{name}".
+// When name is non-empty, canonical and exact legacy orchestrator aliases are
+// included because callers have already established ownership of that profile.
 func ProfileAgentKeys(name string) []string {
 	suffix := ""
 	if name != "" {
 		suffix = "-" + name
 	}
 
-	keys := make([]string, 0, 14)
-	keys = append(keys, "sdd-orchestrator"+suffix)
+	keys := make([]string, 0, 15)
+	if name == "" {
+		keys = append(keys, "sdd-orchestrator")
+	} else {
+		keys = append(keys, namedProfileActor(name), legacyNamedProfileActor(name))
+	}
 	for _, phase := range profilePhaseOrder {
 		keys = append(keys, phase+suffix)
 	}
@@ -144,10 +156,10 @@ func ProfileAgentKeys(name string) []string {
 }
 
 // DetectProfiles reads opencode.json at settingsPath and returns all named
-// SDD profiles found in the agent map. The default profile (bare sdd-orchestrator
-// without suffix) is NOT included in the result. Returns an empty slice if the
-// file does not exist or contains no named profiles. Results are sorted by name.
-func DetectProfiles(settingsPath string) ([]model.Profile, error) {
+// SDD profiles found in the agent map. Canonical actors are ownership evidence.
+// Exact legacy aliases are read only for names supplied by a trusted profile
+// inventory; a legacy key's shape never discovers ownership by itself.
+func DetectProfiles(settingsPath string, managedProfileNames ...string) ([]model.Profile, error) {
 	data, err := os.ReadFile(settingsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -170,16 +182,26 @@ func DetectProfiles(settingsPath string) ([]model.Profile, error) {
 		return []model.Profile{}, nil
 	}
 
-	// Scan for sdd-orchestrator-{name} keys (exclude bare sdd-orchestrator).
-	const orchPrefix = "sdd-orchestrator-"
 	profileNames := make([]string, 0)
 	seen := make(map[string]bool)
 	for key := range agentMap {
-		if !strings.HasPrefix(key, orchPrefix) {
+		if !strings.HasPrefix(key, namedProfileActorPrefix) {
 			continue
 		}
-		profileName := key[len(orchPrefix):]
+		profileName := key[len(namedProfileActorPrefix):]
 		if profileName == "" || seen[profileName] {
+			continue
+		}
+		seen[profileName] = true
+		profileNames = append(profileNames, profileName)
+	}
+	for _, profileName := range managedProfileNames {
+		if profileName == "" || profileName == "default" || seen[profileName] {
+			continue
+		}
+		_, canonicalPresent := agentMap[namedProfileActor(profileName)]
+		_, legacyPresent := agentMap[legacyNamedProfileActor(profileName)]
+		if !canonicalPresent && !legacyPresent {
 			continue
 		}
 		seen[profileName] = true
@@ -194,8 +216,10 @@ func DetectProfiles(settingsPath string) ([]model.Profile, error) {
 
 	profiles := make([]model.Profile, 0, len(profileNames))
 	for _, profileName := range profileNames {
-		orchKey := "sdd-orchestrator-" + profileName
-		orchRaw := agentMap[orchKey]
+		orchRaw, canonicalPresent := agentMap[namedProfileActor(profileName)]
+		if !canonicalPresent {
+			orchRaw = agentMap[legacyNamedProfileActor(profileName)]
+		}
 		orchMap, _ := orchRaw.(map[string]any)
 
 		orchModel := extractModelFromAgent(orchMap)
@@ -241,7 +265,7 @@ func extractModelFromAgent(agentMap map[string]any) model.ModelAssignment {
 
 // GenerateProfileOverlay builds an OpenCode agent overlay JSON for the given
 // profile. The overlay contains 11 agent definitions:
-//   - sdd-orchestrator-{name}: primary mode, inlined orchestrator prompt (with suffixed
+//   - shevanio-orchestrator-{name}: primary mode, inlined orchestrator prompt (with suffixed
 //     sub-agent references and model assignments table), permissions scoped to *-{name}
 //   - sdd-{phase}-{name} (10 agents): subagent mode, hidden, file reference to
 //     the shared prompt at SharedPromptDir(homeDir)/sdd-{phase}.md
@@ -251,7 +275,7 @@ func GenerateProfileOverlay(profile model.Profile, homeDir, settingsPath string,
 	}
 
 	suffix := "-" + profile.Name
-	orchestratorKey := "sdd-orchestrator" + suffix
+	orchestratorKey := namedProfileActor(profile.Name)
 
 	// Build the orchestrator prompt: start with the base asset, inject model
 	// assignments table, then suffix sub-agent references.
@@ -475,6 +499,10 @@ func cleanupStaleProfileJDAgents(settingsPath string, profile model.Profile) (fi
 
 	deleted := 0
 	suffix := "-" + profile.Name
+	if _, exists := agentMap[legacyNamedProfileActor(profile.Name)]; exists {
+		delete(agentMap, legacyNamedProfileActor(profile.Name))
+		deleted++
+	}
 	for _, jd := range opencode.JDPhases() {
 		if hasProfileAssignment(profile, jd) {
 			continue
@@ -598,8 +626,9 @@ func buildProfileOrchestratorPrompt(profile model.Profile, options ...Orchestrat
 			base = replacePhaseRef(base, jd, jd+suffix)
 		}
 	}
-	// Also replace the orchestrator self-reference.
-	base = replacePhaseRef(base, "sdd-orchestrator", "sdd-orchestrator"+suffix)
+	// Also replace canonical and legacy orchestrator self-references.
+	base = replacePhaseRef(base, model.CanonicalManagedIdentity.Actor, namedProfileActor(profile.Name))
+	base = replacePhaseRef(base, "sdd-orchestrator", namedProfileActor(profile.Name))
 	base = appendProfileJDDelegationOverrides(base, profile)
 
 	return base, nil
@@ -733,7 +762,7 @@ func renderProfileModelAssignmentsSection(profile model.Profile) string {
 }
 
 // RemoveProfileAgents reads the opencode.json at settingsPath, removes all agent
-// keys belonging to the named profile (sdd-orchestrator-{name},
+// keys belonging to the named profile (canonical actor, exact legacy alias,
 // sdd-{phase}-{name}, and profile-scoped Judgment Day agents), and atomically
 // writes the result back.
 //

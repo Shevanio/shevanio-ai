@@ -78,7 +78,7 @@ func TestGenerateProfileOverlay_FallsBackToGlobalAssignments(t *testing.T) {
 	for phase, want := range globalAssignments {
 		var key string
 		if phase == "gentle-orchestrator" {
-			key = "sdd-orchestrator-homework"
+			key = namedProfileActor("homework")
 		} else {
 			key = phase + "-homework"
 		}
@@ -159,7 +159,7 @@ func TestInjectHomeworkProfileFallsBackToGlobalAssignmentsViaInject(t *testing.T
 
 	// Sanity check: the homework profile is detected with 9 phase assignments
 	// (sdd-onboard is absent because sdd-onboard-homework has no model on disk).
-	profiles, err := DetectProfiles(settingsPath)
+	profiles, err := DetectProfiles(settingsPath, "homework")
 	if err != nil {
 		t.Fatalf("DetectProfiles() error = %v", err)
 	}

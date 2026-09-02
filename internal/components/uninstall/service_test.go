@@ -703,13 +703,14 @@ func TestComponentOperationsSDD_RemovesBaseAndProfileAgentsFromSettings(t *testi
 		"sdd-apply",
 		"sdd-onboard",
 		"sdd-verify",
-		"sdd-orchestrator-fast",
-		"sdd-apply-fast",
-		"sdd-onboard-fast",
-		"sdd-verify-fast",
 	} {
 		if _, exists := agentMap[removedKey]; exists {
 			t.Fatalf("managed SDD key %q should be removed, got agent map: %#v", removedKey, agentMap)
+		}
+	}
+	for _, preservedKey := range []string{"sdd-orchestrator-fast", "sdd-apply-fast", "sdd-onboard-fast", "sdd-verify-fast"} {
+		if _, exists := agentMap[preservedKey]; !exists {
+			t.Fatalf("unproven profile key %q should be preserved, got agent map: %#v", preservedKey, agentMap)
 		}
 	}
 
@@ -744,6 +745,7 @@ func TestComponentOperationsSDD_RemovesOnlySelectedProfilesFromSettings(t *testi
 	  "agent": {
 	    "sdd-orchestrator": {"mode": "primary", "model": "anthropic:claude-sonnet-4"},
 	    "sdd-apply": {"mode": "subagent", "model": "anthropic:claude-sonnet-4"},
+	    "shevanio-orchestrator-cheap": {"mode": "primary", "model": "openai:gpt-4.1-mini"},
 	    "sdd-orchestrator-cheap": {"mode": "primary", "model": "openai:gpt-4.1-mini"},
 	    "sdd-apply-cheap": {"mode": "subagent", "model": "openai:gpt-4.1-mini"},
 	    "sdd-orchestrator-gemini": {"mode": "primary", "model": "google:gemini-2.5-pro"},
@@ -782,7 +784,10 @@ func TestComponentOperationsSDD_RemovesOnlySelectedProfilesFromSettings(t *testi
 	agentMap := root["agent"].(map[string]any)
 
 	if _, exists := agentMap["sdd-orchestrator-cheap"]; exists {
-		t.Fatalf("selected profile orchestrator should be removed, got: %#v", agentMap)
+		t.Fatalf("selected profile legacy alias should be removed, got: %#v", agentMap)
+	}
+	if _, exists := agentMap["shevanio-orchestrator-cheap"]; exists {
+		t.Fatalf("selected profile canonical actor should be removed, got: %#v", agentMap)
 	}
 	if _, exists := agentMap["sdd-apply-cheap"]; exists {
 		t.Fatalf("selected profile sub-agent should be removed, got: %#v", agentMap)
