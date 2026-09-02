@@ -128,7 +128,8 @@ func TestMutateRollbackOutcomes(t *testing.T) {
 			require(t, r.Outcome == want && e != nil, "rollback outcome")
 			if x.exact {
 				got, re := snapshotFile(p)
-				require(t, re == nil && got.exists == x.exists && (!x.exists || bytes.Equal(got.data, old) && got.mode.Perm() == 0600), "exact bytes and mode rollback")
+				modeMatches := runtime.GOOS == "windows" || got.mode.Perm() == 0o600
+				require(t, re == nil && got.exists == x.exists && (!x.exists || bytes.Equal(got.data, old) && modeMatches), "exact bytes and mode rollback")
 			}
 		})
 	}

@@ -81,6 +81,10 @@ func TestRARPlanAuthorityPublishesResolvesAndReplaysExactLivePlan(t *testing.T) 
 
 func TestRARPlanAuthorityConcurrentExactReplayConverges(t *testing.T) {
 	fixture := newRARPlanFixture(t, "plan-concurrent")
+	want, err := fixture.repository.PublishPlan(context.Background(), fixture.publication)
+	if err != nil {
+		t.Fatal(err)
+	}
 	const publishers = 8
 	results := make(chan RARPlanAuthority, publishers)
 	errs := make(chan error, publishers)
@@ -102,15 +106,9 @@ func TestRARPlanAuthorityConcurrentExactReplayConverges(t *testing.T) {
 			t.Errorf("concurrent PublishPlan() error = %v", err)
 		}
 	}
-	var first *RARPlanAuthority
 	for authority := range results {
-		if first == nil {
-			copy := authority
-			first = &copy
-			continue
-		}
-		if !rarPlanAuthoritiesEqual(*first, authority) {
-			t.Errorf("concurrent plan publication diverged:\nfirst=%#v\nother=%#v", *first, authority)
+		if !rarPlanAuthoritiesEqual(want, authority) {
+			t.Errorf("concurrent plan replay diverged:\nwant=%#v\ngot=%#v", want, authority)
 		}
 	}
 }
