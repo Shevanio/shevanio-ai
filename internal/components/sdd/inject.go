@@ -1,7 +1,9 @@
 package sdd
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -721,6 +723,16 @@ func Inject(homeDir string, adapter agents.Adapter, sddMode model.SDDModeID, opt
 				files = append(files, outPath)
 			}
 		}
+		if adapter.Agent() == model.AgentKimi {
+			legacyPath, removed, cleanupErr := removeLegacyKimiRootAgent(agentsDir)
+			if cleanupErr != nil {
+				return InjectionResult{}, cleanupErr
+			}
+			if removed {
+				changed = true
+				files = append(files, legacyPath)
+			}
+		}
 
 		// Post-check: verify critical agent files exist (either .md or .yaml)
 		for _, phase := range []string{"sdd-apply", "sdd-verify"} {
@@ -831,6 +843,32 @@ func validateOpenClawWorkspacePath(workspaceDir string, adapter agents.Adapter) 
 		return fmt.Errorf("openclaw workspace path is required for workspace-first injection")
 	}
 	return nil
+}
+
+func removeLegacyKimiRootAgent(agentsDir string) (string, bool, error) {
+	path := filepath.Join(agentsDir, "gentleman.yaml")
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return path, false, nil
+	}
+	if err != nil {
+		return path, false, fmt.Errorf("inspect legacy Kimi root agent %q: %w", path, err)
+	}
+	if !info.Mode().IsRegular() {
+		return path, false, nil
+	}
+	current, err := os.ReadFile(path)
+	if err != nil {
+		return path, false, fmt.Errorf("read legacy Kimi root agent %q: %w", path, err)
+	}
+	legacy := []byte(assets.MustRead("kimi/migrations/gentleman.yaml"))
+	if !bytes.Equal(current, legacy) {
+		return path, false, nil
+	}
+	if err := os.Remove(path); err != nil {
+		return path, false, fmt.Errorf("remove legacy Kimi root agent %q: %w", path, err)
+	}
+	return path, true, nil
 }
 
 func inlineOpenCodeSDDPrompts(overlayBytes []byte, homeDir, settingsPath string, agent model.AgentID, preserveExistingOrchestratorPrompt bool, renderOptions OrchestratorRenderOptions, codeGraphGuidance string) ([]byte, error) {
@@ -1485,43 +1523,6 @@ func readManagedOpenCodeAgentPrompt(settingsPath string) (string, error) {
 	return prompt, nil
 }
 
-func readMisnamedOpenCodeGentlemanSDDPrompt(settingsPath string) (string, error) {
-	if strings.TrimSpace(settingsPath) == "" {
-		return "", nil
-	}
-
-	data, err := os.ReadFile(settingsPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", fmt.Errorf("read OpenCode settings %q: %w", settingsPath, err)
-	}
-
-	var root map[string]any
-	if err := json.Unmarshal(data, &root); err != nil {
-		return "", nil
-	}
-	agentsRaw, ok := root["agent"]
-	if !ok {
-		return "", nil
-	}
-	agentsMap, ok := agentsRaw.(map[string]any)
-	if !ok {
-		return "", nil
-	}
-	agentRaw, ok := agentsMap["gentleman"]
-	if !ok || !looksLikeOpenCodeSDDConductor(agentRaw) {
-		return "", nil
-	}
-	agentMap, ok := agentRaw.(map[string]any)
-	if !ok {
-		return "", nil
-	}
-	prompt, _ := agentMap["prompt"].(string)
-	return prompt, nil
-}
-
 func installSkillRegistryAutomation(homeDir string, adapter agents.Adapter) (InjectionResult, error) {
 	if adapter.Agent() == model.AgentCodex {
 		hooksPath := filepath.Join(adapter.GlobalConfigDir(homeDir), "hooks.json")
@@ -2008,87 +2009,6 @@ func openCodeSettingsHasShare(settingsPath string) bool {
 	return exists
 }
 
-// migrateLegacyOpenCodeSDDOrchestrator removes legacy or accidentally renamed
-// base OpenCode SDD conductor agents. The base SDD coordinator is now the
-// gentle-orchestrator primary agent; named profile agents such as
-// sdd-orchestrator-cheap intentionally remain untouched because they are
-// generated profile-specific coordinators. The old OpenCode "gentleman" agent
-// key is revoked and is removed during sync; if it clearly contains the old SDD
-// conductor prompt and no gentle-orchestrator exists yet, its prompt is migrated
-// before the revoked key is deleted.
-func migrateLegacyOpenCodeSDDOrchestrator(baseJSON []byte) ([]byte, error) {
-	if len(strings.TrimSpace(string(baseJSON))) == 0 {
-		return baseJSON, nil
-	}
-
-	root := map[string]any{}
-	if err := json.Unmarshal(baseJSON, &root); err != nil {
-		return baseJSON, nil
-	}
-
-	agentsRaw, ok := root["agent"]
-	if !ok {
-		return baseJSON, nil
-	}
-	agentsMap, ok := agentsRaw.(map[string]any)
-	if !ok {
-		return baseJSON, nil
-	}
-
-	legacy, hasLegacy := agentsMap["sdd-orchestrator"]
-	revokedGentleman, hasRevokedGentleman := agentsMap["gentleman"]
-	gentlemanLooksLikeConductor := hasRevokedGentleman && looksLikeOpenCodeSDDConductor(revokedGentleman)
-	if !hasLegacy && !hasRevokedGentleman {
-		return baseJSON, nil
-	}
-	if !hasLegacy && gentlemanLooksLikeConductor {
-		legacy = revokedGentleman
-		hasLegacy = true
-	}
-
-	if _, hasGentleOrchestrator := agentsMap["gentle-orchestrator"]; !hasGentleOrchestrator && hasLegacy {
-		agentsMap["gentle-orchestrator"] = legacy
-	}
-	delete(agentsMap, "sdd-orchestrator")
-	if hasRevokedGentleman {
-		delete(agentsMap, "gentleman")
-	}
-
-	encoded, err := json.MarshalIndent(root, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-	return append(encoded, '\n'), nil
-}
-
-func looksLikeOpenCodeSDDConductor(agentRaw any) bool {
-	agentMap, ok := agentRaw.(map[string]any)
-	if !ok {
-		return false
-	}
-	for _, field := range []string{"description", "prompt"} {
-		value, _ := agentMap[field].(string)
-		if strings.Contains(value, "SDD Orchestrator") || strings.Contains(value, "SDD conductor") {
-			return true
-		}
-	}
-	permissionRaw, ok := agentMap["permission"].(map[string]any)
-	if !ok {
-		return false
-	}
-	taskRaw, ok := permissionRaw["task"].(map[string]any)
-	if !ok {
-		return false
-	}
-	replaceRaw, ok := taskRaw["__replace__"].(map[string]any)
-	if !ok {
-		return false
-	}
-	_, allowsApply := replaceRaw["sdd-apply"]
-	_, allowsVerify := replaceRaw["sdd-verify"]
-	return allowsApply && allowsVerify
-}
-
 func hasOpenCodeAgentKey(settingsText, agentKey string) bool {
 	root := map[string]any{}
 	if err := json.Unmarshal([]byte(settingsText), &root); err != nil {
@@ -2395,7 +2315,7 @@ func stripBareOrchestratorForFilePrompt(content string) string {
 
 const instructionsFrontmatter = "---\n" +
 	"name: Shevanio AI Persona\n" +
-	"description: Gentleman persona with SDD orchestration and Engram protocol\n" +
+	"description: Shevanio persona with SDD orchestration and Engram protocol\n" +
 	"applyTo: \"**\"\n" +
 	"---\n"
 

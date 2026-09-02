@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fail when a NEW unreachable function appears.
 #
-# Why a ratchet and not a clean gate: the repository already carries 230
+# Why a ratchet and not a clean gate: the repository already carries 244
 # functions that nothing reaches from main, and most are legitimate (exported
 # API exercised only by tests, platform-specific variants, mocks). Demanding
 # that list reach zero before this guard can exist would mean the guard never

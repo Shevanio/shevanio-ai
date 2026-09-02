@@ -220,7 +220,7 @@ func (a *Adapter) EmbeddedSubAgentsDir() string {
 }
 
 func (a *Adapter) PostInstallMessage(homeDir string) string {
-	gentlemanYaml := filepath.Join(homeDir, ".kimi", "agents", "gentleman.yaml")
+	shevanioYaml := filepath.Join(homeDir, ".kimi", "agents", "shevanio.yaml")
 	skillsRoot := filepath.Join(homeDir, ".config", "agents", "skills")
 
 	return fmt.Sprintf(`Kimi Code configured!
@@ -241,7 +241,7 @@ Native SDD entrypoints:
   /skill:sdd-onboard
 
 Skills root:
-  "%s"`, gentlemanYaml, skillsRoot)
+  "%s"`, shevanioYaml, skillsRoot)
 }
 
 // --- Helpers ---

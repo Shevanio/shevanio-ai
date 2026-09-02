@@ -25,7 +25,7 @@ func ComponentsForPreset(preset PresetID, persona PersonaID) []ComponentID {
 		components = []ComponentID{ComponentEngram, ComponentSDD, ComponentSkills, ComponentContext7}
 	case PresetCustom:
 		return nil
-	default: // full-gentleman
+	default: // full-shevanio and its exact legacy alias
 		components = []ComponentID{
 			ComponentEngram,
 			ComponentSDD,

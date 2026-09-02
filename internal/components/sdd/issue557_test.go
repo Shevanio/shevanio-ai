@@ -34,10 +34,9 @@ func TestGenerateProfileOverlay_FallsBackToGlobalAssignments(t *testing.T) {
 	// phases (mirrors a user who touched a few rows in the picker but skipped
 	// the rest, or who used the global flow to set most assignments).
 	profile := model.Profile{
-		Name:              "homework",
-		OrchestratorModel: model.ModelAssignment{ProviderID: "openai", ModelID: "gpt-5.1"},
+		Name: "homework",
 		PhaseAssignments: map[string]model.ModelAssignment{
-			"sdd-apply": {ProviderID: "openai", ModelID: "gpt-5.1"},
+			"sdd-apply": {ProviderID: "anthropic", ModelID: "claude-sonnet-4", Effort: "medium"},
 		},
 	}
 
@@ -45,16 +44,16 @@ func TestGenerateProfileOverlay_FallsBackToGlobalAssignments(t *testing.T) {
 	// populates) — this is the user's source of truth for "what Shevanio AI
 	// shows as assigned" in the global view.
 	globalAssignments := map[string]model.ModelAssignment{
-		"gentle-orchestrator": {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-init":            {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-explore":         {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-onboard":         {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-propose":         {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-spec":            {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-design":          {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-tasks":           {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-verify":          {ProviderID: "openai", ModelID: "gpt-5.1"},
-		"sdd-archive":         {ProviderID: "openai", ModelID: "gpt-5.1"},
+		model.CanonicalManagedIdentity.Actor: {ProviderID: "openai", ModelID: "gpt-5.1", Effort: "high"},
+		"sdd-init":                           {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-explore":                        {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-onboard":                        {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-propose":                        {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-spec":                           {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-design":                         {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-tasks":                          {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-verify":                         {ProviderID: "openai", ModelID: "gpt-5.1"},
+		"sdd-archive":                        {ProviderID: "openai", ModelID: "gpt-5.1"},
 	}
 
 	overlay, err := GenerateProfileOverlay(profile, home, openCodeSettingsPathForTest(home), globalAssignments, "")
@@ -77,7 +76,7 @@ func TestGenerateProfileOverlay_FallsBackToGlobalAssignments(t *testing.T) {
 	// it (and the rest) to lock the contract.
 	for phase, want := range globalAssignments {
 		var key string
-		if phase == "gentle-orchestrator" {
+		if phase == model.CanonicalManagedIdentity.Actor {
 			key = namedProfileActor("homework")
 		} else {
 			key = phase + "-homework"
@@ -96,16 +95,21 @@ func TestGenerateProfileOverlay_FallsBackToGlobalAssignments(t *testing.T) {
 			t.Errorf("agent %q model = %q, want %q", key, gotModel, want.FullID())
 		}
 	}
+	orchestratorEntry := agentMap[namedProfileActor("homework")].(map[string]any)
+	if got, _ := orchestratorEntry["variant"].(string); got != "high" {
+		t.Errorf("profile orchestrator variant = %q, want high from canonical fallback", got)
+	}
 
-	// Explicit profile overrides take precedence — confirm sdd-apply-homework
-	// gets the profile-level assignment (which happens to equal the global
-	// fallback in this test, but the contract is "profile wins over global").
+	// Explicit profile overrides take precedence over the global fallback.
 	applyEntry, ok := agentMap["sdd-apply-homework"].(map[string]any)
 	if !ok {
 		t.Fatal("missing sdd-apply-homework agent")
 	}
-	if m, _ := applyEntry["model"].(string); m != "openai/gpt-5.1" {
-		t.Errorf("sdd-apply-homework model = %q, want openai/gpt-5.1", m)
+	if m, _ := applyEntry["model"].(string); m != "anthropic/claude-sonnet-4" {
+		t.Errorf("sdd-apply-homework model = %q, want anthropic/claude-sonnet-4", m)
+	}
+	if v, _ := applyEntry["variant"].(string); v != "medium" {
+		t.Errorf("sdd-apply-homework variant = %q, want medium", v)
 	}
 }
 
@@ -132,9 +136,9 @@ func TestInjectHomeworkProfileFallsBackToGlobalAssignmentsViaInject(t *testing.T
 	// sdd-onboard-homework is missing the model — the user-reported state.
 	seed := `{
   "agent": {
-    "gentle-orchestrator": { "mode": "primary" },
+    "shevanio-orchestrator": { "mode": "primary" },
     "sdd-init": { "mode": "subagent", "model": "openai/gpt-5.1" },
-    "sdd-orchestrator-homework": { "mode": "primary", "model": "openai/gpt-5.1" },
+    "shevanio-orchestrator-homework": { "mode": "primary", "model": "openai/gpt-5.1" },
     "sdd-init-homework": { "mode": "subagent", "model": "openai/gpt-5.1" },
     "sdd-explore-homework": { "mode": "subagent", "model": "openai/gpt-5.1" },
     "sdd-propose-homework": { "mode": "subagent", "model": "openai/gpt-5.1" },

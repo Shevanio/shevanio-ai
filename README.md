@@ -109,8 +109,8 @@ Run `shevanio-ai` to open the guided TUI. It detects supported agents and lets y
 For an explicit, auditable CLI path, inspect a dry run before applying the same selection:
 
 ```bash
-shevanio-ai install --dry-run --agent opencode --preset full-gentleman
-shevanio-ai install --agent opencode --preset full-gentleman
+shevanio-ai install --dry-run --agent opencode --preset full-shevanio
+shevanio-ai install --agent opencode --preset full-shevanio
 shevanio-ai doctor
 ```
 
@@ -430,7 +430,7 @@ component and preset reference is [Components, Skills & Presets](docs/components
 | SDD | `sdd` | Spec-Driven Development prompts, lifecycle, and native orchestration. |
 | Skills | `skills` | Curated workflow and coding skill files. |
 | Context7 | `context7` | MCP access to current framework and library documentation. |
-| Persona | `persona` | Managed Gentleman, neutral, or unmanaged custom behavior. |
+| Persona | `persona` | Managed Shevanio, neutral, or unmanaged custom behavior. |
 | Permissions | `permissions` | Security-first defaults and sensitive-path guardrails. |
 | OpenCode Theme | `theme` | OpenCode visual theme overlay. |
 | Claude Code Theme | `claude-theme` | Claude Code visual theme overlay. |
@@ -442,7 +442,7 @@ component and preset reference is [Components, Skills & Presets](docs/components
 | --- | --- | --- |
 | Memory Only | `minimal` | Engram plus SDD skills. |
 | Dev Stack | `ecosystem-only` | Engram, SDD, Skills, and Context7 plus the full bundled skill set. |
-| Dev Stack + Polish | `full-gentleman` | Dev Stack plus Persona, Permissions, and visual polish. |
+| Dev Stack + Polish | `full-shevanio` | Dev Stack plus Persona, Permissions, and visual polish. |
 | Custom | `custom` | Explicit component and skill selection; existing persona/settings remain unmanaged. |
 
 ### Bundled skills

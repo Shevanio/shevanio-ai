@@ -336,11 +336,11 @@ func GenerateProfileOverlay(profile model.Profile, homeDir, settingsPath string,
 	}
 	orchAssignment := profile.OrchestratorModel
 	if orchAssignment.ProviderID == "" || orchAssignment.ModelID == "" {
-		// Fall back to the global gentle-orchestrator assignment (issue #557)
+		// Fall back to the global canonical orchestrator assignment (issue #557)
 		// when the profile did not pin its own orchestrator model. This mirrors
 		// how PhaseAssignments are resolved below so generated profile
 		// orchestrators stay consistent with what the TUI shows elsewhere.
-		if fallback, ok := fallbackPhaseAssignments["gentle-orchestrator"]; ok {
+		if fallback, ok := fallbackPhaseAssignments[model.CanonicalManagedIdentity.Actor]; ok {
 			orchAssignment = fallback
 		}
 	}

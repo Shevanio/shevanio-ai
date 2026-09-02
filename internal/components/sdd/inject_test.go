@@ -1756,21 +1756,21 @@ func TestInjectKimiWritesNativeAgentFilesAndGlobalSkills(t *testing.T) {
 		t.Fatal("sdd-orchestrator.md should reference Kimi's documented Task tool for custom subagent delegation")
 	}
 
-	rootAgentPath := filepath.Join(home, ".kimi", "agents", "gentleman.yaml")
+	rootAgentPath := filepath.Join(home, ".kimi", "agents", "shevanio.yaml")
 	rootAgent, err := os.ReadFile(rootAgentPath)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v", rootAgentPath, err)
 	}
 
 	rootText := string(rootAgent)
-	if !strings.Contains(rootText, "name: gentleman") {
-		t.Fatal("gentleman.yaml should define a named root custom agent")
+	if !strings.Contains(rootText, "name: shevanio") {
+		t.Fatal("shevanio.yaml should define the canonical named root custom agent")
 	}
 	if strings.Contains(rootText, "kimi_cli.tools.agent:Agent") {
-		t.Fatal("gentleman.yaml should inherit Kimi's default tool set instead of hardcoding the old Agent tool path")
+		t.Fatal("shevanio.yaml should inherit Kimi's default tool set instead of hardcoding the old Agent tool path")
 	}
 	if !strings.Contains(rootText, "../KIMI.md") {
-		t.Fatal("gentleman.yaml should load the installed KIMI.md system prompt")
+		t.Fatal("shevanio.yaml should load the installed KIMI.md system prompt")
 	}
 
 	for _, want := range []string{
@@ -1790,6 +1790,42 @@ func TestInjectKimiWritesNativeAgentFilesAndGlobalSkills(t *testing.T) {
 		if _, err := os.Stat(want); err != nil {
 			t.Fatalf("expected Kimi SDD artifact %q: %v", want, err)
 		}
+	}
+}
+
+func TestInjectKimiRemovesOnlyExactLegacyRootAgent(t *testing.T) {
+	legacy := []byte(assets.MustRead("kimi/migrations/gentleman.yaml"))
+	for _, tc := range []struct {
+		name      string
+		content   []byte
+		wantExist bool
+	}{
+		{name: "managed legacy asset", content: legacy},
+		{name: "user-modified legacy asset", content: append(append([]byte(nil), legacy...), []byte("\n# user customization\n")...), wantExist: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home := t.TempDir()
+			legacyPath := filepath.Join(home, ".kimi", "agents", "gentleman.yaml")
+			if err := os.MkdirAll(filepath.Dir(legacyPath), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(legacyPath, tc.content, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Inject(home, kimiAdapter(), ""); err != nil {
+				t.Fatalf("Inject(kimi) error = %v", err)
+			}
+			_, legacyErr := os.Lstat(legacyPath)
+			if tc.wantExist && legacyErr != nil {
+				t.Fatalf("user-modified legacy agent was removed: %v", legacyErr)
+			}
+			if !tc.wantExist && !os.IsNotExist(legacyErr) {
+				t.Fatalf("exact managed legacy agent still exists: %v", legacyErr)
+			}
+			if _, err := os.Stat(filepath.Join(home, ".kimi", "agents", "shevanio.yaml")); err != nil {
+				t.Fatalf("canonical Kimi root agent missing: %v", err)
+			}
+		})
 	}
 }
 

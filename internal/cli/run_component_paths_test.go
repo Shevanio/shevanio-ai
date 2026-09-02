@@ -446,7 +446,7 @@ func TestComponentPathsSDDKimiIncludesAgentFilesAndGlobalSkills(t *testing.T) {
 
 	for _, want := range []string{
 		filepath.Join(home, ".kimi", "KIMI.md"),
-		filepath.Join(home, ".kimi", "agents", "gentleman.yaml"),
+		filepath.Join(home, ".kimi", "agents", "shevanio.yaml"),
 		filepath.Join(home, ".kimi", "agents", "sdd-init.yaml"),
 		filepath.Join(home, ".kimi", "agents", "sdd-propose.md"),
 		filepath.Join(home, ".kimi", "agents", "sdd-apply.yaml"),

@@ -8,7 +8,7 @@
 
 | Persona   | ID          | Description                                                                       |
 | --------- | ----------- | --------------------------------------------------------------------------------- |
-| Gentleman | `gentleman` | Teaching-oriented mentor persona — pushes back on bad practices, explains the why |
+| Shevanio   | `shevanio`  | Teaching-oriented mentor persona — pushes back on bad practices, explains the why |
 | Neutral   | `neutral`   | Same teacher, same philosophy, no regional language — warm and professional       |
 | Custom    | `custom`    | Keep your existing persona/config unmanaged — shevanio-ai does not inject a persona |
 
@@ -44,7 +44,7 @@ First-time setup — detects your tools, configures agents, injects all componen
 # Full ecosystem for multiple agents
 shevanio-ai install \
   --agent claude-code,opencode,gemini-cli \
-  --preset full-gentleman
+  --preset full-shevanio
 
 # Minimal setup for Cursor
 shevanio-ai install \
@@ -54,19 +54,19 @@ shevanio-ai install \
 # OpenClaw setup after installing OpenClaw manually
 shevanio-ai install \
   --agent openclaw \
-  --preset full-gentleman
+  --preset full-shevanio
 
 # Pick specific components and skills
 shevanio-ai install \
   --agent claude-code \
   --component engram,sdd,skills,context7,persona,permissions \
   --skill go-testing,skill-creator,branch-pr,issue-creation \
-  --persona gentleman
+  --persona shevanio
 
 # Dry-run first (preview plan without applying changes)
 shevanio-ai install --dry-run \
   --agent claude-code,opencode \
-  --preset full-gentleman
+  --preset full-shevanio
 ```
 
 ### skill-registry refresh
@@ -246,8 +246,8 @@ shevanio-ai -v
 | `--agent`, `--agents`         | Agents to configure (comma-separated)                                                                             |
 | `--component`, `--components` | Components to install (comma-separated)                                                                           |
 | `--skill`, `--skills`         | Skills to install (comma-separated)                                                                               |
-| `--persona`                   | Persona mode: `gentleman`, `neutral`, `custom` (`custom` keeps your existing persona unmanaged)                   |
-| `--preset`                    | Preset: `full-gentleman`, `ecosystem-only`, `minimal`, `custom` (`custom` means manual component/skill selection) |
+| `--persona`                   | Persona mode: `shevanio`, `neutral`, `custom` (`custom` keeps your existing persona unmanaged)                    |
+| `--preset`                    | Preset: `full-shevanio`, `ecosystem-only`, `minimal`, `custom` (`custom` means manual component/skill selection)  |
 | `--sdd-mode`                  | SDD orchestrator mode: `single` or `multi`                                                                        |
 | `--scope`                     | Install scope for agent-scoped files: `global` (default, writes to each selected agent's global config directory) or `workspace` (writes to the current project root). Also settable via `SHEVANIO_AI_INSTALL_SCOPE` env var for CI/non-interactive use. |
 | `--channel`                   | Release channel: `stable`, `beta`, or `nightly` (an alias for beta); also settable via `SHEVANIO_AI_CHANNEL`. |
@@ -307,7 +307,7 @@ See [OpenCode SDD Profiles](opencode-profiles.md) for the full guide.
 
 ```bash
 # First time: use the locally installed binary
-shevanio-ai install --agent claude-code,cursor --preset full-gentleman
+shevanio-ai install --agent claude-code,cursor --preset full-shevanio
 
 # After a new release: upgrade + sync
 brew upgrade shevanio-ai
@@ -318,7 +318,7 @@ shevanio-ai doctor
 shevanio-ai uninstall --agent claude-code --component sdd,persona
 
 # Adding a new agent later
-shevanio-ai install --agent windsurf --preset full-gentleman
+shevanio-ai install --agent windsurf --preset full-shevanio
 ```
 
 ### Homebrew upgrade troubleshooting

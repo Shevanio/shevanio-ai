@@ -73,7 +73,7 @@ const (
 	AgentHermes        AgentID = "hermes"
 )
 
-// SupportTier indicates how fully an agent supports the Gentleman AI ecosystem.
+// SupportTier indicates how fully an agent supports the Shevanio AI ecosystem.
 // All current agents receive the full SDD orchestrator, skill files, MCP config,
 // and system prompt injection. The tier is kept as metadata for display purposes.
 type SupportTier string
@@ -241,7 +241,7 @@ const (
 )
 
 // Profile represents a named SDD orchestrator configuration with model assignments.
-// The default profile (Name="" or Name="default") maps to the base sdd-orchestrator.
+// The default profile (Name="" or Name="default") maps to the base shevanio-orchestrator.
 // Named profiles generate shevanio-orchestrator-{Name} + suffixed sub-agents.
 type Profile struct {
 	Name              string                     // e.g. "cheap", "premium"; empty = default
