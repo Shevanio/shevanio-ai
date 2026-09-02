@@ -644,6 +644,7 @@ func applyTUIInstallState(installState *state.InstallState, selection model.Sele
 	installState.ModelAssignments = modelAssignmentsToState(selection.ModelAssignments)
 	installState.Persona = string(selection.Persona)
 	installState.SetSelection(selection)
+	*installState, _ = state.ConvergeManagedIdentity(*installState)
 	if backgroundPersist != "" {
 		installState.BackgroundIntent = backgroundPersist
 	}

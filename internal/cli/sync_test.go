@@ -5583,20 +5583,83 @@ func TestRunSyncWithSelectionPersonaPublicationContentionIsRetryable(t *testing.
 	}
 }
 
+func TestSyncManagedIdentityPublicationConvergesExactAliases(t *testing.T) {
+	canonical := state.ModelAssignmentState{ProviderID: "canonical", ModelID: "keep"}
+	legacy := state.ModelAssignmentState{ProviderID: "legacy", ModelID: "move"}
+	custom := state.ModelAssignmentState{ProviderID: "custom", ModelID: "preserve"}
+	tests := []struct {
+		name            string
+		input           string
+		wantPersona     string
+		wantPreset      model.PresetID
+		wantAssignments map[string]state.ModelAssignmentState
+	}{
+		{
+			name:        "canonical",
+			input:       `{"schema_version":1,"installed_agents":[],"persona":"shevanio","preset":"full-shevanio","model_assignments":{"shevanio-orchestrator":{"provider_id":"canonical","model_id":"keep"}},"future_state":{"keep":true}}`,
+			wantPersona: "shevanio", wantPreset: model.PresetFullShevanio,
+			wantAssignments: map[string]state.ModelAssignmentState{model.CanonicalManagedIdentity.Actor: canonical},
+		},
+		{
+			name:        "canonical display",
+			input:       `{"schema_version":1,"installed_agents":[],"persona":"Shevanio","preset":"full-shevanio","future_state":{"keep":true}}`,
+			wantPersona: "shevanio", wantPreset: model.PresetFullShevanio,
+		},
+		{
+			name:        "legacy",
+			input:       `{"schema_version":1,"installed_agents":[],"persona":"Gentleman","preset":"full-gentleman","model_assignments":{"sdd-orchestrator":{"provider_id":"legacy","model_id":"move"}},"future_state":{"keep":true}}`,
+			wantPersona: "shevanio", wantPreset: model.PresetFullShevanio,
+			wantAssignments: map[string]state.ModelAssignmentState{model.CanonicalManagedIdentity.Actor: legacy},
+		},
+		{
+			name:        "canonical assignment wins coexistence",
+			input:       `{"schema_version":1,"installed_agents":[],"persona":"gentleman","preset":"full-gentleman","model_assignments":{"shevanio-orchestrator":{"provider_id":"canonical","model_id":"keep"},"sdd-orchestrator":{"provider_id":"legacy","model_id":"move"},"gentle-orchestrator":{"provider_id":"legacy","model_id":"move"},"sdd-orchestrator-team":{"provider_id":"custom","model_id":"preserve"}},"future_state":{"keep":true}}`,
+			wantPersona: "shevanio", wantPreset: model.PresetFullShevanio,
+			wantAssignments: map[string]state.ModelAssignmentState{model.CanonicalManagedIdentity.Actor: canonical, "sdd-orchestrator-team": custom},
+		},
+		{
+			name:        "unknown and custom values",
+			input:       `{"schema_version":1,"installed_agents":[],"persona":"user-persona","preset":"user-preset","model_assignments":{"user-orchestrator":{"provider_id":"custom","model_id":"preserve"},"sdd-orchestrator-team":{"provider_id":"custom","model_id":"preserve"}},"future_state":{"keep":true}}`,
+			wantPersona: "user-persona", wantPreset: "user-preset",
+			wantAssignments: map[string]state.ModelAssignmentState{"user-orchestrator": custom, "sdd-orchestrator-team": custom},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			mustWrite(t, state.Path(home), []byte(tt.input), 0o600)
+			publication, err := persistSyncManagedAssetStateWithBackground(home, model.Selection{}, "", "", "", false)
+			if err != nil || publication.Result.Outcome != statestore.Committed {
+				t.Fatalf("first publication = %#v, %v", publication, err)
+			}
+			got := mustPersonaState(t, home)
+			first := mustPersonaFile(t, state.Path(home))
+			if got.Persona != tt.wantPersona || got.Preset != tt.wantPreset || !reflect.DeepEqual(got.ModelAssignments, tt.wantAssignments) || !bytes.Contains(first, []byte(`"future_state"`)) {
+				t.Fatalf("converged state = %#v, want persona=%q preset=%q assignments=%#v with unknown field", got, tt.wantPersona, tt.wantPreset, tt.wantAssignments)
+			}
+			publication, err = persistSyncManagedAssetStateWithBackground(home, model.Selection{}, "", "", "", false)
+			second := mustPersonaFile(t, state.Path(home))
+			if err != nil || publication.Result.Outcome != statestore.Committed || !bytes.Equal(first, second) {
+				t.Fatalf("second publication = %#v, %v; state changed=%t", publication, err, !bytes.Equal(first, second))
+			}
+		})
+	}
+}
+
 func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
 	home, before, mode, asset, assetBefore, buf := personaRuntimeSetup(t, true)
 	_, assetMode := personaFileSnapshot(t, asset)
-	old := publishSyncState
-	first := true
-	publishSyncState = func(homeDir string, s model.Selection, w string, b model.OpenCodeBackgroundIntent, p model.PiBackgroundIntent, v bool) (syncStatePublication, error) {
-		if first {
-			first = false
-			return syncStatePublication{Result: statestore.Result{Outcome: statestore.Uncommitted}}, errors.New("retryable")
-		}
-		return old(homeDir, s, w, b, p, v)
+	statePath := state.Path(home)
+	target := filepath.Join(home, ".shevanio-ai", "persisted-state.json")
+	if err := os.Rename(statePath, target); err != nil {
+		t.Fatal(err)
 	}
-	t.Cleanup(func() { publishSyncState = old })
-	requirePersonaFailure(t, home, personaTestSelection())
+	if err := os.Symlink(target, statePath); err != nil {
+		t.Skipf("state symlink unavailable: %v", err)
+	}
+	if _, err := RunSyncWithSelection(home, personaTestSelection()); err == nil || !strings.Contains(err.Error(), "persist managed asset provenance") {
+		t.Fatalf("first sync error = %v, want publication write failure", err)
+	}
 	got, gotMode := personaStateSnapshot(t, home)
 	if !bytes.Equal(got, before) || gotMode != mode {
 		t.Fatal("failed publication changed state")
@@ -5604,6 +5667,12 @@ func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
 	assetAfter := mustPersonaFile(t, asset)
 	if !bytes.Equal(assetAfter, assetBefore) || personaBackupCount(t, home) == 0 || buf.Len() != 0 {
 		t.Fatal("failed publication did not compensate and retain evidence")
+	}
+	if err := os.Remove(statePath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(target, statePath); err != nil {
+		t.Fatal(err)
 	}
 	requirePersonaSync(t, home, personaTestSelection())
 	stable, stableMode := personaStateSnapshot(t, home)

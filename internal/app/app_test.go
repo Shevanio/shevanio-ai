@@ -636,10 +636,15 @@ func TestTuiSyncSelectionPreservesCustomPermissionExclusion(t *testing.T) {
 func TestTUIExecutePersistsConfiguredSelection(t *testing.T) {
 	home := t.TempDir()
 	setupMockHome(t, home)
-	selection := model.Selection{Preset: model.PresetCustom, Components: []model.ComponentID{}, Skills: []model.SkillID{}, SDDMode: model.SDDModeMulti, StrictTDD: true}
+	assignment := model.ModelAssignment{ProviderID: "anthropic", ModelID: "legacy"}
+	selection := model.Selection{
+		Persona: model.PersonaGentleman, Preset: model.PresetFullGentleman,
+		Components: []model.ComponentID{}, Skills: []model.SkillID{}, SDDMode: model.SDDModeMulti, StrictTDD: true,
+		ModelAssignments: map[string]model.ModelAssignment{"sdd-orchestrator": assignment},
+	}
 	result := tuiExecuteWithBackground(selection, planner.ResolvedPlan{}, system.DetectionResult{}, "", "", "", "", nil)
 	got, err := state.Read(home)
-	if result.Err != nil || err != nil || !got.SelectionConfigured || got.Preset != model.PresetCustom || got.SDDMode != model.SDDModeMulti || !got.StrictTDD || len(got.Components) != 0 || len(got.Skills) != 0 {
+	if result.Err != nil || err != nil || !got.SelectionConfigured || got.Persona != string(model.PersonaShevanio) || got.Preset != model.PresetFullShevanio || got.SDDMode != model.SDDModeMulti || !got.StrictTDD || len(got.Components) != 0 || len(got.Skills) != 0 || got.ModelAssignments[model.CanonicalManagedIdentity.Actor].ModelID != assignment.ModelID {
 		t.Fatalf("persisted selection = %#v, execute err = %v, read err = %v", got, result.Err, err)
 	}
 }

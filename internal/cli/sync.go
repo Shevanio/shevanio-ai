@@ -1523,6 +1523,7 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	}
 
 	personaAliasPending := persistedStateErr == nil && persistedState.Persona == string(model.PersonaGentlemanNeutralArtifacts)
+	_, managedIdentityPending := state.ConvergeManagedIdentity(persistedState)
 
 	result := SyncResult{
 		Agents:       agentIDs,
@@ -1536,7 +1537,7 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 		return result, err
 	}
 	if noOp {
-		if !personaAliasPending {
+		if !personaAliasPending && !managedIdentityPending {
 			return result, nil
 		}
 		publication, publishErr := publishSyncState(homeDir, selection, "", "", "", false)
@@ -1664,6 +1665,10 @@ func persistSyncManagedAssetStateWithBackground(homeDir string, selection model.
 	var err error
 	publication.Result, err = statestore.Mutate(homeDir, func(latest *state.InstallState) error {
 		shouldWrite := false
+		if converged, changed := state.ConvergeManagedIdentity(*latest); changed {
+			*latest = converged
+			shouldWrite = true
+		}
 		if latest.Persona == string(model.PersonaGentlemanNeutralArtifacts) {
 			latest.Persona = string(model.PersonaNeutral)
 			publication.PersonaNormalized = true

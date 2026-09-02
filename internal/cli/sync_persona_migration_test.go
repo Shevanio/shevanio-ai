@@ -72,9 +72,9 @@ func TestRestorePersistedSelectionIdentityBoundary(t *testing.T) {
 	}
 }
 
-// TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp pins the early-return path:
-// a sync that discovers zero agents must still migrate a persisted legacy alias.
-func TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp(t *testing.T) {
+// TestRunSyncWithSelectionPublishesAliasesOnZeroAgentNoOp pins the early-return
+// path: a sync that discovers zero agents must still converge managed aliases.
+func TestRunSyncWithSelectionPublishesAliasesOnZeroAgentNoOp(t *testing.T) {
 	var buf bytes.Buffer
 	previous := personaNoticeWriter
 	personaNoticeWriter = &buf
@@ -109,6 +109,27 @@ func TestRunSyncWithSelectionPublishesAliasOnZeroAgentNoOp(t *testing.T) {
 	}
 	if !bytes.Equal(gotLegacy, legacy) || legacyInfo.Mode().Perm() != 0o600 {
 		t.Fatal("alias-only publication changed legacy fallback")
+	}
+
+	managed := t.TempDir()
+	canonicalAssignment := state.ModelAssignmentState{ProviderID: "canonical", ModelID: "wins"}
+	if err := state.Write(managed, state.InstallState{
+		Persona: "Gentleman", Preset: model.PresetFullGentleman,
+		ModelAssignments: map[string]state.ModelAssignmentState{
+			model.CanonicalManagedIdentity.Actor: canonicalAssignment,
+			"sdd-orchestrator":                   {ProviderID: "legacy", ModelID: "remove"},
+			"sdd-orchestrator-team":              {ProviderID: "custom", ModelID: "keep"},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	result, err = RunSyncWithSelection(managed, model.Selection{})
+	converged := mustPersonaState(t, managed)
+	if err != nil || !result.NoOp || converged.Persona != string(model.PersonaShevanio) || converged.Preset != model.PresetFullShevanio || converged.ModelAssignments[model.CanonicalManagedIdentity.Actor] != canonicalAssignment {
+		t.Fatalf("managed alias convergence = result=%#v state=%#v err=%v", result, converged, err)
+	}
+	if _, exists := converged.ModelAssignments["sdd-orchestrator"]; exists || converged.ModelAssignments["sdd-orchestrator-team"].ModelID != "keep" {
+		t.Fatalf("managed alias convergence changed custom or retained legacy assignment: %#v", converged.ModelAssignments)
 	}
 
 	noAlias := t.TempDir()

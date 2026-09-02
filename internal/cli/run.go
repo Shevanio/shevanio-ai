@@ -314,6 +314,7 @@ func persistInstallState(homeDir string, newState state.InstallState, agentIDs [
 		}
 		*current = newState
 		current.ManagedAssetDigest = writer
+		*current, _ = state.ConvergeManagedIdentity(*current)
 		return nil
 	})
 	return err

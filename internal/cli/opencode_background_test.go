@@ -391,7 +391,14 @@ func TestPersistInstallStateFullInstallPreservesUnrelatedFields(t *testing.T) {
 	if err := state.Write(home, existing); err != nil {
 		t.Fatal(err)
 	}
-	fresh := state.InstallState{InstalledAgents: []string{"opencode"}, SelectionConfigured: true, Components: []model.ComponentID{model.ComponentPermission}, Persona: "gentleman", BackgroundIntent: model.OpenCodeBackgroundOn}
+	legacyAssignment := state.ModelAssignmentState{ProviderID: "anthropic", ModelID: "legacy"}
+	customAssignment := state.ModelAssignmentState{ProviderID: "custom", ModelID: "keep"}
+	fresh := state.InstallState{
+		InstalledAgents: []string{"opencode"}, SelectionConfigured: true,
+		Components: []model.ComponentID{model.ComponentPermission}, Persona: "gentleman", Preset: model.PresetFullGentleman,
+		ModelAssignments: map[string]state.ModelAssignmentState{"sdd-orchestrator": legacyAssignment, "sdd-orchestrator-team": customAssignment},
+		BackgroundIntent: model.OpenCodeBackgroundOn,
+	}
 	if err := persistInstallState(home, fresh, []string{"opencode"}, InstallFlags{}, "new"); err != nil {
 		t.Fatal(err)
 	}
@@ -401,6 +408,8 @@ func TestPersistInstallStateFullInstallPreservesUnrelatedFields(t *testing.T) {
 	}
 	want := fresh
 	want.ManagedAssetDigest = "new"
+	want.Persona, want.Preset = string(model.PersonaShevanio), model.PresetFullShevanio
+	want.ModelAssignments = map[string]state.ModelAssignmentState{model.CanonicalManagedIdentity.Actor: legacyAssignment, "sdd-orchestrator-team": customAssignment}
 	want.LastUpdateCheck, want.PendingSync = existing.LastUpdateCheck, existing.PendingSync
 	want.RDDMode, want.RDDModeRecordedAt = existing.RDDMode, existing.RDDModeRecordedAt
 	want.PersonaPresent = true
