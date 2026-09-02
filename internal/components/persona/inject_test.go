@@ -59,10 +59,10 @@ func assertLanguageGuardrails(t *testing.T, text string, required []string, bann
 	}
 }
 
-func TestInjectClaudeGentlemanWritesSectionWithRealContent(t *testing.T) {
+func TestInjectClaudeShevanioWritesSectionWithRealContent(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := Inject(home, claudeAdapter(), model.PersonaGentleman)
+	result, err := Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
@@ -102,12 +102,15 @@ func TestInjectClaudeGentlemanWritesSectionWithRealContent(t *testing.T) {
 	if !strings.Contains(text, "Persona Voice") {
 		t.Fatal("CLAUDE.md residual persona section missing the 'Persona Voice' pointer to the output style")
 	}
+	if !strings.Contains(text, "**Shevanio**/**Neutral**") || strings.Contains(text, "**Gentleman**/**Neutral**") {
+		t.Fatal("CLAUDE.md persona voice must reference canonical Shevanio/Neutral styles")
+	}
 }
 
-func TestInjectKimiGentlemanIncludesProjectInstructionsAndLoadedSkills(t *testing.T) {
+func TestInjectKimiShevanioIncludesProjectInstructionsAndLoadedSkills(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := Inject(home, kimiAdapter(), model.PersonaGentleman)
+	result, err := Inject(home, kimiAdapter(), model.PersonaShevanio)
 	if err != nil {
 		t.Fatalf("Inject(kimi) error = %v", err)
 	}
@@ -133,14 +136,14 @@ func TestInjectKimiGentlemanIncludesProjectInstructionsAndLoadedSkills(t *testin
 		t.Fatal("KIMI.md missing ${KIMI_SKILLS} for loaded-skills parity")
 	}
 
-	// output-style.md module should contain the Gentleman style content.
+	// output-style.md module should contain the canonical Shevanio style content.
 	outputStylePath := filepath.Join(home, ".kimi", "output-style.md")
 	styleContent, err := os.ReadFile(outputStylePath)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v", outputStylePath, err)
 	}
-	if !strings.Contains(string(styleContent), "Gentleman Output Style") {
-		t.Fatal("output-style.md missing Gentleman Output Style content")
+	if !strings.Contains(string(styleContent), "name: Shevanio") || !strings.Contains(string(styleContent), "Shevanio Output Style") {
+		t.Fatal("output-style.md missing canonical Shevanio metadata")
 	}
 	assertLanguageGuardrails(t, string(styleContent),
 		[]string{
@@ -170,6 +173,9 @@ func TestInjectKimiGentlemanIncludesProjectInstructionsAndLoadedSkills(t *testin
 	if !strings.Contains(personaText, "Persona Voice") {
 		t.Fatal("Kimi persona.md residual missing the 'Persona Voice' pointer to output-style.md")
 	}
+	if !strings.Contains(personaText, "**Shevanio**/**Neutral**") || strings.Contains(personaText, "**Gentleman**/**Neutral**") {
+		t.Fatal("Kimi persona.md must reference canonical Shevanio/Neutral styles")
+	}
 	for _, banned := range []string{
 		"Match the user's current language in your REPLY ONLY",
 		"Rioplatense",
@@ -181,35 +187,35 @@ func TestInjectKimiGentlemanIncludesProjectInstructionsAndLoadedSkills(t *testin
 	}
 }
 
-func TestInjectClaudeGentlemanWritesOutputStyleFile(t *testing.T) {
+func TestInjectClaudeShevanioWritesOutputStyleFile(t *testing.T) {
 	home := t.TempDir()
 
-	_, err := Inject(home, claudeAdapter(), model.PersonaGentleman)
+	_, err := Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
 
 	// Verify output-style file was written.
-	stylePath := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	stylePath := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 	content, err := os.ReadFile(stylePath)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v", stylePath, err)
 	}
 
 	text := string(content)
-	if !strings.Contains(text, "name: Gentleman") {
-		t.Fatal("Output style file missing YAML frontmatter 'name: Gentleman'")
+	if !strings.Contains(text, "name: Shevanio") {
+		t.Fatal("Output style file missing YAML frontmatter 'name: Shevanio'")
 	}
 	if !strings.Contains(text, "keep-coding-instructions: true") {
 		t.Fatal("Output style file missing 'keep-coding-instructions: true'")
 	}
-	if !strings.Contains(text, "Gentleman Output Style") {
-		t.Fatal("Output style file missing 'Gentleman Output Style' heading")
+	if !strings.Contains(text, "Shevanio Output Style") {
+		t.Fatal("Output style file missing 'Shevanio Output Style' heading")
 	}
 	assertLanguageGuardrails(t, text, claudeOutputStyleLanguageGuardrails, nil)
 }
 
-func TestInjectClaudeGentlemanMergesOutputStyleIntoSettings(t *testing.T) {
+func TestInjectClaudeShevanioMergesOutputStyleIntoSettings(t *testing.T) {
 	home := t.TempDir()
 
 	// Pre-create a settings.json with some existing content.
@@ -222,7 +228,7 @@ func TestInjectClaudeGentlemanMergesOutputStyleIntoSettings(t *testing.T) {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
-	_, err := Inject(home, claudeAdapter(), model.PersonaGentleman)
+	_, err := Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
@@ -243,8 +249,8 @@ func TestInjectClaudeGentlemanMergesOutputStyleIntoSettings(t *testing.T) {
 	if !ok {
 		t.Fatal("settings.json missing 'outputStyle' key")
 	}
-	if outputStyle != "Gentleman" {
-		t.Fatalf("settings.json outputStyle = %q, want %q", outputStyle, "Gentleman")
+	if outputStyle != "Shevanio" {
+		t.Fatalf("settings.json outputStyle = %q, want %q", outputStyle, "Shevanio")
 	}
 
 	// Verify existing keys were preserved.
@@ -256,10 +262,10 @@ func TestInjectClaudeGentlemanMergesOutputStyleIntoSettings(t *testing.T) {
 	}
 }
 
-func TestInjectClaudeGentlemanReturnsAllFiles(t *testing.T) {
+func TestInjectClaudeShevanioReturnsAllFiles(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := Inject(home, claudeAdapter(), model.PersonaGentleman)
+	result, err := Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
@@ -269,7 +275,7 @@ func TestInjectClaudeGentlemanReturnsAllFiles(t *testing.T) {
 		t.Fatalf("Inject() returned %d files, want 3: %v", len(result.Files), result.Files)
 	}
 
-	wantSuffixes := []string{"CLAUDE.md", "gentleman.md", "settings.json"}
+	wantSuffixes := []string{"CLAUDE.md", "shevanio.md", "settings.json"}
 	for _, suffix := range wantSuffixes {
 		found := false
 		for _, f := range result.Files {
@@ -326,6 +332,10 @@ func TestInjectClaudeNeutralWritesNeutralOutputStyleAndSettings(t *testing.T) {
 	if err := os.WriteFile(staleGentlemanPath, []byte("stale gentleman style"), 0o644); err != nil {
 		t.Fatalf("WriteFile(stale gentleman) error = %v", err)
 	}
+	staleShevanioPath := filepath.Join(settingsDir, "output-styles", "shevanio.md")
+	if err := os.WriteFile(staleShevanioPath, []byte("stale shevanio style"), 0o644); err != nil {
+		t.Fatalf("WriteFile(stale shevanio) error = %v", err)
+	}
 	existingSettings := `{"permissions":{"allow":["Read"]},"outputStyle":"Gentleman"}`
 	if err := os.WriteFile(filepath.Join(settingsDir, "settings.json"), []byte(existingSettings), 0o644); err != nil {
 		t.Fatalf("WriteFile(settings) error = %v", err)
@@ -366,6 +376,9 @@ func TestInjectClaudeNeutralWritesNeutralOutputStyleAndSettings(t *testing.T) {
 	}
 	if _, err := os.Stat(staleGentlemanPath); !os.IsNotExist(err) {
 		t.Fatalf("stale gentleman output style should be removed, stat err=%v", err)
+	}
+	if _, err := os.Stat(staleShevanioPath); !os.IsNotExist(err) {
+		t.Fatalf("stale shevanio output style should be removed, stat err=%v", err)
 	}
 
 	settingsContent, err := os.ReadFile(filepath.Join(settingsDir, "settings.json"))
@@ -800,7 +813,7 @@ func TestInjectOpenCodeReplacesExactLegacyAssetWithoutDuplication(t *testing.T) 
 	}
 
 	// Write the exact legacy asset (no markers) — simulates old installer output.
-	legacyContent := assets.MustRead("opencode/persona-gentleman.md")
+	legacyContent := assets.MustRead("opencode/persona-shevanio.md")
 	if err := os.WriteFile(path, []byte(legacyContent), 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
@@ -1618,7 +1631,7 @@ func TestInjectVSCodePreservesNonPersonaGitHubFile(t *testing.T) {
 
 func TestNeutralAndGentlemanToneSectionsMatch(t *testing.T) {
 	neutral := assets.MustRead("generic/persona-neutral.md")
-	gentleman := assets.MustRead("generic/persona-gentleman.md")
+	gentleman := assets.MustRead("generic/persona-shevanio.md")
 
 	extractSection := func(content, section string) string {
 		idx := strings.Index(content, "## "+section)
@@ -1676,31 +1689,31 @@ func TestInjectVSCodeIdempotentAfterHeal(t *testing.T) {
 	}
 }
 
-func TestInjectClaude_SwitchGentlemanToNeutral_CleansOutputStyle(t *testing.T) {
+func TestInjectClaude_SwitchShevanioToNeutral_CleansOutputStyle(t *testing.T) {
 	home := t.TempDir()
 
-	// Step 1: install gentleman — creates output-styles/gentleman.md and sets outputStyle in settings.json.
-	_, err := Inject(home, claudeAdapter(), model.PersonaGentleman)
+	// Step 1: install Shevanio and select the canonical output style.
+	_, err := Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
-		t.Fatalf("Inject(gentleman) error = %v", err)
+		t.Fatalf("Inject(shevanio) error = %v", err)
 	}
 
-	stylePath := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	stylePath := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 	if _, statErr := os.Stat(stylePath); os.IsNotExist(statErr) {
-		t.Fatal("precondition: gentleman.md must exist after gentleman install")
+		t.Fatal("precondition: shevanio.md must exist after Shevanio install")
 	}
 
 	settingsPath := filepath.Join(home, ".claude", "settings.json")
 	settingsRaw, err := os.ReadFile(settingsPath)
 	if err != nil {
-		t.Fatalf("precondition: settings.json must exist after gentleman install: %v", err)
+		t.Fatalf("precondition: settings.json must exist after Shevanio install: %v", err)
 	}
 	var settingsBefore map[string]any
 	if err := json.Unmarshal(settingsRaw, &settingsBefore); err != nil {
 		t.Fatalf("precondition: unmarshal settings.json: %v", err)
 	}
-	if settingsBefore["outputStyle"] != "Gentleman" {
-		t.Fatalf("precondition: outputStyle must be 'Gentleman', got %v", settingsBefore["outputStyle"])
+	if settingsBefore["outputStyle"] != "Shevanio" {
+		t.Fatalf("precondition: outputStyle must be 'Shevanio', got %v", settingsBefore["outputStyle"])
 	}
 
 	// Step 2: switch to neutral — should clean both residuals.
@@ -1709,12 +1722,12 @@ func TestInjectClaude_SwitchGentlemanToNeutral_CleansOutputStyle(t *testing.T) {
 		t.Fatalf("Inject(neutral) error = %v", err)
 	}
 	if !result.Changed {
-		t.Fatal("Inject(neutral) should report changed when cleaning gentleman residuals")
+		t.Fatal("Inject(neutral) should report changed when cleaning Shevanio residuals")
 	}
 
-	// output-styles/gentleman.md must be gone.
+	// output-styles/shevanio.md must be gone.
 	if _, statErr := os.Stat(stylePath); !os.IsNotExist(statErr) {
-		t.Fatal("gentleman.md must be removed when switching to neutral")
+		t.Fatal("shevanio.md must be removed when switching to neutral")
 	}
 
 	// outputStyle must now point at the managed Neutral style.
@@ -1966,11 +1979,11 @@ func TestInjectClaude_MalformedJSON_DoesNotPanic(t *testing.T) {
 	}
 }
 
-func TestInjectKimi_SwitchGentlemanToNeutral_NoResidualPersonaContent(t *testing.T) {
+func TestInjectKimi_SwitchShevanioToNeutral_NoResidualPersonaContent(t *testing.T) {
 	home := t.TempDir()
 
-	if _, err := Inject(home, kimiAdapter(), model.PersonaGentleman); err != nil {
-		t.Fatalf("Inject(gentleman) error = %v", err)
+	if _, err := Inject(home, kimiAdapter(), model.PersonaShevanio); err != nil {
+		t.Fatalf("Inject(shevanio) error = %v", err)
 	}
 
 	if _, err := Inject(home, kimiAdapter(), model.PersonaNeutral); err != nil {
@@ -1993,8 +2006,8 @@ func TestInjectKimi_SwitchGentlemanToNeutral_NoResidualPersonaContent(t *testing
 	if strings.Contains(content, "Rioplatense") {
 		t.Error("output-style.md still contains 'Rioplatense' after switching to neutral")
 	}
-	if strings.Contains(content, "Gentleman Output Style") {
-		t.Error("output-style.md still contains 'Gentleman Output Style' after switching to neutral")
+	if strings.Contains(content, "Shevanio Output Style") || strings.Contains(content, "Gentleman Output Style") {
+		t.Error("output-style.md still contains a regional output style after switching to neutral")
 	}
 	if strings.Contains(content, "voseo") {
 		t.Error("output-style.md still contains 'voseo' after switching to neutral")
@@ -2030,16 +2043,16 @@ func TestInjectForSync_OpenCodeNeutral_CleansAgentGentleman(t *testing.T) {
 	}
 }
 
-func TestInjectForSync_ClaudeGentlemanToNeutral_CleansOutputStyle(t *testing.T) {
+func TestInjectForSync_ClaudeShevanioToNeutral_CleansOutputStyle(t *testing.T) {
 	home := t.TempDir()
 
-	if _, err := Inject(home, claudeAdapter(), model.PersonaGentleman); err != nil {
-		t.Fatalf("Inject(gentleman) error = %v", err)
+	if _, err := Inject(home, claudeAdapter(), model.PersonaShevanio); err != nil {
+		t.Fatalf("Inject(shevanio) error = %v", err)
 	}
 
-	stylePath := filepath.Join(home, ".claude", "output-styles", "gentleman.md")
+	stylePath := filepath.Join(home, ".claude", "output-styles", "shevanio.md")
 	if _, err := os.Stat(stylePath); os.IsNotExist(err) {
-		t.Fatal("gentleman.md not written by Inject(gentleman) — precondition failed")
+		t.Fatal("shevanio.md not written by Inject(shevanio) — precondition failed")
 	}
 
 	settingsPath := filepath.Join(home, ".claude", "settings.json")
@@ -2056,7 +2069,7 @@ func TestInjectForSync_ClaudeGentlemanToNeutral_CleansOutputStyle(t *testing.T) 
 	}
 
 	if _, err := os.Stat(stylePath); !os.IsNotExist(err) {
-		t.Fatal("gentleman.md still present after InjectForSync(neutral) — residue not cleaned")
+		t.Fatal("shevanio.md still present after InjectForSync(neutral) — residue not cleaned")
 	}
 
 	afterRaw, err := os.ReadFile(settingsPath)
@@ -2101,7 +2114,7 @@ func TestPersonaContentHermesGentleman(t *testing.T) {
 				t.Fatal("hermes gentleman persona missing ~/.hermes/skills/ reference")
 			}
 			// Must be distinct from generic asset.
-			generic := assets.MustRead("generic/persona-gentleman.md")
+			generic := assets.MustRead("generic/persona-shevanio.md")
 			if content == generic {
 				t.Fatal("hermes gentleman persona is byte-identical to generic — Hermes-specific asset not used")
 			}
@@ -2156,7 +2169,7 @@ func TestPersonaContentHermesCustom(t *testing.T) {
 // TestPersonaContentGentlemanResidualIgnoredForClaudeAndKimi pins the JD-020
 // trap documented on personaContent: unlike PersonaNeutral, PersonaGentleman
 // dispatch for Claude/Kimi is agent-hardcoded, NOT driven by the residual
-// argument, because claude/persona-gentleman.md and kimi/persona-gentleman.md
+// argument, because claude/persona-shevanio.md and kimi/persona-shevanio.md
 // were slimmed to the residual block IN PLACE (Decision 3) instead of split
 // into separate full/residual files. Calling with residual=false still
 // returns the SAME slim asset — there is no full-Gentleman fallback to serve.
@@ -2453,25 +2466,32 @@ var legacyKimiOutputStyleNeutralLines = []string{
 // overwritten to be byte-identical to the reconciled Claude asset (no unique
 // Kimi content is lost; Kimi merely gains the union lines it was missing).
 func TestKimiOutputStyleSupersetOfLegacyKimiCopy(t *testing.T) {
-	t.Run("gentleman", func(t *testing.T) {
-		reconciled := assets.MustRead("kimi/output-style-gentleman.md")
+	t.Run("shevanio", func(t *testing.T) {
+		reconciled := assets.MustRead("kimi/output-style-shevanio.md")
 		for _, line := range legacyKimiOutputStyleGentlemanLines {
-			if !strings.Contains(reconciled, line) {
-				t.Fatalf("reconciled kimi/output-style-gentleman.md lost legacy line %q", line)
+			want := map[string]string{
+				"name: Gentleman":          "name: Shevanio",
+				"# Gentleman Output Style": "# Shevanio Output Style",
+			}[line]
+			if want == "" {
+				want = line
+			}
+			if !strings.Contains(reconciled, want) {
+				t.Fatalf("reconciled kimi/output-style-shevanio.md lost canonical form %q of legacy line %q", want, line)
 			}
 		}
 		// Decision 4/JD-013: the near-duplicate "reply fully in English" bullets
 		// (persona + style) are merged into one canonical bullet — verify both
 		// normative elements survive the merge instead of the old verbatim line.
 		if !strings.Contains(reconciled, "keep the full reply in natural English with the same warm energy") {
-			t.Fatal("reconciled kimi/output-style-gentleman.md lost the 'warm energy' normative element of the merged English-reply bullet")
+			t.Fatal("reconciled kimi/output-style-shevanio.md lost the 'warm energy' normative element of the merged English-reply bullet")
 		}
 		if !strings.Contains(reconciled, "the full response stays in English unless the user explicitly asks for another language or you are translating/quoting") {
-			t.Fatal("reconciled kimi/output-style-gentleman.md lost the 'full-English default with exception' normative element of the merged English-reply bullet")
+			t.Fatal("reconciled kimi/output-style-shevanio.md lost the 'full-English default with exception' normative element of the merged English-reply bullet")
 		}
-		claudeReconciled := assets.MustRead("claude/output-style-gentleman.md")
+		claudeReconciled := assets.MustRead("claude/output-style-shevanio.md")
 		if reconciled != claudeReconciled {
-			t.Fatal("kimi/output-style-gentleman.md must be overwritten with the same reconciled text as claude/output-style-gentleman.md (Decision 4)")
+			t.Fatal("kimi/output-style-shevanio.md must match claude/output-style-shevanio.md (Decision 4)")
 		}
 	})
 
@@ -2633,7 +2653,7 @@ var kimiGentlemanMovedRules = []movedPersonaRule{
 		checkAgainst: "code without context",
 		mergedNote:   "style's own numbered ## Behavior item 2 already covered this rule under different phrasing before reconciliation"},
 	// JD-017: Kimi's own phrasing ("to explain concepts") differed from
-	// Claude's; Decision 4 overwrites kimi/output-style-gentleman.md
+	// Claude's; Decision 4 overwrites the canonical Kimi Shevanio output style
 	// byte-identical to Claude's reconciled text, which (after the JD-017
 	// fix) carries Claude's version of this rule — the shared "use
 	// construction/architecture analogies" directive survives even though
@@ -2724,11 +2744,11 @@ var neutralMovedRules = []movedPersonaRule{
 // (verbatim or via a documented merged form) in the corresponding
 // reconciled output style.
 func TestReconciledStylesCarryAllMovedPersonaRules(t *testing.T) {
-	t.Run("claude-gentleman", func(t *testing.T) {
-		assertMovedPersonaRules(t, "claude/output-style-gentleman.md", claudeGentlemanMovedRules)
+	t.Run("claude-shevanio", func(t *testing.T) {
+		assertMovedPersonaRules(t, "claude/output-style-shevanio.md", claudeGentlemanMovedRules)
 	})
-	t.Run("kimi-gentleman", func(t *testing.T) {
-		assertMovedPersonaRules(t, "kimi/output-style-gentleman.md", kimiGentlemanMovedRules)
+	t.Run("kimi-shevanio", func(t *testing.T) {
+		assertMovedPersonaRules(t, "kimi/output-style-shevanio.md", kimiGentlemanMovedRules)
 	})
 	t.Run("claude-neutral", func(t *testing.T) {
 		assertMovedPersonaRules(t, "claude/output-style-neutral.md", neutralMovedRules)
@@ -2981,7 +3001,7 @@ func TestInjectHermesNeutralWritesSOULMD(t *testing.T) {
 // generic assistant identity — it answers as Shevanio AI running on Hermes Agent.
 func TestHermesPersonaAssetsContainIdentitySection(t *testing.T) {
 	paths := []string{
-		"hermes/persona-gentleman.md",
+		"hermes/persona-shevanio.md",
 		"hermes/persona-neutral.md",
 	}
 

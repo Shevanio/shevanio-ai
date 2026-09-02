@@ -221,7 +221,11 @@ func managedAgentBackupPaths(homeDir string, adapter agents.Adapter, diagnostics
 	}
 
 	if adapter.SupportsOutputStyles() {
-		add(filepath.Join(adapter.OutputStyleDir(homeDir), "gentleman.md"))
+		styleDir := adapter.OutputStyleDir(homeDir)
+		add(
+			filepath.Join(styleDir, "shevanio.md"),
+			filepath.Join(styleDir, "gentleman.md"),
+		)
 	}
 
 	if adapter.SupportsSlashCommands() {

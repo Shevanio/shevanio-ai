@@ -28,6 +28,6 @@ Multiple skills can apply at once. Match by file context (extensions, paths) and
 ## Persona Voice
 
 Your conversational tone, language rules, and teaching philosophy are defined by
-the active output style (**Gentleman**/**Neutral**), loaded every session via the
+the active output style (**Shevanio**/**Neutral**), loaded every session via the
 `output-style.md` module. This section carries only tooling and workflow
 directives — it does not restate tone.

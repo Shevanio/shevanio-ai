@@ -1,6 +1,7 @@
 package persona
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -83,7 +84,7 @@ func Inject(homeDir string, adapter agents.Adapter, persona model.PersonaID) (In
 // InjectForSync regenerates the persona assets that `shevanio-ai sync` is
 // allowed to touch. It writes:
 //   - The marker-bound persona block in the agent's prompt file (markdown).
-//   - The Gentleman output-style file + outputStyle settings overlay (Claude
+//   - The Shevanio output-style file + outputStyle settings overlay (Claude
 //     Code only — no conflict with other components).
 //
 // It deliberately skips the OpenCode/Kilocode `gentleman` agent definition in
@@ -334,7 +335,7 @@ func injectInternal(homeDir string, adapter agents.Adapter, persona model.Person
 		outputStyleContent := ""
 		switch {
 		case isGentlemanConversationPersona(persona):
-			outputStyleContent = assets.MustRead("kimi/output-style-gentleman.md")
+			outputStyleContent = assets.MustRead("kimi/output-style-shevanio.md")
 		case persona == model.PersonaNeutral:
 			outputStyleContent = assets.MustRead("kimi/output-style-neutral.md")
 		}
@@ -479,17 +480,18 @@ func isExactLegacyPersonaAsset(existing string) bool {
 	if trimmed == "" {
 		return false
 	}
-	for _, assetPath := range []string{
-		"opencode/persona-gentleman.md",
-		"generic/persona-gentleman.md",
-		"generic/persona-neutral.md",
-	} {
-		asset := strings.TrimSpace(assets.MustRead(assetPath))
-		if trimmed == asset {
-			return true
-		}
-	}
-	return false
+	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(trimmed)))
+	_, ok := exactLegacyPersonaAssetDigests[digest]
+	return ok
+}
+
+// These hashes pin the exact unwrapped assets written by older installers.
+// They are content fingerprints, not basename-based ownership inference.
+var exactLegacyPersonaAssetDigests = map[string]struct{}{
+	// opencode/persona-gentleman.md and generic/persona-gentleman.md
+	"f9ac4cabe62c5dca7b0eecf2f219e9bc3bcc8fb300f0bbc7a7a73fb80b0401b9": {},
+	// generic/persona-neutral.md
+	"3f51f9834190b587aab027be4a23b10ee8d35e56748f428450024be78e88a843": {},
 }
 
 func shouldStripManagedLegacyPersona(existing string) bool {
@@ -544,21 +546,21 @@ func neutralPersonaContent(agent model.AgentID, residualContentAvailable bool) s
 }
 
 func gentlemanPersonaContent(agent model.AgentID) string {
-	// Claude and Kimi Gentleman assets are already residual/slim in place; unlike
+	// Claude and Kimi Shevanio assets are already residual/slim in place; unlike
 	// Neutral, there is no separate residual variant to choose here.
 	switch agent {
 	case model.AgentClaudeCode:
-		return assets.MustRead("claude/persona-gentleman.md")
+		return assets.MustRead("claude/persona-shevanio.md")
 	case model.AgentOpenCode, model.AgentKilocode:
-		return assets.MustRead("opencode/persona-gentleman.md")
+		return assets.MustRead("opencode/persona-shevanio.md")
 	case model.AgentKimi:
-		return assets.MustRead("kimi/persona-gentleman.md")
+		return assets.MustRead("kimi/persona-shevanio.md")
 	case model.AgentKiroIDE:
-		return assets.MustRead("kiro/persona-gentleman.md")
+		return assets.MustRead("kiro/persona-shevanio.md")
 	case model.AgentHermes:
-		return assets.MustRead("hermes/persona-gentleman.md")
+		return assets.MustRead("hermes/persona-shevanio.md")
 	default:
-		return assets.MustRead("generic/persona-gentleman.md")
+		return assets.MustRead("generic/persona-shevanio.md")
 	}
 }
 

@@ -478,25 +478,25 @@ func TestGoldenSDD_Kiro(t *testing.T) {
 // Persona Injector golden tests
 // ---------------------------------------------------------------------------
 
-func TestGoldenPersona_Claude_Gentleman(t *testing.T) {
+func TestGoldenPersona_Claude_Shevanio(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := persona.Inject(home, claudeAdapter(), model.PersonaGentleman)
+	result, err := persona.Inject(home, claudeAdapter(), model.PersonaShevanio)
 	if err != nil {
-		t.Fatalf("persona.Inject(claude, gentleman) error = %v", err)
+		t.Fatalf("persona.Inject(claude, shevanio) error = %v", err)
 	}
 	if !result.Changed {
-		t.Fatalf("persona.Inject(claude, gentleman) changed = false")
+		t.Fatalf("persona.Inject(claude, shevanio) changed = false")
 	}
 
 	claudeMD := readTestFile(t, filepath.Join(home, ".claude", "CLAUDE.md"))
-	assertGolden(t, "persona-claude-gentleman.golden", claudeMD)
+	assertGolden(t, "persona-claude-shevanio.golden", claudeMD)
 
-	outputStyle := readTestFile(t, filepath.Join(home, ".claude", "output-styles", "gentleman.md"))
-	assertGolden(t, "persona-claude-gentleman-outputstyle.golden", outputStyle)
+	outputStyle := readTestFile(t, filepath.Join(home, ".claude", "output-styles", "shevanio.md"))
+	assertGolden(t, "persona-claude-shevanio-outputstyle.golden", outputStyle)
 
 	settingsJSON := readTestFile(t, filepath.Join(home, ".claude", "settings.json"))
-	assertGolden(t, "persona-claude-gentleman-settings.golden", settingsJSON)
+	assertGolden(t, "persona-claude-shevanio-settings.golden", settingsJSON)
 }
 
 func TestGoldenPersona_Claude_Neutral(t *testing.T) {
