@@ -172,7 +172,7 @@ go build -o /tmp/shevanio-ai ./cmd/shevanio-ai
 |------|-------|--------------|----------------|
 | Deterministic | none (always runs) | Free and fast | The real OpenCode transport plugin bytes through an emulated Task hook surface (host-frame emulation), one full Claude-lane lifecycle plus a medium-candidate consent round-trip, and schema conformance of every captured envelope against `contracts/review-integration/`. |
 | Model | `--with-model` | Real reviewer model runs (model spend) | Additionally runs the real compiled claude-code reviewer runtime. |
-| Host | `--with-host` | Real host sessions plus model spend | Spawns real host applications: `codex exec` through the compiled Codex adapter, the installed `gentle-pi` print-mode Pi relay, and a headless `opencode run` session in a sandboxed HOME with the real transport plugin. |
+| Host | `--with-host` | Real host sessions plus model spend | Spawns real host applications: `codex exec` through the compiled Codex adapter, the installed `shevanio-pi` print-mode Pi relay, and a headless `opencode run` session in a sandboxed HOME with the real transport plugin. |
 
 Behavior to expect:
 
@@ -182,7 +182,7 @@ Behavior to expect:
 
 Run the battery before merging changes that touch a review-lifecycle surface (facade, transports, contracts, host adapters) and after building a new binary you intend to exercise. Running it and reporting red checks is itself a valuable contribution — open an issue with the PASS/FAIL/SKIP table and the binary/commit you tested.
 
-The sibling `gentle-pi` repository carries its own battery: `pnpm test:cross-lane` in [Gentleman-Programming/gentle-pi](https://github.com/Gentleman-Programming/gentle-pi).
+The sibling `shevanio-pi` repository carries its own battery: `pnpm test:cross-lane` in [Shevanio/shevanio-pi](https://github.com/Shevanio/shevanio-pi).
 
 ### Benchmark Validation
 

@@ -508,7 +508,7 @@ is preferred.
 
 ### OpenCode SDD Profiles
 
-Assign different AI models to different SDD phases -- a powerful model for design, a fast one for implementation, a cheap one for exploration. OpenCode uses **`gentle-orchestrator`** as the base SDD conductor, and generated named profiles still appear as `sdd-orchestrator-{name}` entries.
+Assign different AI models to different SDD phases -- a powerful model for design, a fast one for implementation, a cheap one for exploration. OpenCode uses **`shevanio-orchestrator`** as the current SDD conductor, and generated named profiles appear as `shevanio-orchestrator-{name}` entries. Existing `gentle-orchestrator` and `sdd-orchestrator-{name}` entries are accepted only as exact legacy read aliases during managed migration.
 
 ```bash
 # Via CLI
@@ -518,13 +518,13 @@ shevanio-ai sync --profile-phase cheap:sdd-design:anthropic/claude-sonnet-4-2025
 # Or via TUI: shevanio-ai → "OpenCode SDD Profiles" → Create
 ```
 
-After creating a profile, open OpenCode and press **Tab** to switch between `gentle-orchestrator` (default) and your custom profiles.
+After creating a profile, open OpenCode and press **Tab** to switch between `shevanio-orchestrator` (default) and your `shevanio-orchestrator-{name}` custom profiles.
 
-| What you need         | Use this                                                        |
-| --------------------- | --------------------------------------------------------------- |
-| Default SDD conductor | `gentle-orchestrator`                                           |
-| Legacy configs        | `sdd-orchestrator` is migrated to `gentle-orchestrator` on sync |
-| Named model profiles  | `sdd-orchestrator-cheap`, `sdd-orchestrator-premium`, etc.      |
+| What you need         | Use this                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| Default SDD conductor | `shevanio-orchestrator`                                                                       |
+| Legacy read aliases   | Exact `gentle-orchestrator` and `sdd-orchestrator-{name}` entries are read only for migration |
+| Named model profiles  | `shevanio-orchestrator-cheap`, `shevanio-orchestrator-premium`, etc.                            |
 
 **Full guide**: [OpenCode SDD Profiles](docs/opencode-profiles.md)
 
