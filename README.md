@@ -445,6 +445,8 @@ component and preset reference is [Components, Skills & Presets](docs/components
 | Dev Stack + Polish | `full-shevanio` | Dev Stack plus Persona, Permissions, and visual polish. |
 | Custom | `custom` | Explicit component and skill selection; existing persona/settings remain unmanaged. |
 
+`full-gentleman` remains an exact, case-sensitive read alias for existing installations. New commands and managed writes use `full-shevanio`.
+
 ### Bundled skills
 
 SDD: `sdd-init`, `sdd-apply`, `sdd-verify`, `sdd-explore`, `sdd-propose`,
