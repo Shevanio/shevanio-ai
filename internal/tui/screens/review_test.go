@@ -157,7 +157,8 @@ func TestRenderReviewSummarizesPersonaConversationAndArtifacts(t *testing.T) {
 		persona model.PersonaID
 		want    string
 	}{
-		{name: "Gentleman", persona: model.PersonaGentleman, want: "Voseo conversation; English technical artifacts"},
+		{name: "Gentleman alias", persona: model.PersonaGentleman, want: "Shevanio (shevanio) — Mentor conversation; English technical artifacts"},
+		{name: "Shevanio", persona: model.PersonaShevanio, want: "Shevanio (shevanio) — Mentor conversation; English technical artifacts"},
 		{name: "Gentleman with English artifacts", persona: model.PersonaGentlemanNeutralArtifacts, want: "No regional conversation tone; English technical artifacts (legacy alias, remapped)"},
 		{name: "Neutral", persona: model.PersonaNeutral, want: "No regional conversation tone; English technical artifacts"},
 	}

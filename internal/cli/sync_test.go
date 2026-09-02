@@ -3514,7 +3514,7 @@ func TestRunSyncRestoresConfiguredSelectionAndExplicitOverrides(t *testing.T) {
 		t.Fatal(err)
 	}
 	result, err := RunSync([]string{"--dry-run"})
-	if err != nil || result.Selection.Preset != model.PresetFullGentleman || !result.Selection.HasComponent(model.ComponentSkills) {
+	if err != nil || result.Selection.Preset != model.PresetFullShevanio || !result.Selection.HasComponent(model.ComponentSkills) {
 		t.Fatalf("legacy sync selection = %#v, err = %v", result.Selection, err)
 	}
 }
@@ -4190,10 +4190,9 @@ func TestRunSyncReadsPersonaFromState(t *testing.T) {
 	}
 }
 
-// TestRunSyncFallsBackToNeutralWhenStateLacksPersona verifies missing persona
-// state resolves to neutral/default-safe behavior instead of reactivating
-// Gentleman regional voice.
-func TestRunSyncFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
+// TestRunSyncFallsBackToCanonicalPersonaWhenStateLacksPersona verifies missing
+// persona state resolves to the canonical managed default.
+func TestRunSyncFallsBackToCanonicalPersonaWhenStateLacksPersona(t *testing.T) {
 	home := t.TempDir()
 	setSyncTestHome(t, home)
 
@@ -4211,12 +4210,12 @@ func TestRunSyncFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunSync() error = %v", err)
 	}
-	if got, want := res.Selection.Persona, model.PersonaNeutral; got != want {
-		t.Errorf("Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
+	if got, want := res.Selection.Persona, model.PersonaShevanio; got != want {
+		t.Errorf("Selection.Persona = %q, want %q (canonical fallback for missing state persona)", got, want)
 	}
 }
 
-func TestRunSyncWithSelectionPiUsesNeutralForMissingPersonaField(t *testing.T) {
+func TestRunSyncWithSelectionPiUsesCanonicalPersonaForMissingPersonaField(t *testing.T) {
 	home := t.TempDir()
 	workspace := t.TempDir()
 	t.Chdir(workspace)
@@ -4231,10 +4230,10 @@ func TestRunSyncWithSelectionPiUsesNeutralForMissingPersonaField(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunSyncWithSelection() error = %v", err)
 	}
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
 		t.Fatalf("Selection.Persona = %q, want %q", got, want)
 	}
-	if got, want := readTextFile(t, piPath), "{\n  \"mode\": \"neutral\"\n}\n"; got != want {
+	if got, want := readTextFile(t, piPath), "{\n  \"mode\": \"shevanio\"\n}\n"; got != want {
 		t.Fatalf("Pi persona config = %q, want %q", got, want)
 	}
 }
@@ -4407,9 +4406,9 @@ func TestRunSyncWithSelection_PersonaResolvesFromStateCustom(t *testing.T) {
 	}
 }
 
-// TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone verifies
-// missing state persona resolves to neutral/default-safe behavior.
-func TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone(t *testing.T) {
+// TestRunSyncWithSelection_PersonaFallsBackToCanonicalWhenStateHasNone verifies
+// missing state persona resolves to the canonical managed default.
+func TestRunSyncWithSelection_PersonaFallsBackToCanonicalWhenStateHasNone(t *testing.T) {
 	home := t.TempDir()
 	setSyncTestHome(t, home)
 
@@ -4436,8 +4435,8 @@ func TestRunSyncWithSelection_PersonaFallsBackToNeutralWhenStateHasNone(t *testi
 		t.Fatalf("RunSyncWithSelection() error = %v", err)
 	}
 
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
-		t.Errorf("result.Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
+		t.Errorf("result.Selection.Persona = %q, want %q (canonical fallback for missing state persona)", got, want)
 	}
 }
 
@@ -4546,7 +4545,7 @@ func TestRunSyncWithSelection_UnknownPersistedPersonaFailsClosed(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(state.Path(home)), 0o755); err != nil {
 		t.Fatalf("MkdirAll state: %v", err)
 	}
-	if err := os.WriteFile(state.Path(home), []byte(`{"installed_agents":["claude-code"],"persona":"Gentleman"}`), 0o644); err != nil {
+	if err := os.WriteFile(state.Path(home), []byte(`{"installed_agents":["claude-code"],"persona":"unsupported-persona"}`), 0o644); err != nil {
 		t.Fatalf("WriteFile state: %v", err)
 	}
 
@@ -4860,10 +4859,9 @@ func TestRunSyncDryRunResolvesPersonaFromState(t *testing.T) {
 	}
 }
 
-// TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona verifies that
-// --dry-run mode falls back to neutral/default-safe behavior when state has no
-// recorded persona.
-func TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
+// TestRunSyncDryRunFallsBackToCanonicalPersonaWhenStateLacksPersona verifies
+// that --dry-run mode uses the canonical managed default when state has no persona.
+func TestRunSyncDryRunFallsBackToCanonicalPersonaWhenStateLacksPersona(t *testing.T) {
 	home := t.TempDir()
 	setSyncTestHome(t, home)
 
@@ -4894,8 +4892,8 @@ func TestRunSyncDryRunFallsBackToNeutralWhenStateLacksPersona(t *testing.T) {
 	if !result.DryRun {
 		t.Fatalf("DryRun = false, want true")
 	}
-	if got, want := result.Selection.Persona, model.PersonaNeutral; got != want {
-		t.Errorf("dry-run fallback: Selection.Persona = %q, want %q (safe fallback for missing state persona)", got, want)
+	if got, want := result.Selection.Persona, model.PersonaShevanio; got != want {
+		t.Errorf("dry-run fallback: Selection.Persona = %q, want %q (canonical fallback for missing state persona)", got, want)
 	}
 }
 
@@ -5627,7 +5625,7 @@ func TestSyncPersonaAliasRetryAndByteStability(t *testing.T) {
 	}
 }
 
-func TestRunSyncWithSelectionPreservesExplicitSelectionAndState(t *testing.T) {
+func TestRunSyncWithSelectionCanonicalizesManagedIdentityAndPreservesState(t *testing.T) {
 	personaTestReady(t)
 	home := t.TempDir()
 	legacy := []byte(`{"schema_version":1,"installed_agents":["claude-code"],"persona":"gentleman-neutral-artifacts","sibling_actor":"keep","profile":"keep"}
@@ -5636,7 +5634,7 @@ func TestRunSyncWithSelectionPreservesExplicitSelectionAndState(t *testing.T) {
 	mustWrite(t, legacyPath, legacy, 0o600)
 	selection := model.Selection{
 		Agents: []model.AgentID{model.AgentClaudeCode}, Components: []model.ComponentID{model.ComponentPersona}, Persona: model.PersonaNeutral,
-		Preset: model.PresetFullGentleman, SDDMode: model.SDDModeMulti, SDDProfileStrategy: model.SDDProfileStrategyGeneratedMulti, StrictTDD: true,
+		Preset: model.PresetFullShevanio, SDDMode: model.SDDModeMulti, SDDProfileStrategy: model.SDDProfileStrategyGeneratedMulti, StrictTDD: true,
 		ModelAssignments:            map[string]model.ModelAssignment{"sdd-apply": {ProviderID: "anthropic", ModelID: "opus", Effort: "high"}},
 		ClaudePhaseAssignments:      map[string]model.ClaudePhaseAssignment{"sdd-apply": {Model: model.ClaudeModelOpus, Effort: model.ClaudeEffortHigh}},
 		CodexCarrilModelAssignments: map[string]string{"sdd-strong": "gpt-5.6-luna"},

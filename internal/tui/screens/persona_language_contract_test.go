@@ -9,8 +9,8 @@ import (
 
 func TestPersonaOptionsExcludeGentlemanNeutralArtifacts(t *testing.T) {
 	for _, option := range PersonaOptions() {
-		if option == model.PersonaGentlemanNeutralArtifacts {
-			t.Fatalf("PersonaOptions() still offers the remapped legacy alias %q", option)
+		if option == model.PersonaGentlemanNeutralArtifacts || option == model.PersonaGentleman {
+			t.Fatalf("PersonaOptions() still offers a legacy alias %q", option)
 		}
 	}
 }
@@ -39,7 +39,7 @@ func TestPersonaDescriptionsNeverReuseNeutral(t *testing.T) {
 // the neutral persona a regional tone, fails here.
 func TestPersonaDescriptionsSeparateToneFromArtifactLanguage(t *testing.T) {
 	managed := []model.PersonaID{
-		model.PersonaGentleman,
+		model.PersonaShevanio,
 		model.PersonaGentlemanNeutralArtifacts,
 		model.PersonaNeutral,
 	}
@@ -52,7 +52,7 @@ func TestPersonaDescriptionsSeparateToneFromArtifactLanguage(t *testing.T) {
 			t.Fatalf("persona %q must state that technical artifacts are English: %q", persona, description)
 		}
 		mentionsVoseo := strings.Contains(strings.ToLower(description), "voseo")
-		isGentleman := persona == model.PersonaGentleman
+		isGentleman := false
 		if mentionsVoseo != isGentleman {
 			t.Fatalf("persona %q voseo claim = %v, want %v (only Gentleman personas carry a regional tone): %q",
 				persona, mentionsVoseo, isGentleman, description)
@@ -69,7 +69,7 @@ func TestPersonaDescriptionsSeparateToneFromArtifactLanguage(t *testing.T) {
 // screen.
 func TestRenderPersonaShowsEveryManagedDescription(t *testing.T) {
 	for _, persona := range []model.PersonaID{
-		model.PersonaGentleman,
+		model.PersonaShevanio,
 		model.PersonaNeutral,
 	} {
 		out := RenderPersona(persona, 0)
@@ -82,21 +82,22 @@ func TestRenderPersonaShowsEveryManagedDescription(t *testing.T) {
 
 // TestReviewPersonaLabelKeepsThePersonaID guards the confirm-before-write
 // screen: the reader must be able to see the exact persona value that will be
-// written to state.json, not only its prose description. The two Gentleman
-// variants share a description apart from the alias suffix, so dropping the ID
-// would make them indistinguishable at the point of no return.
 func TestReviewPersonaLabelKeepsThePersonaID(t *testing.T) {
-	for _, persona := range []model.PersonaID{
-		model.PersonaGentleman,
-		model.PersonaGentlemanNeutralArtifacts,
-		model.PersonaNeutral,
-	} {
-		label := reviewPersonaLabel(persona)
-		if !strings.Contains(label, string(persona)) {
-			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the persona ID", persona, label)
+	cases := []struct {
+		input model.PersonaID
+		want  model.PersonaID
+	}{
+		{input: model.PersonaGentleman, want: model.PersonaShevanio},
+		{input: model.PersonaGentlemanNeutralArtifacts, want: model.PersonaGentlemanNeutralArtifacts},
+		{input: model.PersonaNeutral, want: model.PersonaNeutral},
+	}
+	for _, tt := range cases {
+		label := reviewPersonaLabel(tt.input)
+		if !strings.Contains(label, string(tt.want)) {
+			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain effective persona ID %q", tt.input, label, tt.want)
 		}
-		if !strings.Contains(label, personaDescriptions[persona]) {
-			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain the description", persona, label)
+		if !strings.Contains(label, personaDescriptions[tt.want]) {
+			t.Fatalf("reviewPersonaLabel(%q) = %q, must contain effective description", tt.input, label)
 		}
 	}
 }

@@ -9,6 +9,9 @@ import (
 
 func TestRenderPersonaClarifiesCustomKeepsExistingPersona(t *testing.T) {
 	out := RenderPersona(model.PersonaCustom, 2)
+	if !strings.Contains(out, "Shevanio") || PersonaOptions()[0] != model.PersonaShevanio {
+		t.Fatalf("RenderPersona missing canonical managed option; output:\n%s", out)
+	}
 
 	if !strings.Contains(out, "custom") {
 		t.Fatalf("RenderPersona missing custom option; output:\n%s", out)
@@ -23,6 +26,9 @@ func TestRenderPersonaClarifiesCustomKeepsExistingPersona(t *testing.T) {
 
 func TestRenderPresetClarifiesCustomManualSelection(t *testing.T) {
 	out := RenderPreset(model.PresetCustom, 3)
+	if !strings.Contains(out, "Full Shevanio") || PresetOptions()[0] != model.PresetFullShevanio {
+		t.Fatalf("RenderPreset missing canonical managed option; output:\n%s", out)
+	}
 
 	if !strings.Contains(out, "Choose each component manually") {
 		t.Fatalf("RenderPreset missing custom preset clarification; output:\n%s", out)

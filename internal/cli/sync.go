@@ -397,21 +397,23 @@ func BuildSyncSelection(flags SyncFlags, agentIDs []model.AgentID) model.Selecti
 		StrictTDD:          flags.StrictTDD,
 		Skills:             skillIDs,
 		Profiles:           flags.Profiles,
-		// Preset is set to full-gentleman so selectedSkillIDs() returns the
+		// Preset uses the canonical managed default so selectedSkillIDs() returns the
 		// correct default skill set when no explicit skills are provided.
-		Preset: model.PresetFullGentleman,
+		Preset: model.CanonicalManagedIdentity.Preset,
 		// Persona is left as zero-value here. RunSync resolves it from state.json
-		// when present. A missing persona field resolves to neutral; invalid state
+		// when present. A missing persona field resolves to the managed default; invalid state
 		// is rejected so sync cannot silently reactivate regional persona behavior.
 	}
 }
 
 func RestorePersistedSelection(selection *model.Selection, persisted state.InstallState, flags SyncFlags) {
 	if !persisted.SelectionConfigured {
+		normalizeManagedSelectionIdentity(selection)
 		return
 	}
 	explicit := *selection
 	persisted.RestoreSelection(selection)
+	normalizeManagedSelectionIdentity(selection)
 	if flags.skillsSet {
 		selection.Skills = explicit.Skills
 		setSelectionComponent(selection, model.ComponentSkills, true, true)
@@ -424,6 +426,19 @@ func RestorePersistedSelection(selection *model.Selection, persisted state.Insta
 	}
 	setSelectionComponent(selection, model.ComponentPermission, flags.permissionsSet, flags.IncludePermissions)
 	setSelectionComponent(selection, model.ComponentTheme, flags.themeSet, flags.IncludeTheme)
+}
+
+func normalizeManagedSelectionIdentity(selection *model.Selection) {
+	if persona, class := model.NormalizePersonaRead(string(selection.Persona)); class != model.IdentityUnknown {
+		selection.Persona = persona
+	}
+	if selection.Preset == "" {
+		selection.Preset = model.CanonicalManagedIdentity.Preset
+		return
+	}
+	if preset, class := model.NormalizePresetRead(string(selection.Preset)); class != model.IdentityUnknown {
+		selection.Preset = preset
+	}
 }
 
 func setSelectionComponent(selection *model.Selection, component model.ComponentID, configured, included bool) {
@@ -1417,12 +1432,13 @@ func boolToInt(b bool) int {
 // so no disk I/O happens inside this function.
 //
 // Resolution order:
-//  1. Explicit: if selection.Persona is non-empty, it is left untouched.
+//  1. Explicit: managed identities are normalized; custom or unknown values are preserved.
 //  2. Persisted: the persisted string is normalized via normalizePersona.
-//  3. Fallback: PersonaNeutral for default-safe behavior when the persona field
+//  3. Fallback: the canonical managed persona when the persona field
 //     is empty or the state file is absent. Other read/validation errors are
 //     rejected by validatePersistedSyncState before this function is called.
 func applyResolvedPersona(selection *model.Selection, persisted string) {
+	normalizeManagedSelectionIdentity(selection)
 	if selection.Persona != "" {
 		return
 	}
@@ -1433,8 +1449,7 @@ func applyResolvedPersona(selection *model.Selection, persisted string) {
 		}
 		// The sync entry points reject unknown persisted values before resolution.
 	}
-	// Default-safe fallback for state files written before persona persistence.
-	selection.Persona = model.PersonaNeutral
+	selection.Persona = model.CanonicalManagedIdentity.Persona
 }
 
 // validatePersistedSyncState rejects state that cannot safely drive sync.
@@ -1501,11 +1516,10 @@ func runSyncWithSelection(homeDir string, selection model.Selection, background 
 	// RunSync already resolves persona before delegating here, so on the CLI path
 	// selection.Persona is already set and applyResolvedPersona early-returns with
 	// no disk read. On the TUI path the Selection has an empty Persona field, so
-	// we read state once here and apply the persisted value (or neutral fallback).
+	// we read state once here and apply the persisted value (or canonical fallback).
+	normalizeManagedSelectionIdentity(&selection)
 	if selection.Persona == "" {
-		var persistedPersona string
-		persistedPersona = persistedState.Persona
-		applyResolvedPersona(&selection, persistedPersona)
+		applyResolvedPersona(&selection, persistedState.Persona)
 	}
 
 	personaAliasPending := persistedStateErr == nil && persistedState.Persona == string(model.PersonaGentlemanNeutralArtifacts)
