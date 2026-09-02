@@ -664,29 +664,13 @@ func TestComponentOperationsSDD_PreservesUnrecordedActors(t *testing.T) {
 	if err := os.WriteFile(settingsPath, initial, 0o644); err != nil {
 		t.Fatalf("WriteFile(settings) error = %v", err)
 	}
-	owner := []byte(`{"schema":"shevanio-ai.opencode-default-agent","version":2,"state":"managed","previous_state":"absent","actors":{}}`)
+	owner := []byte(`{"schema":"shevanio-ai.opencode-default-agent","version":2,"state":"managed","previous_state":"absent","actors":{"sdd-apply":{"scope":"base","fingerprint":"sha256:0dbf24dc1cfda5d6b1fe613c577b268931d58de588ab3502a39528fbf2fb8658"},"sdd-verify":{"scope":"base","fingerprint":"sha256:5d8e3ccfa07f094738d6240fe32123018c331324093133abf0808ab0e6dbf252"}}}`)
 	if err := os.WriteFile(opencodedefault.OwnershipPath(settingsPath), owner, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	ops, _, err := svc.componentOperations(adapter, model.ComponentSDD)
-	if err != nil {
-		t.Fatalf("componentOperations() error = %v", err)
-	}
-
-	appliedSettingsRewrite := false
-	for _, op := range ops {
-		if op.typeID != opRewriteFile || op.path != settingsPath {
-			continue
-		}
-		appliedSettingsRewrite = true
-		_, _, err := op.apply(op.path)
-		if err != nil {
-			t.Fatalf("settings rewrite op.apply() error = %v", err)
-		}
-	}
-	if !appliedSettingsRewrite {
-		t.Fatalf("expected settings rewrite operation for %q", settingsPath)
+	if _, err := svc.PartialUninstall([]model.AgentID{model.AgentOpenCode}, []model.ComponentID{model.ComponentSDD}); err != nil {
+		t.Fatalf("PartialUninstall() error = %v", err)
 	}
 
 	raw, err := os.ReadFile(settingsPath)
@@ -706,7 +690,6 @@ func TestComponentOperationsSDD_PreservesUnrecordedActors(t *testing.T) {
 
 	for _, preservedKey := range []string{
 		"sdd-orchestrator",
-		"sdd-apply",
 		"sdd-onboard",
 		"sdd-verify",
 		"jd-judge-a",
@@ -718,6 +701,9 @@ func TestComponentOperationsSDD_PreservesUnrecordedActors(t *testing.T) {
 		if _, exists := agentMap[preservedKey]; !exists {
 			t.Fatalf("unrecorded actor %q should be preserved, got agent map: %#v", preservedKey, agentMap)
 		}
+	}
+	if _, exists := agentMap["sdd-apply"]; exists {
+		t.Fatalf("exact recorded actor should be removed, got agent map: %#v", agentMap)
 	}
 
 	if _, exists := agentMap["my-custom-agent"]; !exists {

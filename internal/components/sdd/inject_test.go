@@ -6126,7 +6126,7 @@ func TestInjectOpenCodeWithProfile_DefaultProfileSkipped(t *testing.T) {
 	}
 }
 
-func TestInjectOpenCodeWithProfile_PreservesStaleProfileJDAgents(t *testing.T) {
+func TestInjectOpenCodeWithProfile_ReconcilesOnlyObservedProfile(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -6137,7 +6137,8 @@ func TestInjectOpenCodeWithProfile_PreservesStaleProfileJDAgents(t *testing.T) {
 			"jd-judge-a": {ProviderID: "anthropic", ModelID: "claude-opus-4-5"},
 		},
 	}
-	if _, err := Inject(home, opencodeAdapter(), model.SDDModeMulti, InjectOptions{Profiles: []model.Profile{profileWithJD}}); err != nil {
+	omittedProfile := model.Profile{Name: "gemini", OrchestratorModel: model.ModelAssignment{ProviderID: "google", ModelID: "gemini-2.5-pro"}}
+	if _, err := Inject(home, opencodeAdapter(), model.SDDModeMulti, InjectOptions{Profiles: []model.Profile{profileWithJD, omittedProfile}}); err != nil {
 		t.Fatalf("Inject() with JD profile assignment error = %v", err)
 	}
 
@@ -6160,22 +6161,18 @@ func TestInjectOpenCodeWithProfile_PreservesStaleProfileJDAgents(t *testing.T) {
 		t.Fatalf("unmarshal opencode.json: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	if _, exists := agentMap["jd-judge-a-cheap"]; !exists {
-		t.Fatal("historical profile-scoped JD agent was removed without ownership authority")
+	if _, exists := agentMap["jd-judge-a-cheap"]; exists {
+		t.Fatal("exact recorded stale actor in the observed profile was preserved")
 	}
 	if _, exists := agentMap["jd-judge-a"]; !exists {
 		t.Fatal("global JD agent jd-judge-a was removed; expected global/default fallback to remain")
 	}
-
-	profiles, err := DetectProfiles(settingsPath)
-	if err != nil {
-		t.Fatalf("DetectProfiles() error = %v", err)
+	if _, exists := agentMap["shevanio-orchestrator-gemini"]; !exists {
+		t.Fatal("actor in omitted profile scope was removed")
 	}
-	if len(profiles) != 1 {
-		t.Fatalf("DetectProfiles() returned %d profiles, want 1", len(profiles))
-	}
-	if _, preserved := profiles[0].PhaseAssignments["jd-judge-a"]; !preserved {
-		t.Fatal("DetectProfiles() lost the preserved historical JD assignment")
+	ownerBytes, err := os.ReadFile(opencodedefault.OwnershipPath(settingsPath))
+	if err != nil || strings.Contains(string(ownerBytes), `"jd-judge-a-cheap"`) || !strings.Contains(string(ownerBytes), `"shevanio-orchestrator-gemini"`) {
+		t.Fatalf("ownership scopes were not reconciled fail-closed: %v %s", err, ownerBytes)
 	}
 }
 
