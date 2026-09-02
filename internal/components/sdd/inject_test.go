@@ -2,6 +2,7 @@ package sdd
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/agents/opencode"
 	windsurfagent "github.com/shevanio/shevanio-ai/v2/internal/agents/windsurf"
 	"github.com/shevanio/shevanio-ai/v2/internal/assets"
+	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
 	opencodemodel "github.com/shevanio/shevanio-ai/v2/internal/opencode"
 	// agents/cursor, agents/gemini, agents/vscode used via agents.NewAdapter()
@@ -6006,9 +6008,44 @@ func TestInjectOpenCodeWithProfile_PostCheckVerifiesOrchestrator(t *testing.T) {
 	if !strings.Contains(string(content), `"shevanio-orchestrator-cheap"`) {
 		t.Fatal("opencode.json missing shevanio-orchestrator-cheap after profile injection")
 	}
+	var settingsRoot map[string]any
+	if err := json.Unmarshal(content, &settingsRoot); err != nil {
+		t.Fatal(err)
+	}
+	ownerPath := opencodedefault.OwnershipPath(settingsPath)
+	ownerBytes, err := os.ReadFile(ownerPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sidecar struct {
+		Version int `json:"version"`
+		Actors  map[string]struct {
+			Scope       string `json:"scope"`
+			Fingerprint string `json:"fingerprint"`
+		} `json:"actors"`
+	}
+	if err := json.Unmarshal(ownerBytes, &sidecar); err != nil {
+		t.Fatal(err)
+	}
+	agentMap := settingsRoot["agent"].(map[string]any)
+	for actor, scope := range map[string]string{"shevanio-orchestrator": "base", "shevanio-orchestrator-cheap": "profile/cheap"} {
+		actorJSON, _ := json.Marshal(agentMap[actor])
+		sum := sha256.Sum256(actorJSON)
+		if record := sidecar.Actors[actor]; sidecar.Version != 2 || record.Scope != scope || record.Fingerprint != fmt.Sprintf("sha256:%x", sum) {
+			t.Fatalf("ownership for %q = %#v (version %d)", actor, record, sidecar.Version)
+		}
+	}
+	second, err := Inject(home, opencodeAdapter(), model.SDDModeMulti, InjectOptions{Profiles: []model.Profile{cheapProfile}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ownerBytesAfter, _ := os.ReadFile(ownerPath)
+	if second.Changed || !bytes.Equal(ownerBytes, ownerBytesAfter) {
+		t.Fatal("second injection was not byte-stable")
+	}
 }
 
-func TestInjectNamedProfileMigratesOnlySelectedActor(t *testing.T) {
+func TestInjectNamedProfilePreservesHistoricalActors(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
 		adapter agents.Adapter
@@ -6051,8 +6088,8 @@ func TestInjectNamedProfileMigratesOnlySelectedActor(t *testing.T) {
 			if !ok || !strings.Contains(actor["prompt"].(string), namedProfileActor("cheap")) {
 				t.Fatalf("canonical named actor missing or not self-routed: %#v", actor)
 			}
-			if _, exists := agentMap[legacyNamedProfileActor("cheap")]; exists {
-				t.Fatal("selected profile retained its exact legacy actor")
+			if agentMap[legacyNamedProfileActor("cheap")].(map[string]any)["model"] != "legacy/model" {
+				t.Fatal("selected profile changed its historical legacy actor")
 			}
 			if agentMap[legacyNamedProfileActor("personal")].(map[string]any)["prompt"] != "KEEP_BYTES" || agentMap["custom-actor"].(map[string]any)["prompt"] != "CUSTOM_BYTES" {
 				t.Fatal("unproven legacy or custom actor changed")
@@ -6089,7 +6126,7 @@ func TestInjectOpenCodeWithProfile_DefaultProfileSkipped(t *testing.T) {
 	}
 }
 
-func TestInjectOpenCodeWithProfile_RemovesStaleProfileJDAgents(t *testing.T) {
+func TestInjectOpenCodeWithProfile_PreservesStaleProfileJDAgents(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -6123,8 +6160,8 @@ func TestInjectOpenCodeWithProfile_RemovesStaleProfileJDAgents(t *testing.T) {
 		t.Fatalf("unmarshal opencode.json: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	if _, exists := agentMap["jd-judge-a-cheap"]; exists {
-		t.Fatal("stale profile-scoped JD agent jd-judge-a-cheap survived sync after assignment removal")
+	if _, exists := agentMap["jd-judge-a-cheap"]; !exists {
+		t.Fatal("historical profile-scoped JD agent was removed without ownership authority")
 	}
 	if _, exists := agentMap["jd-judge-a"]; !exists {
 		t.Fatal("global JD agent jd-judge-a was removed; expected global/default fallback to remain")
@@ -6137,12 +6174,12 @@ func TestInjectOpenCodeWithProfile_RemovesStaleProfileJDAgents(t *testing.T) {
 	if len(profiles) != 1 {
 		t.Fatalf("DetectProfiles() returned %d profiles, want 1", len(profiles))
 	}
-	if _, resurrected := profiles[0].PhaseAssignments["jd-judge-a"]; resurrected {
-		t.Fatalf("DetectProfiles() resurrected stale jd-judge-a assignment: %#v", profiles[0].PhaseAssignments["jd-judge-a"])
+	if _, preserved := profiles[0].PhaseAssignments["jd-judge-a"]; !preserved {
+		t.Fatal("DetectProfiles() lost the preserved historical JD assignment")
 	}
 }
 
-func TestInjectOpenCodeWithProfile_StaleJDCleanupAcceptsJSONCSettings(t *testing.T) {
+func TestInjectOpenCodeWithProfile_PreservesHistoricalJSONCActors(t *testing.T) {
 	home := t.TempDir()
 	mockNoPackageManager(t)
 
@@ -6179,8 +6216,8 @@ func TestInjectOpenCodeWithProfile_StaleJDCleanupAcceptsJSONCSettings(t *testing
 		t.Fatalf("opencode.json should be rewritten as normalized JSON: %v", err)
 	}
 	agentMap := root["agent"].(map[string]any)
-	if _, exists := agentMap["jd-judge-a-cheap"]; exists {
-		t.Fatal("stale profile-scoped JD agent survived JSONC-tolerant cleanup")
+	if _, exists := agentMap["jd-judge-a-cheap"]; !exists {
+		t.Fatal("historical profile-scoped JD agent was removed from JSONC settings")
 	}
 	if _, exists := agentMap["shevanio-orchestrator-cheap"]; !exists {
 		t.Fatal("profile orchestrator was removed during stale JD cleanup")

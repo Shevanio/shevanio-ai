@@ -638,11 +638,7 @@ func (s *Service) componentOperations(adapter agents.Adapter, componentID model.
 		}
 		if path := adapter.SettingsPath(homeDir); path != "" {
 			targets = append(targets, path)
-			jsonPaths := []jsonPath{{"outputStyle"}}
-			if adapter.Agent() == model.AgentOpenCode {
-				jsonPaths = append(jsonPaths, jsonPath{"agent", "gentleman"})
-			}
-			ops = append(ops, rewriteJSONFile(path, jsonPaths...))
+			ops = append(ops, rewriteJSONFile(path, jsonPath{"outputStyle"}))
 		}
 	case model.ComponentContext7:
 		targets = append(targets, context7Targets(adapter, homeDir)...)
@@ -755,23 +751,14 @@ func (s *Service) componentOperations(adapter agents.Adapter, componentID model.
 				return nil, nil, err
 			}
 			targets = append(targets, path, opencodedefault.OwnershipPath(path))
-			paths := make([]jsonPath, 0, len(configuredAgents))
-			for _, agentKey := range configuredAgents {
-				paths = append(paths, jsonPath{"agent", agentKey})
-			}
+			paths := make([]jsonPath, 0)
 
-			// Remove named SDD profile agents (suffixed keys). If a profile subset was
-			// selected in the uninstall flow, remove only those profiles; otherwise,
-			// preserve legacy behavior and remove all detected profiles.
+			// Explicit profile selection is user authority to remove that profile's
+			// actors. Unscoped uninstall preserves every actor until provenance-backed
+			// cleanup is implemented.
 			if s.profileSelectionScoped {
 				for _, profileName := range s.profileNamesToRemove {
 					for _, agentKey := range sdd.ProfileAgentKeys(profileName) {
-						paths = append(paths, jsonPath{"agent", agentKey})
-					}
-				}
-			} else if profiles, err := sdd.DetectProfiles(path); err == nil {
-				for _, profile := range profiles {
-					for _, agentKey := range sdd.ProfileAgentKeys(profile.Name) {
 						paths = append(paths, jsonPath{"agent", agentKey})
 					}
 				}
