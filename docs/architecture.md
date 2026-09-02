@@ -70,13 +70,13 @@ Test coverage is broad and changes frequently. Keep this section qualitative unl
 
 ## Relationship to Gentleman.Dots
 
-| | Gentleman.Dots | AI Gentle Stack |
+| | Gentleman.Dots | Shevanio AI |
 |--|---------------|-----------------|
 | **Purpose** | Dev environment (editors, shells, terminals) | AI development layer (agents, memory, skills) |
 | **Installs** | Neovim, Fish/Zsh, Tmux/Zellij, Ghostty | Configures Claude Code, OpenCode, Gemini CLI, Cursor, VS Code Copilot, Codex, Windsurf, Antigravity |
 | **Overlap** | None — complementary | None — different layer |
 
-Install Gentleman.Dots first for your dev environment, then AI Gentle Stack for the AI layer on top.
+Install Gentleman.Dots first for your dev environment, then Shevanio AI for the AI layer on top.
 
 ---
 
