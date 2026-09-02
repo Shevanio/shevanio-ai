@@ -12,6 +12,7 @@ import (
 	"github.com/shevanio/shevanio-ai/v2/internal/components/filemerge"
 	"github.com/shevanio/shevanio-ai/v2/internal/components/opencodedefault"
 	"github.com/shevanio/shevanio-ai/v2/internal/model"
+	"github.com/shevanio/shevanio-ai/v2/internal/pipeline"
 	"github.com/shevanio/shevanio-ai/v2/internal/planner"
 	"github.com/shevanio/shevanio-ai/v2/internal/system"
 )
@@ -157,6 +158,46 @@ func TestComponentPersonaPiUsesResolvedScopePath(t *testing.T) {
 	custom := componentPathsWithWorkspaceScoped(home, workspace, ScopeWorkspace, model.Selection{Persona: model.PersonaCustom}, adapters, model.ComponentPersona)
 	if len(custom) != 0 {
 		t.Fatalf("custom Pi persona paths = %v, want none", custom)
+	}
+}
+
+func TestCanonicalOpenCodePersonaProjectionRuntime(t *testing.T) {
+	for _, flow := range []string{"install", "sync"} {
+		t.Run(flow, func(t *testing.T) {
+			home := t.TempDir()
+			settingsPath := openCodeSettingsPath(home)
+			original := []byte("{\n  \"sibling\": \"keep\",\n  \"agent\": {\n    \"shevanio-orchestrator\": {\"prompt\": \"keep\"},\n    \"gentleman\": {\"mode\":\"primary\",\"description\":\"Senior Architect mentor - helpful first, challenging when it matters\",\"prompt\":\"{file:./AGENTS.md}\",\"tools\":{\"write\":true,\"edit\":true}}\n  }\n}\n")
+			mustWriteFile(t, settingsPath, original)
+			selection := model.Selection{Agents: []model.AgentID{model.AgentOpenCode}, Components: []model.ComponentID{model.ComponentPersona}, Persona: model.PersonaNeutral}
+			if flow == "install" {
+				adapters := resolveAdapters(selection.Agents)
+				canonical := selection
+				canonical.Persona = model.PersonaShevanio
+				if containsPath(componentPaths(home, selection, adapters, model.ComponentPersona), settingsPath) || !containsPath(componentPaths(home, canonical, adapters, model.ComponentPersona), settingsPath) {
+					t.Fatal("install verification settings contract does not distinguish cleanup from creation")
+				}
+			}
+			var plan pipeline.StagePlan
+			componentIndex := 2
+			if flow == "install" {
+				plan = newTestInstallRuntime(t, home, selection).stagePlan()
+			} else {
+				runtime, err := newSyncRuntime(home, selection)
+				if err != nil {
+					t.Fatal(err)
+				}
+				plan = runtime.stagePlan()
+				componentIndex = 1
+			}
+			plan.Apply = []pipeline.Step{plan.Apply[0], plan.Apply[componentIndex], failingSyncStep{}}
+			result := pipeline.NewOrchestrator(pipeline.DefaultRollbackPolicy()).Execute(plan)
+			if result.Err == nil || !result.Rollback.Success {
+				t.Fatalf("runtime did not reach the forced failure and rollback: %#v", result)
+			}
+			if restored, err := os.ReadFile(settingsPath); err != nil || string(restored) != string(original) {
+				t.Fatalf("restored settings = %q, error = %v, want original bytes", restored, err)
+			}
+		})
 	}
 }
 

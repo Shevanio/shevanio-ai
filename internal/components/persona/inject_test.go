@@ -604,8 +604,8 @@ func TestInjectOpenCodeGentlemanDoesNotCreateSDDConductor(t *testing.T) {
 	if strings.Contains(text, `"gentle-orchestrator"`) {
 		t.Fatal("persona injection must not create SDD conductor; SDD component owns gentle-orchestrator")
 	}
-	if !strings.Contains(text, `"gentleman"`) {
-		t.Fatal("persona injection should still create the gentleman persona agent")
+	if !strings.Contains(text, `"shevanio"`) || strings.Contains(text, `"gentleman"`) {
+		t.Fatal("persona injection must create only the canonical shevanio actor")
 	}
 }
 
@@ -965,7 +965,7 @@ func TestInjectKimiNeutralWritesMeaningfulOutputStyle(t *testing.T) {
 	}
 }
 
-func TestInjectForSyncNeutralCleansOnlyGentlemanAgent(t *testing.T) {
+func TestInjectForSyncNeutralCleansOnlyExactGentlemanActor(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		adapter     agents.Adapter
@@ -980,7 +980,8 @@ func TestInjectForSyncNeutralCleansOnlyGentlemanAgent(t *testing.T) {
 			if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
 				t.Fatalf("MkdirAll() error = %v", err)
 			}
-			existing := `{"agent":{"gentleman":{"mode":"primary"},"custom":{"mode":"primary"}},"theme":"dark"}`
+			existingRaw, _ := json.Marshal(map[string]any{"agent": map[string]any{"gentleman": generatedOpenCodePersonaActor, "shevanio": map[string]any{"prompt": "custom canonical"}, "custom": map[string]any{"mode": "primary"}}, "theme": "dark"})
+			existing := string(existingRaw)
 			if err := os.WriteFile(settingsPath, []byte(existing), 0o644); err != nil {
 				t.Fatalf("WriteFile(settings) error = %v", err)
 			}
@@ -1011,6 +1012,9 @@ func TestInjectForSyncNeutralCleansOnlyGentlemanAgent(t *testing.T) {
 			if _, exists := agentMap["custom"]; !exists {
 				t.Fatalf("settings lost agent.custom sibling: %s", string(content))
 			}
+			if _, exists := agentMap["shevanio"]; !exists {
+				t.Fatalf("settings removed modified agent.shevanio: %s", content)
+			}
 			if got, want := root["theme"], "dark"; got != want {
 				t.Fatalf("settings theme = %q, want %q", got, want)
 			}
@@ -1018,7 +1022,7 @@ func TestInjectForSyncNeutralCleansOnlyGentlemanAgent(t *testing.T) {
 	}
 }
 
-func TestInjectForSyncNeutralToleratesMalformedOpenCodeSettings(t *testing.T) {
+func TestInjectForSyncNeutralRejectsMalformedOpenCodeSettings(t *testing.T) {
 	home := t.TempDir()
 	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
 	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
@@ -1029,8 +1033,8 @@ func TestInjectForSyncNeutralToleratesMalformedOpenCodeSettings(t *testing.T) {
 		t.Fatalf("WriteFile(settings) error = %v", err)
 	}
 
-	if _, err := InjectForSync(home, opencodeAdapter(), model.PersonaNeutral); err != nil {
-		t.Fatalf("InjectForSync() should tolerate malformed settings, got error: %v", err)
+	if _, err := InjectForSync(home, opencodeAdapter(), model.PersonaNeutral); err == nil {
+		t.Fatal("InjectForSync() error = nil, want malformed settings rejection")
 	}
 	content, err := os.ReadFile(settingsPath)
 	if err != nil {
@@ -1206,6 +1210,14 @@ func TestInjectClaudeIsIdempotent(t *testing.T) {
 
 func TestInjectOpenCodeIsIdempotent(t *testing.T) {
 	home := t.TempDir()
+	settingsPath := opencodeAdapter().SettingsPath(home)
+	seed, _ := json.Marshal(map[string]any{"sibling": "keep", "agent": map[string]any{"shevanio-orchestrator": map[string]any{"prompt": "keep"}, "gentleman": generatedOpenCodePersonaActor}})
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(settingsPath, seed, 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	first, err := Inject(home, opencodeAdapter(), model.PersonaGentleman)
 	if err != nil {
@@ -1221,6 +1233,14 @@ func TestInjectOpenCodeIsIdempotent(t *testing.T) {
 	}
 	if second.Changed {
 		t.Fatalf("Inject() second changed = true")
+	}
+	var settings map[string]any
+	if raw, err := os.ReadFile(settingsPath); err != nil || json.Unmarshal(raw, &settings) != nil {
+		t.Fatalf("read migrated settings: %v", err)
+	}
+	agentMap := settings["agent"].(map[string]any)
+	if _, legacy := agentMap["gentleman"]; legacy || agentMap["shevanio"] == nil || agentMap["shevanio-orchestrator"] == nil || settings["sibling"] != "keep" {
+		t.Fatalf("legacy migration lost canonical or sibling actors: %#v", settings)
 	}
 }
 
@@ -1807,10 +1827,10 @@ func TestInjectClaude_SwitchGentlemanToNeutral_IsIdempotent(t *testing.T) {
 	}
 }
 
-func TestInjectOpenCode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T) {
+func TestInjectOpenCode_SwitchShevanioToNeutral_CleansAgentOverlay(t *testing.T) {
 	home := t.TempDir()
 
-	// Step 1: install gentleman — agent.gentleman key must appear in opencode.json.
+	// Step 1: install the managed persona — agent.shevanio must appear.
 	_, err := Inject(home, opencodeAdapter(), model.PersonaGentleman)
 	if err != nil {
 		t.Fatalf("Inject(gentleman) error = %v", err)
@@ -1829,8 +1849,8 @@ func TestInjectOpenCode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T
 	if !ok {
 		t.Fatal("precondition: 'agent' key must be present after gentleman install")
 	}
-	if _, ok := agentBefore["gentleman"]; !ok {
-		t.Fatal("precondition: agent.gentleman must be present after gentleman install")
+	if _, ok := agentBefore["shevanio"]; !ok {
+		t.Fatal("precondition: agent.shevanio must be present after persona install")
 	}
 
 	// Pre-populate a user-defined agent to verify it survives the cleanup.
@@ -1842,13 +1862,13 @@ func TestInjectOpenCode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T
 		t.Fatalf("WriteFile() setup error = %v", err)
 	}
 
-	// Step 2: switch to neutral — agent.gentleman must be removed.
+	// Step 2: switch to neutral — the exact generated canonical actor is removed.
 	result, err := Inject(home, opencodeAdapter(), model.PersonaNeutral)
 	if err != nil {
 		t.Fatalf("Inject(neutral) error = %v", err)
 	}
 	if !result.Changed {
-		t.Fatal("Inject(neutral) should report changed when cleaning agent.gentleman residual")
+		t.Fatal("Inject(neutral) should report changed when cleaning agent.shevanio residual")
 	}
 
 	settingsRaw, err = os.ReadFile(settingsPath)
@@ -1860,10 +1880,10 @@ func TestInjectOpenCode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T
 		t.Fatalf("Unmarshal opencode.json after neutral: %v", err)
 	}
 
-	// agent.gentleman must be gone.
+	// agent.shevanio must be gone.
 	if agentAfter, ok := after["agent"].(map[string]any); ok {
-		if _, stillPresent := agentAfter["gentleman"]; stillPresent {
-			t.Fatal("agent.gentleman must be removed from opencode.json after switching to neutral")
+		if _, stillPresent := agentAfter["shevanio"]; stillPresent {
+			t.Fatal("agent.shevanio must be removed from opencode.json after switching to neutral")
 		}
 		// User-defined agent must survive.
 		if _, ok := agentAfter["my-custom-agent"]; !ok {
@@ -1887,8 +1907,8 @@ func TestInjectKilocode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T
 
 	settingsPath := filepath.Join(home, ".config", "kilo", "opencode.json")
 	data, _ := os.ReadFile(settingsPath)
-	if !strings.Contains(string(data), `"gentleman"`) {
-		t.Fatal("precondition: kilo/opencode.json should have gentleman agent after Gentleman install")
+	if !strings.Contains(string(data), `"shevanio"`) {
+		t.Fatal("precondition: kilo/opencode.json should have shevanio agent after persona install")
 	}
 
 	result, err := Inject(home, kilocodeAdapter(), model.PersonaNeutral)
@@ -1903,8 +1923,8 @@ func TestInjectKilocode_SwitchGentlemanToNeutral_CleansAgentOverlay(t *testing.T
 	if err != nil {
 		t.Fatalf("ReadFile kilo/opencode.json error = %v", err)
 	}
-	if strings.Contains(string(data), `"gentleman"`) {
-		t.Fatal("kilo/opencode.json must not have gentleman agent key after switching to Neutral")
+	if strings.Contains(string(data), `"shevanio"`) {
+		t.Fatal("kilo/opencode.json must not have shevanio agent key after switching to Neutral")
 	}
 }
 
@@ -1919,45 +1939,63 @@ func TestInjectOpenCode_NeutralFresh_IsNoOp(t *testing.T) {
 	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
 	if _, statErr := os.Stat(settingsPath); !os.IsNotExist(statErr) {
 		data, _ := os.ReadFile(settingsPath)
-		if strings.Contains(string(data), `"gentleman"`) {
-			t.Fatal("Neutral fresh install must not create gentleman agent key")
+		if strings.Contains(string(data), `"gentleman"`) || strings.Contains(string(data), `"shevanio"`) {
+			t.Fatal("Neutral fresh install must not create a managed persona actor")
 		}
 	}
 }
 
-func TestInjectOpenCode_GentlemanOnly_WritesAgentOverlay(t *testing.T) {
+func TestInjectOpenCode_GentlemanAliasWritesCanonicalActor(t *testing.T) {
 	home := t.TempDir()
+	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(settingsPath, []byte(`{"agent":{"gentleman":{"prompt":"custom"}}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err := Inject(home, opencodeAdapter(), model.PersonaGentleman)
 	if err != nil {
 		t.Fatalf("Inject(gentleman) error = %v", err)
 	}
 
-	settingsPath := filepath.Join(home, ".config", "opencode", "opencode.json")
 	data, err := os.ReadFile(settingsPath)
 	if err != nil {
 		t.Fatalf("ReadFile(opencode.json) error = %v", err)
 	}
-	if !strings.Contains(string(data), `"gentleman"`) {
-		t.Fatal("Gentleman install must write gentleman agent overlay in opencode.json")
+	if !strings.Contains(string(data), `"shevanio"`) || !strings.Contains(string(data), `"gentleman"`) || !strings.Contains(string(data), `"custom"`) {
+		t.Fatal("canonical projection must preserve a modified legacy actor")
 	}
 }
 
-func TestInjectOpenCode_MalformedJSON_DoesNotPanic(t *testing.T) {
-	home := t.TempDir()
-
-	settingsDir := filepath.Join(home, ".config", "opencode")
-	if err := os.MkdirAll(settingsDir, 0o755); err != nil {
-		t.Fatalf("MkdirAll() error = %v", err)
-	}
-	malformed := `{ "agent": { "gentleman": {invalid json`
-	if err := os.WriteFile(filepath.Join(settingsDir, "opencode.json"), []byte(malformed), 0o644); err != nil {
-		t.Fatalf("WriteFile() error = %v", err)
-	}
-
-	_, err := Inject(home, opencodeAdapter(), model.PersonaNeutral)
-	if err != nil {
-		t.Fatalf("Inject(neutral) with malformed JSON must not error, got: %v", err)
+func TestInjectOpenCodeActorPreflightRejectsWithoutMutation(t *testing.T) {
+	for _, tt := range []struct {
+		name, seed, want string
+		persona          model.PersonaID
+	}{
+		{"malformed JSON", `{ "agent": { "gentleman": {invalid json`, "decode OpenCode persona settings", model.PersonaNeutral},
+		{"user-managed canonical actor", `{"agent":{"shevanio":{"prompt":"mine"}}}`, "agent.shevanio", model.PersonaShevanio},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			settingsPath := opencodeAdapter().SettingsPath(home)
+			if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(settingsPath, []byte(tt.seed), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Inject(home, opencodeAdapter(), tt.persona); err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("preflight error = %v, want %q", err, tt.want)
+			}
+			if got, _ := os.ReadFile(settingsPath); string(got) != tt.seed {
+				t.Fatalf("preflight changed settings bytes: %q", got)
+			}
+			if _, err := os.Stat(opencodeAdapter().SystemPromptFile(home)); !os.IsNotExist(err) {
+				t.Fatalf("preflight mutated prompt: %v", err)
+			}
+		})
 	}
 }
 
@@ -2014,7 +2052,7 @@ func TestInjectKimi_SwitchShevanioToNeutral_NoResidualPersonaContent(t *testing.
 	}
 }
 
-func TestInjectForSync_OpenCodeNeutral_CleansAgentGentleman(t *testing.T) {
+func TestInjectForSync_OpenCodeNeutral_CleansCanonicalActor(t *testing.T) {
 	home := t.TempDir()
 
 	if _, err := Inject(home, opencodeAdapter(), model.PersonaGentleman); err != nil {
@@ -2026,8 +2064,8 @@ func TestInjectForSync_OpenCodeNeutral_CleansAgentGentleman(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile(opencode.json) after install error = %v", err)
 	}
-	if !strings.Contains(string(before), `"gentleman"`) {
-		t.Fatalf("opencode.json missing gentleman agent after install; got:\n%s", string(before))
+	if !strings.Contains(string(before), `"shevanio"`) {
+		t.Fatalf("opencode.json missing canonical actor after install; got:\n%s", string(before))
 	}
 
 	if _, err := InjectForSync(home, opencodeAdapter(), model.PersonaNeutral); err != nil {
@@ -2038,8 +2076,8 @@ func TestInjectForSync_OpenCodeNeutral_CleansAgentGentleman(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile(opencode.json) after sync error = %v", err)
 	}
-	if strings.Contains(string(after), `"gentleman"`) {
-		t.Fatalf("opencode.json still has gentleman agent after InjectForSync(neutral); got:\n%s", string(after))
+	if strings.Contains(string(after), `"shevanio"`) {
+		t.Fatalf("opencode.json still has canonical actor after InjectForSync(neutral); got:\n%s", string(after))
 	}
 }
 
