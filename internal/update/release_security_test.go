@@ -237,10 +237,10 @@ prerelease=false
 [[ -z "${FAKE_PRERELEASE:-}" ]] || prerelease=$FAKE_PRERELEASE
 immutable=${FAKE_IMMUTABLE:-true}
 if [[ "$1" == api && "$2" == "repos/$GITHUB_REPOSITORY/releases/tags/$tag" ]]; then
-  provider_sbom_asset=',{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json"}'
+  provider_sbom_asset=',{"name":"shevanio-ai-review-provider-contract-2.0.0.tar.gz.sbom.json"}'
   [[ "${FAKE_SBOM_MODE:-}" != missing-asset ]] || provider_sbom_asset=
   cat <<JSON
-{"tag_name":"$tag","draft":false,"prerelease":$prerelease,"immutable":$immutable,"assets":[{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-1.1.0.tar.gz"},{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz.sbom.json"}${provider_sbom_asset},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
+{"tag_name":"$tag","draft":false,"prerelease":$prerelease,"immutable":$immutable,"assets":[{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz"},{"name":"shevanio-ai-review-provider-contract-2.0.0.tar.gz"},{"name":"shevanio-ai_${version}_darwin_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_darwin_arm64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_amd64.tar.gz.sbom.json"},{"name":"shevanio-ai_${version}_linux_arm64.tar.gz.sbom.json"}${provider_sbom_asset},{"name":"checksums.txt"},{"name":"checksums.txt.minisig"}]}
 JSON
   exit 0
 fi
@@ -258,8 +258,8 @@ if [[ "$1" == release && "$2" == download && "$3" == "$tag" ]]; then
   for platform in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64; do
     printf 'archive %s\n' "$platform" >"$directory/shevanio-ai_${version}_${platform}.tar.gz"
   done
-  printf 'provider contract\n' >"$directory/shevanio-ai-review-provider-contract-1.1.0.tar.gz"
-  for archive in "$directory"/shevanio-ai_${version}_*.tar.gz "$directory"/shevanio-ai-review-provider-contract-1.1.0.tar.gz; do
+  printf 'provider contract\n' >"$directory/shevanio-ai-review-provider-contract-2.0.0.tar.gz"
+  for archive in "$directory"/shevanio-ai_${version}_*.tar.gz "$directory"/shevanio-ai-review-provider-contract-2.0.0.tar.gz; do
     printf '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}\n' >"${archive}.sbom.json"
   done
   case "${FAKE_SBOM_MODE:-}" in
@@ -268,8 +268,8 @@ if [[ "$1" == release && "$2" == download && "$3" == "$tag" ]]; then
   esac
   (
     cd "$directory"
-    for asset in shevanio-ai_${version}_*.tar.gz shevanio-ai_${version}_*.tar.gz.sbom.json shevanio-ai-review-provider-contract-1.1.0.tar.gz shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json; do
-      [[ "${FAKE_SBOM_MODE:-}" != missing-manifest || "$asset" != shevanio-ai-review-provider-contract-1.1.0.tar.gz.sbom.json ]] || continue
+    for asset in shevanio-ai_${version}_*.tar.gz shevanio-ai_${version}_*.tar.gz.sbom.json shevanio-ai-review-provider-contract-2.0.0.tar.gz shevanio-ai-review-provider-contract-2.0.0.tar.gz.sbom.json; do
+      [[ "${FAKE_SBOM_MODE:-}" != missing-manifest || "$asset" != shevanio-ai-review-provider-contract-2.0.0.tar.gz.sbom.json ]] || continue
       sha256sum "$asset"
     done >checksums.txt
   )
