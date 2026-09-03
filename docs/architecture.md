@@ -27,7 +27,7 @@ internal/
     filemerge/             Marker-based file merging (inject without clobbering)
   skillregistry/           .atl skill registry refresh/list support
   agents/                  Agent adapters (config strategy per agent)
-    claude/  opencode/  gemini/  cursor/  vscode/  codex/  windsurf/  antigravity/
+    <agent>/                Paths and strategies for every supported integration
   opencode/                OpenCode model/config parsing utilities
   state/                   Installation state tracking
   update/                  Self-update + upgrade logic
@@ -36,7 +36,7 @@ internal/
   tui/                     Bubbletea TUI (Rose Pine theme)
     styles/  screens/
 scripts/                   Installer, release, and maintainer scripts (install.sh, release preflights, cross-lane battery)
-e2e/                       Docker-based E2E tests (Ubuntu + Arch)
+e2e/                       Docker-based E2E tests (Ubuntu + Arch + Fedora)
 testdata/                  Golden test fixtures
 ```
 
@@ -48,7 +48,7 @@ testdata/                  Golden test fixtures
 # Unit tests
 go test ./...
 
-# Docker E2E (Ubuntu + Arch, requires Docker)
+# Docker E2E (Ubuntu + Arch + Fedora, requires Docker)
 RUN_FULL_E2E=1 RUN_BACKUP_TESTS=1 ./e2e/docker-test.sh
 
 # Dry-run smoke test (macOS/Linux)
@@ -61,7 +61,7 @@ shevanio-ai.exe install --dry-run --agent claude-code --preset minimal
 Test coverage is broad and changes frequently. Keep this section qualitative unless counts are generated automatically:
 
 - Unit tests cover agent adapters, components, system detection, app dispatch, update/upgrade behavior, and TUI flows.
-- Docker E2E tests exercise Ubuntu and Arch paths when `RUN_FULL_E2E=1` is enabled.
+- Docker E2E tests exercise Ubuntu, Arch, and Fedora paths when `RUN_FULL_E2E=1` is enabled. See [CI Operations](ci.md) for remote workflow coverage.
 - Golden fixtures snapshot generated component output under `testdata/`.
 - Full pipeline paths are tested: detection, planning, execution, backup, restore, and verification.
 - Agent adapter tests include cross-platform path validation.

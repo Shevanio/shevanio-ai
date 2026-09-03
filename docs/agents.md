@@ -25,7 +25,7 @@
 | Pi              | `pi`             | Yes          | Yes | Full (package-managed subagents) | No            | Yes            | `~/.pi`                             |
 | Hermes          | `hermes`         | Yes          | Yes | Full (delegate_task ephemeral)   | No            | No             | `~/.hermes`                         |
 
-Most agents receive the **full SDD orchestrator** policy, plus skill files written to their skills directory. Most receive it through their system prompt; OpenCode and Kilo Code receive it through the OpenCode-compatible `opencode.json` agent overlay. Pi is the exception: Shevanio AI installs Pi packages, and `gentle-pi` owns Pi skills, prompts, SDD agents, and chains at runtime. The agent handles SDD automatically when the task is large enough, or when the user explicitly asks for it — no manual setup required.
+Most agents receive the **full SDD orchestrator** policy, plus skill files written to their skills directory. Most receive it through their system prompt; OpenCode and Kilo Code receive it through the OpenCode-compatible `opencode.json` agent overlay. Pi is the exception: Shevanio AI installs the Shevanio Pi harness through currently published compatibility packages, which own Pi skills, prompts, SDD agents, and chains at runtime. The agent may propose SDD when durable planning would reduce substantial ambiguity, but selects it only after an explicit request or an accepted proposal.
 
 `shevanio-ai install --scope=workspace` is supported across selected agents for agent-scoped files, not only Claude Code. In workspace scope, Shevanio AI writes system prompts, skills, SDD agents, and persona files into the current project root when the agent supports project-local configuration. Global-only integrations, such as package installs or settings that the agent only reads from its global config, remain global by design.
 
@@ -85,7 +85,7 @@ Kiro uses native custom agents in `~/.kiro/agents/`. `shevanio-ai` writes phase 
 
 > \* **Kiro multi-mode** assigns models per phase through `KiroModelAssignments` (configured via _Configure Models → Configure Kiro models_ in the TUI). The selected Kiro alias (`auto|opus|sonnet|haiku|minimax|glm|deepseek|qwen`) is resolved to a Kiro-native model ID and stamped into each `~/.kiro/agents/sdd-{phase}.md` at sync time.
 
-> \*\* **Pi multi-mode** is owned by the Pi packages. `gentle-pi` installs SDD agent and chain assets into `.pi/agents/` and `.pi/chains/`; model overrides live in those Pi-managed files or chain steps.
+> \*\* **Pi multi-mode** is owned by the Pi package. The current compatibility distribution installs global SDD agent and chain assets and writes model routing through Pi's subagent profiles.
 
 ---
 
@@ -249,19 +249,20 @@ For the full Pi command and package reference, see [Pi Agent](pi.md).
   - `pi install npm:pi-web-access`
   - `pi install npm:@juicesharp/rpiv-todo`
   - `pi install npm:pi-btw`
-- **`gentle-pi` package**: adds the Gentleman harness for Pi: SDD/OpenSpec workflow, strict TDD guidance, safety defaults, `/shevanio-ai:*` commands, skill assets, prompts, SDD agents, and SDD chains. On normal `session_start`, it copies project assets into `.pi/agents/`, `.pi/chains/`, and `.pi/shevanio-ai/support/` without overwriting local files unless the Pi recovery command uses `--force`. Starting Pi with `pi -ns` skips startup skill loading/hooks, so that automatic refresh does not run in that mode.
-- **Package metadata**: latest verified `gentle-pi` version is `0.2.6`; npm lists `alan_buscaglia` as maintainer, with source at [Gentleman-Programming/gentle-pi](https://github.com/Gentleman-Programming/gentle-pi) and package docs at [npm: gentle-pi](https://www.npmjs.com/package/gentle-pi).
-- **Persona command**: `gentle-pi` owns Pi persona switching through `/gentleman:persona` (`/shevanio-ai:persona` remains a compatibility alias). It switches between `gentleman` and `neutral`, saves `.pi/shevanio-ai/persona.json`, and may require `/reload` or a new Pi session for the active prompt to refresh.
-- **Model assignment command**: `gentle-pi` owns Pi model selection through `/gentleman:models` (`/shevanio-ai:models` remains a compatibility alias). It opens a Pi-native modal for project, user, and built-in agents, prioritizes SDD agents, saves `.pi/shevanio-ai/models.json`, and applies overrides into `.pi/agents/*.md` or `.pi/settings.json`.
-- **`gentle-engram` package**: adds persistent Engram memory for Pi. It captures sessions, exposes Engram MCP tools through `pi-mcp-adapter`, and degrades safely when the local `engram` binary is missing.
+- **Shevanio Pi harness**: canonical source and package identity live at [Shevanio/shevanio-pi](https://github.com/Shevanio/shevanio-pi). The `shevanio-pi` npm name is not published, so the current installer uses `gentle-pi` as a transitional distribution.
+- **Current package commands**: use `/gentle:status`, `/gentle:doctor`, `/gentle:persona`, `/gentle:models`, `/gentle:background-subagents`, and `/gentle:install-sdd`. Canonical source uses `/shevanio-pi:*`, but those commands are not installed by the current stable Shevanio AI package path.
+- **Package metadata**: the registry artifacts verified for this guide were `gentle-pi@2.3.0` and `gentle-engram@0.1.10`. Their npm names are compatibility coordinates, not canonical repository identities.
+- **Persona command**: `/gentle:persona` switches between `gentleman` and `neutral`, saves global state at `~/.pi/gentle-ai/persona.json`, honors an existing project override, and may require `/reload` or a new Pi session.
+- **Model assignment command**: `/gentle:models` configures project, user, and built-in agents, saves global routing at `~/.pi/gentle-ai/models.json`, and applies profiles through `.pi/subagents.json` or `~/.pi/agent/subagents.json`.
+- **Engram package**: canonical source lives at [Shevanio/shevanio-engram](https://github.com/Shevanio/shevanio-engram). The current installer uses the published `gentle-engram` compatibility package for Pi session capture and memory tools.
 - **MCP adapter wiring**: ComponentEngram declares `npm:pi-mcp-adapter` in `.pi/agent/settings.json` packages and adds `pi-mcp-adapter` `^2.6.0` to `.pi/npm/package.json` without removing unrelated user entries. `pi-engram init` owns the Pi Engram MCP config schema and is run during installation.
 - **`pi-subagents-j0k3r` package**: discovers and runs SDD agents from `.pi/agents/`; Shevanio AI installs it directly with `pi install npm:pi-subagents-j0k3r`.
 - **Background subagents**: managed background execution is configured through `shevanio-ai install` / `shevanio-ai sync` with `--pi-background-subagents=auto|on|off` or `SHEVANIO_AI_PI_BACKGROUND_SUBAGENTS`; there is no launcher or activation plumbing, because the primitive is the already-installed `pi-subagents-j0k3r` extension.
 - CLI precedence is flag, non-empty environment, prior managed state, then `auto`; `auto` never enables by itself, unresolved non-interactive `auto` stays foreground, and the interactive Pi installer prompts only when that preference is unresolved.
-- The resolved on/off policy is projected to `~/.pi/shevanio-ai/background-subagents.json` as `{"schema":"gentle-pi.background-subagents/v1","policy":"on"|"off"}` (the base directory honors `GENTLE_PI_CONFIG_HOME`); `off` rewrites the policy instead of deleting files, and a file at that path without the managed schema marker is never overwritten.
+- The background-subagent flags persist a managed compatibility policy without overwriting a foreign file. During this transition, use `/gentle:background-subagents` to inspect the effective runtime decision and its source.
 - **`@juicesharp/rpiv-ask-user-question` package**: lets Pi child agents ask the active user session for clarification when they need human input.
 - **Pi companion packages**: `pi-web-access`, `@juicesharp/rpiv-todo`, and `pi-btw` add web access, todo tracking, and companion workflow support.
-- **Pi-only flow**: when Pi is the only selected agent, shevanio-ai skips persona, ecosystem component selection, and Strict TDD prompts because those behaviors are provided by `gentle-pi`.
+- **Pi-only flow**: when Pi is the only selected agent, shevanio-ai skips persona, ecosystem component selection, and Strict TDD prompts because those behaviors are provided by the Pi package.
 
 ### Hermes Ephemeral Delegation
 

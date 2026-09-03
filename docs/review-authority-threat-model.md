@@ -95,4 +95,4 @@ A legacy-v1 lineage that would have needed this quarantine today has no repair p
 
 ## Further Reading
 
-[Chapter 21 — Verifiable Trust](https://the-amazing-gentleman-programming-book.vercel.app/en/book/Chapter21_Verifiable-Trust) complements these technical boundaries with the mental model: trust what native authority and delivery gates can deterministically derive, not an agent's narration. Its examples were written around v2.1.2, so use it for the durable principle; this threat model and current CLI documentation define v2.1.4 behavior.
+[Chapter 21 — Verifiable Trust](https://the-amazing-gentleman-programming-book.vercel.app/en/book/Chapter21_Verifiable-Trust) complements these technical boundaries with the mental model: trust what native authority and delivery gates can deterministically derive, not an agent's narration. Its examples were written around v2.1.2, so use it for the durable principle; this threat model and current CLI documentation define stable v2.5.0 behavior.

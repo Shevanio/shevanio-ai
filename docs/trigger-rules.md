@@ -84,7 +84,7 @@ or optional SDD routing without starting, retrying, or re-enabling review on the
 user's behalf. Existing exact governing receipts remain authoritative; otherwise, native review delivery gates report `disabled/unmanaged` and
 defer to ordinary repository policy without fabricating approval.
 
-In stable [`v2.3.0`](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.3.0), prerelease [`v2.4.0-rc.1`](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.4.0-rc.1), and unreleased `main`, disabled SDD status skips review authority and leaves `reviewGate` structurally absent. Pre-verify continues without routing to review, and archive proceeds under ordinary repository policy when `reviewGate` is absent. A present `reviewGate.result: allow` is required only when review activity was discovered for the candidate. Native delivery gates remain distinct: when no exact governing receipt applies, they report `disabled/unmanaged`. See the [SDD status contract](../internal/assets/skills/_shared/sdd-status-contract.md).
+In stable [`v2.5.0`](https://github.com/Shevanio/shevanio-ai/releases/tag/v2.5.0) and `main`, disabled SDD status skips review authority and leaves `reviewGate` structurally absent. Pre-verify continues without routing to review, and archive proceeds under ordinary repository policy when `reviewGate` is absent. A present `reviewGate.result: allow` is required only when review activity was discovered for the candidate. Native delivery gates remain distinct: when no exact governing receipt applies, they report `disabled/unmanaged`. See the [SDD status contract](../internal/assets/skills/_shared/sdd-status-contract.md).
 
 ## Review store reset
 
@@ -126,7 +126,7 @@ It **preserves** the receipt-driven-development kill switch in both the
 allowlist, so any path the command does not recognize -- including one a future
 release adds -- is reported and left in place rather than guessed at.
 
-It **withholds** `reviews/`, the review graph store the gentle-pi adapter
+It **withholds** `reviews/`, the review graph store the Pi compatibility adapter
 writes, and removes it only when `--include-adapter-reviews` is given. Both
 safeties described below stop at the edge of that directory:
 `REVIEW-MAINTENANCE.lock` does not cover any path under it, so the exclusive

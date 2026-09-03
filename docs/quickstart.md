@@ -70,7 +70,7 @@ go run ./cmd/shevanio-ai install --dry-run
 
 End users choosing Go should use the pinned module command above. Go and local source builds do not embed production release trust anchors, so update them by reinstalling or rebuilding rather than using binary self-upgrade.
 
-For a Pi-only install, the plan shows the Pi package stack instead of Shevanio AI components. It installs `gentle-pi`, `gentle-engram`, and `pi-mcp-adapter`, runs `pi-engram init` through the pinned `gentle-engram` package, then installs `pi-subagents-j0k3r`, `@juicesharp/rpiv-ask-user-question`, `pi-web-access`, `@juicesharp/rpiv-todo`, and `pi-btw`.
+For a Pi-only install, the plan shows the Pi package stack instead of Shevanio AI components. The current stable installer uses the published `gentle-pi` and `gentle-engram` compatibility names, adds `pi-mcp-adapter`, runs `pi-engram init`, then installs the documented companion packages. The canonical `shevanio-pi` and `shevanio-engram` npm names are not published; see the [Pi integration guide](pi.md) before using package-native commands.
 
 ## Hardening recommendations for users
 

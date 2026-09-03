@@ -35,7 +35,7 @@ Engram is persistent memory for your AI agent. It saves decisions, discoveries, 
 
 Since v1.11.0, engram auto-detects the project name from git remote at startup, normalizes to lowercase, and warns if it finds similar existing project names. This prevents the name drift issue where the same project ends up with multiple name variants.
 
-For full documentation: [github.com/Gentleman-Programming/engram](https://github.com/Gentleman-Programming/engram)
+For full documentation: [github.com/Shevanio/shevanio-engram](https://github.com/Shevanio/shevanio-engram)
 
 ---
 
@@ -66,7 +66,7 @@ Support depends on the agent:
 | **OpenCode** | SDD Profiles generate `shevanio-orchestrator` plus phase sub-agents in `opencode.json` |
 | **Kilo Code** | OpenCode-compatible SDD profile overlay in `~/.config/kilo` |
 | **Kiro IDE** | Native phase agents with per-agent `model:` frontmatter |
-| **Pi** | Owned by `gentle-pi` through Pi-managed agents, chains, and model overrides |
+| **Pi** | Owned by Shevanio Pi through Pi-managed agents, chains, and model overrides; the current installer uses the published `gentle-pi` compatibility package |
 | **Others** | Single-mode SDD; one active model handles all phases |
 
 Single-mode is not a downgrade. It is the simpler default and works well. Multi-mode is useful when you deliberately want cost, speed, or reasoning tradeoffs per phase.
@@ -107,7 +107,8 @@ This pattern works today in several delegation models:
 | ----- | ------ | ----------- |
 | **Full sub-agents** | Claude Code, OpenCode, Kilo Code, Gemini CLI, Cursor, VS Code Copilot, Kimi Code, Kiro IDE, Qwen Code, Pi | Each SDD phase can run in a focused context through native delegation, package-managed subagents, or an OpenCode-compatible overlay |
 | **Hermes delegate_task** | Hermes | The orchestrator spawns ephemeral workers with self-contained missions and verifies their summaries before reporting success |
-| **Solo-agent** | Codex, Windsurf, Antigravity, OpenClaw, Trae | SDD phases run inline in one conversation; Engram still provides cross-phase persistence when available |
+| **Native multi-agent** | Codex | Uses native collaboration tools when available, with inline execution as a graceful fallback |
+| **Solo-agent** | Windsurf, Antigravity, OpenClaw, Trae | SDD phases run inline in one conversation; Engram still provides cross-phase persistence when available |
 
 You don't need to configure any of this. The installer sets up the right model for your agent, and the orchestrator manages delegation automatically.
 
@@ -143,7 +144,7 @@ Once installed, your agent detects what you're working on and loads the relevant
 
 How it works:
 
-1. **The registry refreshes at startup where the agent supports hooks.** Normal Pi startup runs the `gentle-pi` session hook. Codex, Claude Code, and OpenCode run `shevanio-ai skill-registry refresh --quiet` from their installed startup/plugin hooks.
+1. **The registry refreshes at startup where the agent supports hooks.** Normal Pi startup runs the currently installed package session hook. Codex, Claude Code, and OpenCode run `shevanio-ai skill-registry refresh --quiet` from their installed startup/plugin hooks.
 2. **The refresh is cached.** Shevanio AI fingerprints discovered `SKILL.md` files using schema version, path, mtime, and size. If `.atl/.skill-registry.cache.json` matches and `.atl/skill-registry.md` exists, startup is a cheap cache-hit.
 3. **The orchestrator uses it automatically** -- once the registry exists, the orchestrator reads it at session start and passes exact matching `SKILL.md` paths to sub-agents. You don't interact with the registry after that.
 4. **Manual fallback stays available** -- run `shevanio-ai skill-registry refresh --force` from a project if you want to regenerate immediately.
