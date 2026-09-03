@@ -13,6 +13,7 @@ Before you dive in, please read this guide fully. We have a structured workflow 
 - [Label System](#label-system)
 - [Development Setup](#development-setup)
 - [Testing](#testing)
+- [CI Operations](#ci-operations)
 - [Running the Cross-Lane Battery](#running-the-cross-lane-battery)
 - [Commit Convention](#commit-convention)
 - [Delivery Strategy for SDD Changes](#delivery-strategy-for-sdd-changes)
@@ -38,11 +39,11 @@ PRs that are not linked to an approved issue will be **automatically rejected** 
 
 ## Looking for something to work on?
 
-Start at the **[Community Roadmap](docs/community-roadmap.md)**.
+Start at the **[Community Roadmap](docs/community-roadmap.md)** or browse the live list of [open issues with `status:approved`](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Astatus%3Aapproved).
 
-Everything labelled [`up-for-grabs`](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, carries `status:approved` so a PR can be opened, and is unclaimed. Comment that you are taking it and go.
+`status:approved` means implementation is authorized; it does not guarantee that an issue is unclaimed. Check the assignee and recent comments, then comment before starting work.
 
-An issue **without** that label is usually waiting on information (`status:needs-info`) or on an architectural decision (`status:needs-design`). Those want discussion first — implementing before the decision lands means the work gets thrown away.
+If an issue does not have `status:approved`, discuss it first. CI rejects a linked pull request until a maintainer approves the issue.
 
 ## AI-Assisted Contributions
 
@@ -82,20 +83,9 @@ For disclosure boundaries, required details, attribution rules, and reviewer exp
 
 | Label | Description |
 |-------|-------------|
-| `status:needs-review` | Newly opened, awaiting maintainer review |
 | `status:approved` | Approved for implementation — work can begin |
-| `status:in-progress` | Being worked on |
-| `status:blocked` | Blocked by another issue or external dependency |
-| `status:wont-fix` | Out of scope or won't be addressed |
 
-### Priority Labels
-
-| Label | Description |
-|-------|-------------|
-| `priority:critical` | Blocking issues, security vulnerabilities |
-| `priority:high` | Important, affects many users |
-| `priority:medium` | Normal priority |
-| `priority:low` | Nice to have |
+This is the only status label enforced by the pull-request gate. Use the live repository label list rather than assuming additional workflow states exist.
 
 ---
 
@@ -223,6 +213,10 @@ To run these tests without restrictions, choose one of:
 - **Grant the privilege explicitly** via Group Policy: `Local Security Policy → User Rights Assignment → Create symbolic links`.
 
 > On Linux and macOS these tests always run without any extra setup.
+
+## CI Operations
+
+See [CI Operations](docs/ci.md) for the workflow trigger matrix, exact required check names, the separate full Windows suite, release gates, and optional Discord notifications. A local passing command is evidence for the code you ran; the protected branch still requires the remote checks on the pull request's exact SHA.
 
 ---
 

@@ -1,6 +1,6 @@
 name: Bug Report
 description: File a bug report for Shevanio AI
-labels: ["bug", "status:needs-review"]
+labels: ["bug"]
 
 body:
   - type: markdown
@@ -8,8 +8,8 @@ body:
       value: |
         ## 📋 How this works
 
-        1. **Submit** this bug report → it gets the `status:needs-review` label automatically
-        2. A **maintainer reviews** it and adds `status:approved` (or closes it as invalid/duplicate)
+        1. **Submit** this bug report for maintainer review
+        2. A **maintainer adds** `status:approved` when it is ready (or closes it as invalid/duplicate)
         3. **Only then** should you (or anyone) open a PR to fix it
 
         PRs that fix issues without `status:approved` will be automatically rejected.

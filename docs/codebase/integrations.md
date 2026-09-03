@@ -16,7 +16,7 @@ Shevanio AI integration code should stay thin: adapters describe where and how a
 | Skills | `internal/components/skills/`, `internal/assets/skills/` | Copy curated skill files. |
 | Skill registry | `internal/skillregistry/`, `internal/app/` | Refresh or list `.atl/skill-registry.md` entries. |
 | Community tools | `internal/components/communitytool/` | Orchestrate community tool installation plus managed guidance/config/MCP reconciliation; do not own external runtime implementation. |
-| OpenCode plugins | `internal/components/opencodeplugin/` | Register external OpenCode plugin package names; Gentle Logo also writes a managed local TUI plugin file and registers its path. |
+| OpenCode plugins | `internal/components/opencodeplugin/` | Register external OpenCode plugin package names; the managed OpenCode logo also writes a local TUI plugin file under its compatibility ID. |
 
 ## Setup boundaries
 
@@ -36,11 +36,11 @@ Community tools and OpenCode plugins are different integration paths:
 | Path | Shevanio AI owns | Runtime owner |
 |---|---|---|
 | `internal/components/communitytool/` | Installation orchestration plus managed guidance/config/MCP reconciliation, such as CodeGraph setup and guidance. | The external tool runtime. |
-| `internal/components/opencodeplugin/` | External plugin package-name registration; Gentle Logo also writes/registers a managed local TUI plugin file. | OpenCode and the plugin package or managed local plugin file. |
+| `internal/components/opencodeplugin/` | External plugin package-name registration; the managed OpenCode logo also writes/registers a local TUI plugin file under its compatibility ID. | OpenCode and the plugin package or managed local plugin file. |
 
 ## Thin plugin principle
 
-OpenCode community plugins are optional integrations. For external plugins, Shevanio AI ensures `~/.config/opencode/tui.json` exists and contains the plugin package name. For Gentle Logo, Shevanio AI writes the managed local TUI plugin file under `~/.config/opencode/tui-plugins/` and registers that path. OpenCode owns runtime loading.
+OpenCode community plugins are optional integrations. For external plugins, Shevanio AI ensures `~/.config/opencode/tui.json` exists and contains the plugin package name. For the managed OpenCode logo, Shevanio AI writes the local TUI plugin under `~/.config/opencode/tui-plugins/` and registers that path. The existing ID and filename remain compatibility surfaces. OpenCode owns runtime loading.
 
 ```text
 TUI selection

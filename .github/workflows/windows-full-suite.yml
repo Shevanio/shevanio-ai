@@ -2,20 +2,11 @@ name: Windows Full Suite
 
 # Deliberately its own workflow, not a job in ci.yml.
 #
-# Until 2026-07-29 this suite never once completed: windows-runtime declared a
-# 30-minute job timeout around a 35-minute step, so every push to main was
-# cancelled at 30m and reported the whole run cancelled. v2.2.0 shipped without
-# these tests ever having run. Unblocking them surfaced eighteen genuine
-# Windows failures that predate the release.
-#
-# Keeping the lane inside ci.yml would make that pre-existing debt block
-# publication, because the release gate requires a green ci.yml run on the
-# exact tagged commit. Running it here instead keeps the signal visible and
-# lets the debt be paid down without holding releases hostage to it. This is
-# not a permanent home: once the eighteen are fixed, fold this back into ci.yml
-# so it gates again.
-#
-# Everything below is otherwise identical to the ci.yml job it replaces.
+# PR CI runs the curated Windows release-blocker subset. This separate workflow
+# runs every Go package after merges to main, on its daily schedule, or by
+# manual dispatch. Keeping the process-heavy full suite here preserves complete
+# native Windows coverage without adding its ten long-running shards to every
+# pull request.
 
 on:
   push:

@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a new feature or enhancement for Shevanio AI
-labels: ["enhancement", "status:needs-review"]
+labels: ["enhancement"]
 
 body:
   - type: markdown
@@ -8,8 +8,8 @@ body:
       value: |
         ## 📋 How this works
 
-        1. **Submit** this feature request → it gets the `status:needs-review` label automatically
-        2. A **maintainer reviews** it and adds `status:approved` (or closes it as out-of-scope/duplicate)
+        1. **Submit** this feature request for maintainer review
+        2. A **maintainer adds** `status:approved` when it is ready (or closes it as out-of-scope/duplicate)
         3. **Only then** should you (or anyone) open a PR to implement it
 
         PRs that implement features without `status:approved` on the linked issue will be automatically rejected.

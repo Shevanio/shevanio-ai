@@ -48,6 +48,7 @@ Golden rule: **agent-specific paths belong in adapters; reusable behavior belong
 | [Integrations](codebase/integrations.md) | Change agent adapters, plugins, and setup boundaries safely. |
 | [Maintainer playbook](codebase/maintainer-playbook.md) | Use checklists by change type and PR review guardrails. |
 | [Reference map](codebase/reference-map.md) | Trace docs and source files to responsibilities. |
+| [CI Operations](ci.md) | Understand workflow triggers, required checks, Windows coverage, releases, and notifications. |
 
 ## Recommended reading path
 

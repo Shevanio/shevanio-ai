@@ -42,7 +42,7 @@ Shevanio AI is NOT an AI agent installer. It adapts the agent runtime(s) already
 | **Gemini CLI** | `gemini-cli` | Full (experimental) | Custom agents in `~/.gemini/agents/` |
 | **Cursor** | `cursor` | Full (native subagents) | SDD agents in `~/.cursor/agents/` |
 | **VS Code Copilot** | `vscode-copilot` | Full (`runSubagent`) | Parallel execution |
-| **Codex** | `codex` | Solo-agent | CLI-native TOML config |
+| **Codex** | `codex` | Native multi-agent (solo fallback) | CLI-native TOML config |
 | **Windsurf** | `windsurf` | Solo-agent | Plan Mode, Code Mode, and native workflows |
 | **Antigravity** | `antigravity` | Solo-agent + Mission Control | Built-in browser/terminal sub-agents |
 | **Kimi Code** | `kimi` | Full (native custom agents) | Modular prompt templates in `~/.kimi` |
@@ -50,10 +50,10 @@ Shevanio AI is NOT an AI agent installer. It adapts the agent runtime(s) already
 | **Qwen Code** | `qwen-code` | Full (native sub-agents) | Slash commands and `~/.qwen/commands/` |
 | **OpenClaw** | `openclaw` | Solo-agent | Workspace-first `AGENTS.md` / `SOUL.md` with global MCP config |
 | **Trae** | `trae-ide` | Solo-agent | Desktop app with `~/.trae/skills/` and OS-specific rules |
-| **Pi** | `pi` | Full (package-managed subagents) | `gentle-pi` harness with native persona, models, SDD, and memory |
-| **Hermes** | `hermes` | Detect-only | YAML MCP config and `SOUL.md`; install manually first |
+| **Pi** | `pi` | Full (package-managed subagents) | Shevanio Pi harness with native persona, models, SDD, and memory |
+| **Hermes** | `hermes` | Full (`delegate_task`) | YAML MCP config and `SOUL.md`; install manually first |
 
-> **Pi is package-managed, not just configured.** Selecting Pi installs the first-class [`gentle-pi`](docs/pi.md) harness, which owns Pi-native persona and model controls, SDD assets, chains, and memory wiring.
+> **Pi is package-managed, not just configured.** The canonical harness is [Shevanio Pi](https://github.com/Shevanio/shevanio-pi). The current stable installer still uses the published `gentle-pi` and `gentle-engram` compatibility packages because `shevanio-pi` and `shevanio-engram` are not yet available from npm. See the [Pi integration guide](docs/pi.md) before using package-native commands.
 
 > **Note**: This project supersedes [Agent Teams Lite](https://github.com/Gentleman-Programming/agent-teams-lite) (now archived). Everything ATL provided is included here with better installation, automatic updates, and persistent memory.
 
@@ -237,7 +237,7 @@ Once your agents are configured, open your AI agent in a project and run these t
 | `/sdd-init`                        | Detects stack, testing capabilities, activates Strict TDD Mode if available | When your project adds/removes test frameworks, or first time in a new project |
 | `shevanio-ai skill-registry refresh` | Scans installed skills and project conventions, builds the registry         | After installing/removing skills, or first time in a new project               |
 
-These are **not required** for basic usage. The SDD orchestrator runs `/sdd-init` automatically if it detects no context. Startup hooks normally keep the skill registry fresh for agents that support hooks, including Codex, Claude Code, OpenCode, and Pi through `gentle-pi`. If you start Pi with `pi -ns`, startup skill loading/hooks are skipped, so run the registry refresh manually when you need updated project rules.
+These are **not required** for basic usage. The SDD orchestrator runs `/sdd-init` automatically if it detects no context. Startup hooks normally keep the skill registry fresh for agents that support hooks, including Codex, Claude Code, OpenCode, and Pi through its currently installed compatibility package. If you start Pi with `pi -ns`, startup skill loading/hooks are skipped, so run the registry refresh manually when you need updated project rules.
 
 Run `shevanio-ai doctor` at any time for a read-only health check of your ecosystem (tool binaries, `state.json`, Engram reachability, disk space).
 
@@ -556,6 +556,7 @@ engram tui                    # Visual memory browser
 | Review or deliver a change safely | [Review Integration Contract](docs/review-integration.md) for provider consumers; [Review Authority Threat Model](docs/review-authority-threat-model.md) for technical boundaries; [Chapter 21 — Verifiable Trust](https://the-amazing-gentleman-programming-book.vercel.app/en/book/Chapter21_Verifiable-Trust) for the mental model |
 | Find or share persistent context | [Engram Commands](docs/engram.md) |
 | Refresh or troubleshoot an installation | [Usage](docs/usage.md), [Backup & Rollback](docs/rollback.md), and [Platforms](docs/platforms.md) |
+| Understand pull-request, Windows, release, or notification automation | [CI Operations](docs/ci.md) |
 | Extend or contribute to Shevanio AI | [Codebase Guide](docs/CODEBASE-GUIDE.md), [Components, Skills & Presets](docs/components.md), [Skill Registry](docs/skill-registry.md), and [Architecture & Development](docs/architecture.md) |
 | Understand how agent behavior is tested | [Testing Agents Deterministically](docs/testing-agents-deterministically.md) for the real-agent E2E and its model fixture |
 
@@ -588,8 +589,8 @@ This project exists because of the community. See [CONTRIBUTORS.md](CONTRIBUTORS
 - **Starting work?** Read [Organic Implementation Routing](docs/trigger-rules.md) to understand direct, delegated, and optional SDD behavior.
 - **Reviewing a focused change?** Start with the [Organic RDD architecture](docs/architecture/organic-rdd.md) and [review authority threat model](docs/review-authority-threat-model.md).
 - **Maintaining Shevanio AI?** Use the [Codebase Guide](docs/CODEBASE-GUIDE.md) to find package ownership and review boundaries.
-- **Using Pi?** Read [Pi Agent](docs/pi.md) for the `gentle-pi` harness, Pi commands, persona, and model assignments.
-- **Ready to contribute?** Start at the [Community Roadmap](docs/community-roadmap.md) — everything labelled [`up-for-grabs`](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Aup-for-grabs) is scoped, approved and unclaimed. Then read [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Using Pi?** Read the [Shevanio Pi integration guide](docs/pi.md) for the current compatibility installation, package commands, persona, and model assignments.
+- **Ready to contribute?** Start with the [Community Roadmap](docs/community-roadmap.md) and the live list of [open approved issues](https://github.com/Shevanio/shevanio-ai/issues?q=is%3Aissue+is%3Aopen+label%3Astatus%3Aapproved), then read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
